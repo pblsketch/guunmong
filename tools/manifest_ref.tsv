@@ -1,0 +1,8 @@
+# name	size	ref	mode
+ref_seongjin_yang	1536x1024	assets/raw/style_c_ref.png	style
+ref_masters	1536x1024	design/ref/ref_seongjin_yang.png	style
+ref_women_1	1536x1024	design/ref/ref_seongjin_yang.png	style
+ref_women_2	1536x1024	design/ref/ref_seongjin_yang.png	style
+ref_fairies	1536x1024	assets/raw/style_c_ref.png	same
+ref_others	1536x1024	design/ref/ref_seongjin_yang.png	style
+ref_piece	1536x1024	design/ref/ref_seongjin_yang.png	char

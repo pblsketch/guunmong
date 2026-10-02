@@ -1,0 +1,5 @@
+Pixel art game objects in the style of the reference: 16-bit era, crisp chunky square pixels, no anti-aliasing, dark outlines, limited palette of about 32 colors (Korean traditional colors). Solid flat pure magenta background (#FF00FF) everywhere behind the figures: no gradient, no floor, no cast shadows, no vignette. Simple bold shapes that still read when shrunk to a tiny size. 
+
+One wide 16:9 picture: thick, billowing white and pale grey auspicious pixel clouds covering almost the whole frame, rolling in from all sides, with only a few small magenta gaps between the cloud puffs.
+
+Absolutely no text: no letters, no Chinese characters, no numbers, no labels, no captions, no name tags, no signature, no watermark, no UI, no color swatches.

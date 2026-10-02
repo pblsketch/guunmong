@@ -1,0 +1,9 @@
+# name	size	ref	mode
+sc_bridge	1536x1024	assets/raw/refpack_bridge.png	scene
+sc_geomungo	1536x1024	assets/raw/refpack_geomungo.png	scene
+sc_c3_feast	1536x1024	assets/raw/refpack_feast.png	scene
+pt_yang_sheet	1024x1024	design/ref/ref_seongjin_yang.png	same
+pt_gyeongpae_sheet	1536x1024	design/ref/ref_women_1.png	same
+horse_walk	1536x1024	design/ref/ref_piece.png	char
+house_inn	1536x1024		
+board	1024x1536	assets/raw/style_c_ref.png	style

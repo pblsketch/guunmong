@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>구운몽: 한바탕 꿈</title>
+  <meta name="description" content="김만중 「구운몽」을 승경도 말판 위에서 양소유의 한평생을 살아 보며 읽는 고등학생용 학습 게임">
+  <meta name="author" content="박준일(온양여자고등학교 국어 교사)">
+  <meta name="theme-color" content="#efe3c6">
+  <link rel="icon" href="assets/ui/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/ui/icon-512.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app"><p class="loading">불러오는 중…</p></div>
+  <noscript><p class="loading">이 게임은 자바스크립트가 필요해요.</p></noscript>
+
+  <!-- 엔진. 내용 데이터(js/data/*.js)는 js/core/data.js가 읽는다(?fixture=1 이면 tests/fixtures/의 임시 데이터) -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/save.js"></script>
+  <script src="js/core/data.js"></script>
+  <script src="js/core/audio.js"></script>
+  <script src="js/core/text.js"></script>
+  <script src="js/core/ui.js"></script>
+  <script src="js/core/activity.js"></script>
+  <script src="js/game/app.js"></script>
+  <!-- 꿈 화면(말판·집·구슬·꿈 보따리·깨어남·꿈 일지·해석·결과): app.js의 확장 지점에 끼운다. app.js 다음, main.js 앞 -->
+  <script src="js/game/board.js"></script>
+  <script src="js/game/house.js"></script>
+  <script src="js/game/pearl.js"></script>
+  <script src="js/game/bag.js"></script>
+  <script src="js/game/wake.js"></script>
+  <script src="js/game/journal.js"></script>
+  <script src="js/game/interp.js"></script>
+  <script src="js/game/result.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

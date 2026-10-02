@@ -1,0 +1,12 @@
+# 여덟 구슬 자리(기획서 §11): 장면 그림(assets/sc/<img>.webp, 480x270)에서 숨김 사물의 가운데를 잰 값.
+# x·y·r은 그림 너비·높이에 대한 백분율(%) — 데이터의 pearl: { x, y, r } 그대로(js/game/pearl.js가 가운데 기준으로 놓는다).
+# 2026-10-03 T7 측정(그림을 4배로 키워 숨김 사물 가운데를 확인). default_*는 §11의 기본값.
+scene	bond	img	x	y	r	object	default_x	default_y
+s01-huayin	chae	sc_huayin	25	23	6	버들가지 끝 잎에 맺힌 둥근 이슬(왼쪽 위)	22	30
+s03-tianjin	seomwol	sc_tianjin	64	63	6	섬월 앞 술상의 흰 옥잔(안에 반짝임)	64	66
+s04-geomungo	gyeongpae	sc_geomungo	49	18	6	뜰 건너 안채의 등불 켜진 창호지 창(가운데 위)	78	34
+s05-chunun	chunun	sc_chunun	51	88	6	정자 앞 물 위에 빛나며 떠 있는 계수나무 잎	40	78
+s07-gyeonghong	gyeonghong	sc_handan	89	34	6	경대 둥근 거울 속에만 있는 빛	70	40
+s08-tungso	nanyang	sc_tungso	90	12	7	보름달 오른쪽의 작은 달(달무리)	84	14
+s11-yoyeon	yoyeon	sc_yoyeon	13	52	6	촛대 받침의 빛나는 흰 구슬 장식	30	52
+s12-neungpa	neungpa	sc_neungpa	63	89	6	못 바닥 흰 돌 사이에서 빛나는 돌	52	82

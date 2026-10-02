@@ -1,0 +1,37 @@
+# tools — 그림·배경음·글꼴을 만드는 도구
+
+## 맡는 것
+| 도구 | 하는 일 | 결과 |
+| --- | --- | --- |
+| `make_prompts.py` | 그림 프롬프트(영어)와 생성 목록, 인물 참조 묶음(`ref#n`) | `prompts/*.txt`, `manifest_*.tsv` |
+| `genqueue.ps1` | 생성 목록을 최대 N개씩 동시에 `gen.ps1`로 | `assets/raw/<이름>.png` |
+| `gen.ps1` | Codex CLI 이미지 생성 한 장(임시 `CODEX_HOME`, 참조 모드) | 생성 원본 한 장 |
+| `pixlib.py` | 크로마 키 빼기, 가운데 자르기, 면적 평균 줄이기, OKLab 가중 32색, 프레임 나누기 | (라이브러리) |
+| `process_assets.py` | 장면·초상·말판·집·물건·화면 장식·제목·아이콘 가공, 구슬 직접 찍기 | `assets/{sc,pt,board,house,items,ui}/` |
+| `process_sprites.py` | 말 걷기 시트(32×32 칸 6열×4줄, 발밑 (16,30)) | `assets/board/horse_walk*.webp` |
+| `check_assets.py` | 129장의 경로·크기·32색·무손실 webp | 종료 코드 |
+| `make_review.py` | 사용자 확인용 모아 보기 | `design/review/` |
+| `make_bgm.py` | 국립국악원 악구 WAV를 이어 곡으로, 음량 맞추기 | `assets/bgm/*.mp3`, `js/data/bgm.js` |
+| `build_fonts.py` | 게임에 쓰인 글자만 남긴 부분 글꼴 | `assets/fonts/*.woff2`, `OFL.txt` |
+
+## 맡지 않는 것
+- 게임 실행 코드(`js/`, `css/`, `index.html`)와 점검(`tests/`)은 여기서 고치지 않는다.
+- 원본(`assets/raw/`, `fonts_src/`, `music_src/`)은 git에 넣지 않는다. `.gitignore`가 뺀다. `git add -f` 금지.
+- 사용권이 확인되지 않은 그림·음원·글꼴을 원본으로 들이지 않는다(그림은 Codex 생성, 소리는 「디지털 이음」 공공누리 제1유형, 글꼴은 SIL OFL).
+
+## 지켜야 할 것
+- 프롬프트는 영어 ASCII만. 그림에 글자를 넣지 말라는 문구(`NOTEXT`)와 당나라 옷 문구(`TANG`)를 뺀 프롬프트를 만들지 않는다.
+- 생성 크기를 믿지 않는다. Codex는 요청한 크기를 무시하기도 한다(1536×1024 요청 → 1672×941). 가공은 언제나 목표 비율로 가운데를 자른 뒤 줄인다. 프롬프트는 가장자리가 잘린다고 보고 중요한 것을 가운데 80% 안에 두게 쓴다.
+- 크로마 키: 기본 마젠타(#FF00FF), 보라·분홍 옷이 든 시트(적경홍 초상, 선녀 시트 b, `horse_walk_sang`)는 초록(#00FF00). 프롬프트 쪽(`make_prompts.py`의 `KEY_GREEN`)과 가공 쪽(`process_assets.py`·`process_sprites.py`의 시트 표)이 같은 키여야 한다. 버들 초록 옷(진채봉)이 든 시트에 초록 키를 쓰지 않는다.
+- 게임 그림은 32색 이하(투명 그림은 31색 + 투명), 무손실 webp(아이콘만 png). 장면 480×270, 초상 96×96, 말 시트 192×128, 집 단계별 너비 320·480·640·800 × 높이 200, 말판 320×480.
+- 16px 안팎의 아주 작은 그림은 생성해 줄이지 않고 코드로 찍는다(`beads()`).
+- `gen.ps1`의 임시 `CODEX_HOME`(최소 설정 세 줄 + `auth.json` 복사본) 방식을 유지한다. 전역 설정을 쓰면 시작이 몇 분씩 멈춘다. 생성을 마치면 `%TEMP%\codex-img-guun-*`를 지운다(자격 증명 복사본).
+- `make_bgm.py`는 몇 곡만 만들 때도 `js/data/bgm.js` 전체를 다시 쓴다. 곡 배정·출처는 `TRACKS`에서 고친다. 곡마다 -20 LUFS, 봉우리 -1.5 dBFS 아래, 모노 44.1kHz MP3 80kbps. 퉁소 곡(`tungso`·`chwimi`)은 단소 「청성곡」이며 출처 문구에 그렇게 적는다.
+- `build_fonts.py`는 `js/**/*.js`, `index.html`, `manifest.webmanifest`의 글자만 모은다. GuunOld는 한자와 몇몇 부호만 담는다(옛한글 자모 없음). 부분 글꼴 이름은 OFL에 따라 `Guun…`으로 바꾼다.
+- 새로 만든 그림은 모아 보기로 사용자에게 먼저 보여 준 뒤에만 `assets/`에 넣는다.
+
+## 확인
+- 그림: `python tools/check_assets.py` → 0, `python tools/make_review.py`로 모아 보기 → 사용자 확인 → `cd tests; node check-assets.mjs`(정수배·파일·바깥 요청).
+- 배경음: `cd tests; node check-bgm.mjs`(ffmpeg가 있어야 음량까지 잰다. 출력에 곡별 LUFS 표가 있어야 함).
+- 글꼴: 스크립트 출력의 "글꼴에 없는 글자 N개"를 본다. 자동 점검은 글자 빠짐을 보지 않는다.
+- 마지막에 `cd tests; node run-all.mjs`.
