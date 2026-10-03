@@ -113,6 +113,30 @@ try {
     assert.equal(await page.evaluate(() => typeof G.app.screens.wish), 'function');
   });
   if (issues.length) throw Error('미구현 계약 RED');
+  await test('구운몽부터 시작·옛 서장 기록 재개·결과의 선택형 비교 읽기', async () => {
+    await fresh('');
+    await page.getByRole('button', { name: '시작하기', exact: true }).click(); await chapter(); await at('c1-bridge');
+    assert.equal(await page.evaluate(() => G.app.list().length), 28);
+    await page.locator('[data-tool="toc"]').click();
+    assert.equal(await page.locator('.toc-ch[data-ch="0"]').count(), 0);
+    await page.keyboard.press('Escape');
+    const abil = { munjang: 12, eumak: 7, muye: 4, jiryak: 6 };
+    await seed('cut-josin', { abil }); await at('c1-bridge');
+    assert.deepEqual((await state()).abil, abil);
+    await seed('cut-josin', { awake: true, awakeAt: 1234, abil }); await at('c3-awake');
+    assert.equal((await state()).awakeAt, 1234); assert.deepEqual((await state()).abil, abil);
+    await seed('r-result', { awake: true, awakeAt: 1234 });
+    const before = await state();
+    const reading = page.locator('details.comparison-reading');
+    assert.equal(await reading.getAttribute('open'), null);
+    assert.equal(await page.locator('.notes .mark.variant').filter({ hasText: '조신의 세월' }).count(), 0);
+    await reading.locator('summary').click();
+    assert.ok((await reading.innerText()).includes('별개의 이야기'));
+    assert.ok((await reading.innerText()).includes('양소유'));
+    assert.equal(await reading.locator('.scene-img img').count(), 2);
+    assert.equal(await reading.locator('.mark.variant').filter({ hasText: '조신의 세월' }).count(), 1);
+    assert.deepEqual(await state(), before, '선택형 비교 읽기는 진행과 기록을 바꾸지 않음');
+  });
   for (const met of [true, false]) await test('깨어난 뒤 모드 전환: ' + (met ? '실제 인연 획득' : '인연 없음') + '·꿈 도구 권한·진행 보존', async () => {
     await fresh('?teacher=1&scene=' + (met ? 'e01-huayin' : 'c3-staff'));
     if (met) {
@@ -274,11 +298,13 @@ try {
     critical(await page.evaluate(() => G.app.open('c3-staff', { quiet: true })) === false, '내려치기 재개 후 잠금 우회');
   });
   await test('컷신 시간·그림·스프라이트 대체·효과·이동·멈춤·건너뛰기', async () => {
-    await fresh();
+    await fresh('');
     await page.evaluate(() => {
       // 승인 대기 그림을 쓰지 않고 기존 말 시트로 메타 기반 프레임 재생만 검증한다.
       G.data.sprites.yang = { src: 'assets/board/horse_walk.webp', width: 32, height: 32, frames: 6, rows: 4 };
-      G.app.byId('cut-josin').timeline = [
+      const opening = G.app.list()[0];
+      opening.kind = 'cut';
+      opening.timeline = [
         { at: 0, img: 'sc_huayin', lines: ['시간 첫 줄'], sprites: [{ id: 'yang', x: 35, y: 55 }], effect: 'petals', move: { x: 6, y: 0, duration: 200 } },
         { at: 300, img: 'sc_tianjin', lines: ['시간 둘째 줄'], effect: 'light', pause: 'next' },
         { at: 500, lines: ['시간 셋째 줄'] },
@@ -304,7 +330,7 @@ try {
     assert.equal(await page.locator('.cutscene').getAttribute('data-frame'), '1');
     await next();
     await page.waitForFunction(() => document.querySelector('.cutscene')?.dataset.frame === '2');
-    await page.locator('[data-act="skip"]').click(); await at('c1-bridge');
+    await page.locator('[data-act="skip"]').click(); await at('c1-cell');
     await fresh(); await page.getByRole('button', { name: '시작하기', exact: true }).click(); await chapter();
     await resume(); assert.equal(await page.locator('.cutscene').getAttribute('data-frame'), '0');
     await page.locator('.stage-background').click(); await at('c1-bridge');

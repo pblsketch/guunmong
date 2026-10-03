@@ -109,7 +109,8 @@ const toTexts = v => typeof v === 'string' ? [plain(v)] : Array.isArray(v) ? v.f
 const before = scenes.filter(s => ['1', '3'].includes(s.ch)).flatMap(s => [...toTexts(s.lines), ...toTexts(s.monologue), ...(s.timeline || []).flatMap(f => toTexts(f.lines))]);
 for (const e of d.interp.evidence) ok((e.after ? toTexts(d.interp.lastWords) : before).some(t => t.includes(e.text)), e.id, '선택 전에 실제로 읽은 근거');
 const opening = scenes.find(s => s.id === 'cut-josin');
-ok(opening?.timeline?.at(-1)?.at >= 50000 && opening?.timeline?.at(-1)?.at <= 65000, '조신', '약 1분');
+ok(opening?.optional === true && d.notes.comparison?.scene === opening.id, '조신', '결과의 선택형 비교 읽기');
+ok(scenes.filter(s => !s.optional).length === 28 && scenes.find(s => !s.optional)?.id === 'c1-bridge', '본편', '구운몽부터 28단위');
 const waking = scenes.find(s => s.kind === 'waking');
 ok(waking?.timeline?.at(-1)?.pause === 'staff', '깨어남', '지팡이를 든 데서 멈춤');
 ok(d.notes.discuss.length === 2 && d.notes.teacher.ledger, '노트', '생각 나눔 둘·장부 안내');

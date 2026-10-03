@@ -1,8 +1,8 @@
 /* 꿈 수치는 문서 흐름 안에 둬 대사창과 진행 단추를 덮지 않는다. */
-.play:has(> .sim-hud) { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+.play:has(> .sim-hud) { display: flex; flex-direction: column; min-height: 100dvh; }
 .play:has(> .sim-hud) > .topbar { flex-shrink: 0; }
-.play:has(> .sim-hud) > .main { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.sim-hud { flex-shrink: 0; padding: 6px 12px; background: #e4d6b3; border-bottom: 1px solid var(--ink-3); }
+.play:has(> .sim-hud) > .main { flex: 0; }
+.sim-hud { position: sticky; top: var(--topbar-height, 64px); z-index: 24; flex-shrink: 0; padding: 6px 12px; background: #e4d6b3; border-bottom: 1px solid var(--ink-3); }
 .hud-top { display: flex; justify-content: space-between; align-items: center; max-width: 720px; margin: auto; }
 .hud-top strong { font-family: var(--pixel); font-size: 1.05rem; }
 .hud-top .btn { padding: 3px 9px; margin-left: 4px; }

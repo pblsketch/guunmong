@@ -116,17 +116,18 @@ html:not(.teacher) .teacher-btn { display: none !important; }
 .topbar .tools { display: flex; gap: 6px; }
 .revisit-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; background: var(--interp-bg); border-bottom: 1px solid var(--interp); font-size: .85em; color: var(--interp); }
 
-/* ───────── 본문과 아래 판(한 손 조작: 진행 단추는 늘 아래) */
-.main { flex: 1; padding: 14px 16px calc(var(--tray-h) + 32px); }
+/* ───────── 본문과 진행 단추 */
+.main { padding: 14px 16px 8px; }
 .main-inner { max-width: 720px; margin: 0 auto; }
 .main-inner * { scroll-margin-top: 72px; scroll-margin-bottom: calc(var(--tray-h) + 16px); }
 .blk { margin: 0 0 18px; }
 .tray {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: flex; justify-content: center; gap: 10px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 720px; margin: 0 auto;
   padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(239, 227, 198, 0), var(--paper) 30%);
+  background: var(--paper);
 }
 .tray .btn { min-width: min(320px, 70vw); }
+.tray .btn.small { min-width: 0; }
 .tray.empty { pointer-events: none; }
 
 /* ───────── 장 펼치기 */
@@ -676,9 +677,16 @@ html.teacher .help-row { display: flex; }
 .stage-background { position: relative; height: 270px; padding: 0; overflow: hidden; }
 .stage-background img { position: absolute; top: 0; left: 50%; transform: translateX(-50%); max-width: none; display: block; }
 .stage-effects, .stage-actors { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.stage-portrait { position: absolute; right: 14px; bottom: calc(var(--speech-height, 110px) + 4px); z-index: 2; }
+.stage-portrait { position: absolute; right: 14px; bottom: 12px; z-index: 2; }
 .stage-portrait img { display: block; image-rendering: pixelated; }
-.stage-speech { position: absolute; z-index: 3; left: 8px; right: 8px; bottom: 8px; padding: 8px 12px; max-height: 62%; overflow-y: auto; color: var(--ink); background: var(--paper); border: 2px solid var(--ink-3); border-radius: 6px; }
+.stage-story { display: grid; gap: 10px; max-width: 484px; margin: 0 auto; }
+.stage-speech { padding: 12px 14px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink-3); border-radius: 6px; }
+.stage-speech .mark { margin: 0; }
+.comparison-reading { margin: 18px 0; padding: 12px; border: 2px solid var(--ink-3); border-radius: 6px; }
+.comparison-reading summary { cursor: pointer; font-family: var(--pixel); }
+.comparison-question { padding: 10px; border-left: 3px solid var(--ink-3); background: var(--paper-3); }
+.prep-reflection { margin-top: 14px; padding: 10px 12px; background: var(--paper-3); border-radius: 6px; }
+.prep-reflection h3 { margin: 0 0 8px; }
 .stage-speaker { font-family: var(--pixel); font-weight: bold; margin-bottom: 6px; }
 .stage-speaker:empty { display: none; }
 .stage-dialogue { min-height: 2.8em; line-height: 1.6; cursor: pointer; }

@@ -24,11 +24,12 @@
     const speaker = h('div.stage-speaker');
     const dialogue = h('div.stage-dialogue', { role: 'button', tabindex: '0', 'aria-label': '다음 대사', 'aria-live': 'polite' });
     const speech = h('div.stage-speech', speaker, dialogue);
-    el.append(background, fx, actors, face, speech);
-    ctx.main.appendChild(el);
+    el.append(background, fx, actors, face);
+    const story = h('div.stage-story', el, speech);
+    ctx.main.appendChild(story);
     const active = () => !disposed && ctx.alive();
     // 좁은 화면에서는 원래 크기에 가까운 정수배를 유지하고 좌우 가장자리만 자른다.
-    // 그림의 가운데와 전체 높이를 보존하며 대사창도 같은 그림 영역 안에 둔다.
+    // 그림과 글은 따로 펼쳐 긴 설명도 그림을 덮거나 잘리지 않게 한다.
     function layout() {
       if (!active()) return;
       if (picture?.naturalWidth) {
@@ -38,7 +39,6 @@
         el.style.maxWidth = picture.naturalWidth * scale + 4 + 'px';
         background.style.height = picture.naturalHeight * scale + 'px';
       }
-      el.style.setProperty('--speech-height', speech.offsetHeight + 'px');
     }
     const layoutObserver = new ResizeObserver(layout);
     layoutObserver.observe(speech);
@@ -109,7 +109,7 @@
       picture?.removeEventListener('load', layout);
       window.removeEventListener('resize', layout);
       ctx.signal.removeEventListener('abort', dispose);
-      el.remove();
+      story.remove();
     }
     ctx.signal.addEventListener('abort', dispose, { once: true });
     if (ctx.signal.aborted) dispose();

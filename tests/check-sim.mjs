@@ -206,6 +206,7 @@ test('데이터 오류를 실제로 검출', () => {
 });
 function productionData() {
   const d = clone(fixture);
+  d.scenes.find((s) => s.id === 'cut-josin').optional = true;
   const cores = [['munjang'], ['munjang'], ['eumak'], ['munjang'], ['jiryak'], ['jiryak'], ['eumak'], ['muye', 'jiryak'], ['muye'], ['jiryak'], ['muye', 'jiryak'], ['munjang']];
   const meetAt = [1, 2, 3, 5, 6, 7, 9, 10];
   const base = d.scenes.find((s) => s.kind === 'event');
@@ -244,6 +245,12 @@ test('실제 12사건 검사 양성·순서·만남·핵심 능력 음성', () =
   crossLine.interp.evidence[0].text = crossLine.scenes[1].lines[0] + crossLine.scenes[2].lines[0];
   assert.ok(G.checkData(crossLine).some((p) => p.includes('evidence:')));
   assert.ok(G.checkData(d, { profile: 'fixture' }).some((p) => p.includes('event-count')));
+  const hidden = clone(d);
+  hidden.scenes.find((s) => s.kind === 'event').optional = true;
+  assert.ok(G.checkData(hidden).some((p) => p.includes('optional-scene')), '본편 사건을 선택형으로 숨길 수 없음');
+  delete hidden.scenes.find((s) => s.kind === 'event').optional;
+  hidden.scenes.find((s) => s.id === 'cut-josin').optional = false;
+  assert.ok(G.checkData(hidden).some((p) => p.includes('optional-scene')), '조신을 본편으로 되돌리는 자료 오류 검출');
 });
 for (const field of ['lines', 'narration']) test('소원 장면 ' + field + ' 4401음절 누락 회귀', () => {
   const d = productionData();

@@ -165,6 +165,14 @@ async function boardReadiness(page) {
   });
 }
 async function checks(page, where) {
+  const reading = await page.evaluate(() => {
+    const story = document.querySelector('.stage-story');
+    if (!story) return null;
+    const picture = story.querySelector('.stage').getBoundingClientRect();
+    const speech = story.querySelector('.stage-speech');
+    return { separated: speech.getBoundingClientRect().top >= picture.bottom + 6, clipped: speech.scrollHeight > speech.clientHeight + 1 };
+  });
+  if (reading) { assert.ok(reading.separated, where + ': 그림과 글 겹침'); assert.equal(reading.clipped, false, where + ': 긴 글 잘림'); }
   const board = await boardReadiness(page);
   if (board.count) {
     assert.deepEqual(board.exposed, [], where + ': 배율 계산 전 원본 그림은 임시 틀에 늘려 그리지 않음');
@@ -266,6 +274,7 @@ async function fullRun(tag, viewport, mode, dpr) {
     await page.goto(BASE); await ready(page);
     const initial = await page.evaluate(() => ({ ok: G.data.ok, fixture: G.data.fixture, problems: G.data.problems, missing: G.data.missing, order: G.app.list().map((s) => s.id) }));
     assert.ok(initial.ok && !initial.fixture); assert.deepEqual(initial.problems, []); assert.deepEqual(initial.missing, []);
+    assert.equal(initial.order[0], 'c1-bridge'); assert.equal(initial.order.length, 28); assert.ok(!initial.order.includes('cut-josin'));
     await checks(page, tag + '/title'); await start(page);
     for (let loop = 0; loop < 2500; loop++) {
       const c = await current(page), s = await state(page);
@@ -285,6 +294,10 @@ async function fullRun(tag, viewport, mode, dpr) {
       for (const title of await page.locator('.mark.fiction h4').allTextContents()) memo.fiction.add(title);
       memo.variants += await page.locator('.mark.variant:visible').count();
       if (c.ch === 'R') break;
+      if (c.step === 'clue') {
+        assert.equal(await page.locator('.prep-reflection li').count(), 2);
+        assert.equal(await page.locator('.prep-reflection li').filter({ hasText: '단서와 이어지는 준비' }).count(), s.events[c.scene].hits);
+      }
       if (c.scene === 'c3-awake' && !memo.lock) { await lockChecks(page, memo); continue; }
       if (c.kind === 'wish' && !memo.wish) { await wrongWish(page); memo.wish = true; continue; }
       if (c.kind === 'journal' && c.step === 'activity' && !memo.match) { await wrongMatch(page); memo.match = true; continue; }
@@ -353,6 +366,13 @@ async function fullRun(tag, viewport, mode, dpr) {
     assert.equal(s.interp.changed.evidence, 'E9'); assert.ok(s.interp.final && s.interp.revised);
     assert.equal(s.interp.changed.option, memo.changedOption); assert.deepEqual(s.interp.first, memo.firstChoice);
     assert.equal(s.journal.revealed.misaek, true); assert.equal(s.ledger['a-wish'].help, 'student'); assert.equal(s.ledger['j-match'].help, 'student');
+    const comparison = page.locator('details.comparison-reading');
+    assert.equal(await comparison.getAttribute('open'), null);
+    await comparison.locator('summary').click();
+    assert.ok((await comparison.innerText()).includes('별개의 이야기'));
+    await checks(page, tag + '/comparison');
+    await comparison.locator('summary').click();
+    assert.deepEqual(await state(page), s, '학생의 선택형 비교 읽기는 기록을 바꾸지 않음');
     assert.ok(s.wrong.some((w) => w.act === 'a-wish') && s.wrong.some((w) => w.act === 'j-match'));
     assert.equal(Object.keys(s.pearls).length, mode === 'miss' ? 0 : 8);
     assert.match(await page.locator('.jp-score').innerText(), new RegExp(s.best + '.*0'));
@@ -442,7 +462,7 @@ try {
     const page = await newPage('file', { width: 390, height: 844 });
     try {
       await page.goto(pathToFileURL(path.join(ROOT, 'index.html')).href); await ready(page); await start(page);
-      await next(page); await page.locator('[data-act="skip"]').click();
+      await next(page);
       await page.waitForFunction(() => G.app.current()?.scene === 'c1-bridge');
       await page.waitForFunction(() => G.audio.via() === 'element' && !!G.audio.now());
       await resume(page); assert.equal((await current(page)).scene, 'c1-bridge'); await healthy(page);

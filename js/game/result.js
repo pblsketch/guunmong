@@ -96,9 +96,26 @@
       }))));
     } else s.appendChild(h('div.notes.wrong-notes', h('h3', '오답 노트'), h('p.small', '틀린 칸이 없어요.')));
     const N = G.data.notes || {};
+    const comparison = N.comparison;
+    const comparisonScene = (G.data.scenes || []).find((scene) => scene.optional && scene.id === comparison?.scene);
+    if (comparisonScene) {
+      const reading = h('details.comparison-reading', h('summary', comparison.title), h('p', T.inline(comparison.lead)));
+      let picture;
+      for (const frame of comparisonScene.timeline || []) {
+        if (frame.img && frame.img !== picture) {
+          picture = frame.img;
+          reading.append(h('div.scene-img', G.util.pixImg('assets/sc/' + picture + '.webp', { alt: comparisonScene.title })));
+        }
+        reading.append(T.blocks(frame.lines || []));
+      }
+      reading.append(h('p.comparison-question', T.inline(comparison.question)));
+      reading.append(...(N.variants || []).filter((note) => note.comparison === comparison.scene).map((note) => T.block({ ...note, mark: 'variant' })));
+      s.append(reading);
+    }
     if ((N.discuss || []).length) s.appendChild(h('div.notes', h('h3', '생각 나눔 질문'), h('ol', N.discuss.map((q) => h('li', T.inline(q))))));
     if ((N.work || []).length) s.appendChild(h('div.notes', h('h3', '작품 노트'), N.work.map((w) => T.block(typeof w === 'string' ? { mark: 'note', body: w } : Object.assign({ mark: 'note' }, w)))));
-    if ((N.variants || []).length) s.appendChild(h('div.notes', h('h3', '이본 노트'), N.variants.map((w) => T.block(Object.assign({ mark: 'variant' }, w)))));
+    const variants = (N.variants || []).filter((note) => !note.comparison);
+    if (variants.length) s.appendChild(h('div.notes', h('h3', '이본 노트'), variants.map((w) => T.block(Object.assign({ mark: 'variant' }, w)))));
     ctx.tray(h('button.btn', { type: 'button', on: { click: () => app.title() } }, '처음 화면'));
     await new Promise((resolve) => ctx.signal.addEventListener('abort', resolve, { once: true }));
   };

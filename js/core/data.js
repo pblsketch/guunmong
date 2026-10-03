@@ -165,6 +165,8 @@
       }
     }
     const front = ['cut-josin', 'c1-bridge', 'c1-cell', 'c1-wish', 'c1-exile', 'c1-rebirth'];
+    if (!fixture && scenes.find((s) => s?.id === 'cut-josin')?.optional !== true) issue('optional-scene', 'cut-josin');
+    for (const s of scenes) if (s && ((s.optional != null && typeof s.optional !== 'boolean') || (s.optional && s.id !== 'cut-josin'))) issue('optional-scene', s.id);
     const dream = fixture ? ['e01', 'l-namjeon', 'e02', 'e03'] : ['e01', 'l-namjeon', 'e02', 'e03', 'e04', 'e05', 'l-hebei', 'e06', 'e07', 'l-bongnae', 'e08', 'e09', 'e10', 'e11', 'e12'];
     const back = ['c3-feast', 'c3-monk', 'c3-staff', 'c3-awake', 'c4-journal', 'c5-dialogue', 'c5-ordination', 'r-result'];
     const order = scenes.map((s) => s && /^e\d{2}-/.test(s.id) ? s.id.slice(0, 3) : s && s.id);

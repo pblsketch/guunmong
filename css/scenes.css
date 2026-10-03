@@ -1,4 +1,4 @@
-/* 꿈 밖 장면은 기존 무대 위에 대사를 유지한다. */
+/* 인물과 효과는 그림에, 글은 무대 아래에 둔다. */
 .cut-figures { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .cut-figure { position: absolute; transform: translate(-50%, -100%); }
 .cut-figure img { display: block; }

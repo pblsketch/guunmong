@@ -214,6 +214,13 @@ try {
     await page.locator('.mark.fiction .real').last().scrollIntoViewIfNeeded();
     const pinned = await page.locator('.sim-hud').evaluate((el) => ({ top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom, header: document.querySelector('.topbar').getBoundingClientRect().bottom }));
     assert.ok(pinned.top >= pinned.header && pinned.bottom < 844, '긴 설명을 읽어도 꿈 점수 띠는 화면에 남음');
+    await page.locator('[data-tool="settings"]').click();
+    await page.locator('[data-set="big"]').click(); await page.keyboard.press('Escape');
+    await page.locator('.mark.fiction .real').last().scrollIntoViewIfNeeded();
+    const large = await page.locator('.sim-hud').evaluate((el) => ({ top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom, header: document.querySelector('.topbar').getBoundingClientRect().bottom }));
+    assert.ok(large.top >= large.header && large.bottom < 844, '큰 글자에서도 위 막대와 꿈 점수 띠가 겹치지 않음');
+    await page.locator('[data-tool="settings"]').click();
+    await page.locator('[data-set="big"]').click(); await page.keyboard.press('Escape');
     await page.evaluate(() => { document.querySelector('.main').scrollTop = 0; window.scrollTo(0, 0); });
     assert.equal((await state()).events['e01-huayin'].grade, 'shine');
     await next(); await at('e01-huayin', 'clue');

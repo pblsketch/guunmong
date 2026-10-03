@@ -2,7 +2,7 @@
 
 ## 맡는 것과 경계
 
-app은 접근 판정·재개·깨어남·목차·설정·장부를, stage는 그림 위 대사와 인물·효과를 맡는다. prep/event/hud가 꿈 육성을, cutscene/wish/wake가 컷신·소원·깨어남을 담당한다. board/house/pearl/bag는 말판·자동 장식·구슬·꿈 도구, journal/interp/result는 꿈 밖의 정리와 PNG를 맡는다.
+app은 접근 판정·재개·깨어남·목차·설정·장부를, stage는 그림과 그 아래 글·인물·효과를 맡는다. prep/event/hud가 꿈 육성을, cutscene/wish/wake가 컷신·소원·깨어남을 담당한다. board/house/pearl/bag는 말판·자동 장식·구슬·꿈 도구, journal/interp/result는 꿈 밖의 정리와 PNG를 맡는다.
 
 저장·계산·글 표기·소리는 core를 사용하고 localStorage를 직접 만지지 않는다. 장면 글·정답·곡·좌표는 data에서 읽는다. 생성 자산·음원 정의·검사 파일은 이 모듈의 일반 수정 범위가 아니다.
 

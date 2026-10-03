@@ -50,7 +50,7 @@
   let LIST = null;
   app.list = function () {
     if (LIST) return LIST;
-    const src = (G.data.scenes || []).filter((s) => s && s.id && chIdx(s.ch) >= 0).map((s) => Object.assign({}, s, { ch: String(s.ch) }));
+    const src = (G.data.scenes || []).filter((s) => s && s.id && !s.optional && chIdx(s.ch) >= 0).map((s) => Object.assign({}, s, { ch: String(s.ch) }));
     LIST = src;
     return LIST;
   };
@@ -547,6 +547,7 @@
       const box = h('div.toc', h('h3', '목차'));
       for (const c of CHAPTERS) {
         const scenes = app.list().filter((s) => s.ch === c.id);
+        if (!scenes.length) continue;
         const can = scenes.map((s) => app.canOpen(s.id));
         const locked = !can.some(Boolean);
         const dLock = st.awake && !st.teacher && chIdx(c.id) <= 3;
@@ -642,7 +643,7 @@
       else if (q.get('ch')) { const f = firstOf(q.get('ch').toUpperCase()); target = f && f.id; }
     }
     if (target && app.canOpen(target)) play(target, { replace: true });
-    else if (target && S().started) { app.resume(); ui.toast(lockMsg(target)); }
+    else if (S().started && (q.get('scene') || q.get('ch'))) { app.resume(); ui.toast(lockMsg(target)); }
     else app.title({ replace: true });
     window.addEventListener('popstate', onPop);
     // 뒤로 가기로 예전 화면이 캐시에서 되살아나면(bfcache) 저장된 상태로 다시 판단한다

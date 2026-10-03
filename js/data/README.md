@@ -23,6 +23,11 @@
 
 `js/core/data.js`의 FILES가 위 파일을 읽는다. 모든 진행 단위는 scenes에, 승인된 동작·아이콘 메타는 sprites에 둔다.
 
+본편은 `optional`이 없는 28단위이며 `c1-bridge`부터 시작한다. `cut-josin`만 `optional:true`로 보존한다. 결과의 선택형 비교 읽기에서만 읽으며 본편 목록·목차·진행 저장에 넣지 않는다. 다른 장면에 optional을 붙이면 데이터 오류다. 옛 `pos:cut-josin` 기록은 현재 본편의 재개 위치로 이어 간다.
+
+`notes.comparison`은 `{scene,title,lead,question}`이며 scene은 선택형 자료 id다. 비교 읽기는 기본으로 접혀 있고 열거나 읽어도 점수·진행·깨어남·해석을 바꾸지 않는다.
+이본 노트의 `comparison`이 자료 id를 가리키면 해당 비교 읽기 안에만 표시하고 일반 이본 노트에서는 제외한다.
+
 ## 글·그림·소리
 
 대사창 줄은 문자열 또는 `{ text, say?, mood?, effect?, shake? }`, `{ gloss }`다. say는 얼굴이 있는 인물 id다.

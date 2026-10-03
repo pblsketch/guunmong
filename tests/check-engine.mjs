@@ -361,6 +361,7 @@ try {
         window.overlayResult = await G.stage.play(ctx, { img: 'sc_huayin', title: '시험 무대' }, { lines: [
           { say: 'yang', mood: 'smile', text: '버들 아래에서 들려온 노래를 가만히 들어 본다.', effect: 'petals' },
           { say: 'yang', text: '노래에 담긴 뜻을 헤아리며 다음 길을 준비한다.', effect: 'petals' },
+          { mark: 'fiction', title: '긴 설명 카드', body: '그림과 글을 함께 살펴보며 사건의 뜻을 생각해 봅니다. '.repeat(8), real: '설명 제목과 본문이 모두 보입니다.' },
         ] });
       };
       G.save.state.teacher = true; G.app.open('c1-bridge');
@@ -391,10 +392,12 @@ try {
       assert.ok(Number.isInteger(boxes.scale) || Number.isInteger(1 / boxes.scale), '정수/역정수배');
       assert.ok(Math.abs(i.width / i.height - boxes.naturalRatio) < 0.001, '그림 비율 보존');
       assert.equal(boxes.rendering, 'pixelated');
-      assert.ok(d.left >= visible.left && d.right <= visible.right && d.top >= visible.top && d.bottom <= visible.bottom, '대사창 전체가 실제 그림의 보이는 영역 안에 겹쳐야 함');
-      assert.ok(d.top - visible.top >= (visible.bottom - visible.top) * 0.35, '그림 윗부분 35% 이상 유지');
+      assert.ok(d.top >= visible.bottom + 6, '그림과 글은 서로 덮지 않고 이어져야 함');
+      assert.ok(d.left >= s.left && d.right <= s.right, '글이 그림 너비 안에 있어야 함');
       assert.ok(s.height <= i.height + 4, '그림 밖 빈 무대 높이 금지');
       assert.ok(d.bottom <= n.top || d.top >= n.bottom || d.right <= n.left || d.left >= n.right, '대사창과 다음 단추 겹침 금지');
+      assert.ok(n.top - d.bottom <= 56, '진행 단추와 글 사이의 큰 빈 공간 금지');
+      assert.equal(await page.locator('.stage-speech').evaluate((el) => el.scrollHeight > el.clientHeight + 1), false, '글 내부 스크롤과 잘림 금지');
       return boxes;
     };
     for (const width of [390, 320, 820, 1280]) {
@@ -411,6 +414,15 @@ try {
     await page.locator('.stage-dialogue').click();
     await page.waitForFunction(() => document.querySelector('.stage-dialogue')?.textContent.includes('노래에 담긴'));
     await geometry();
+    await page.locator('.stage-dialogue').click();
+    await page.waitForSelector('.stage-dialogue .mark.fiction');
+    await page.evaluate(() => document.documentElement.classList.add('big'));
+    for (const width of [320, 390, 820, 1280]) {
+      await page.setViewportSize({ width, height: 720 });
+      await geometry();
+      assert.equal(await page.locator('.stage-dialogue h4').innerText(), '긴 설명 카드');
+    }
+    await page.evaluate(() => document.documentElement.classList.remove('big'));
     await page.evaluate(() => G.app.title());
     await page.waitForFunction(() => window.overlayResult === false);
     assert.equal(await page.evaluate(() => stage.active()), false);

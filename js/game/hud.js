@@ -3,7 +3,11 @@
   const { h } = G.util;
   const H = (G.hud = {});
   let current = null;
+  function pin(ctx) {
+    if (ctx.alive()) ctx.page.style.setProperty('--topbar-height', ctx.page.querySelector('.topbar').getBoundingClientRect().height + 'px');
+  }
   function draw(ctx) {
+    pin(ctx);
     let box = ctx.page.querySelector('.sim-hud');
     const st = G.save.state;
     if (!['2', '3'].includes(ctx.ch) || (st.awake && !st.teacher)) { box?.remove(); return; }
@@ -27,6 +31,9 @@
   H.refresh = () => { if (current?.alive()) draw(current); };
   G.app.hook('scene', (ctx) => {
     current = ctx;
+    const observer = new ResizeObserver(() => pin(ctx));
+    observer.observe(ctx.page.querySelector('.topbar'));
+    ctx.signal.addEventListener('abort', () => observer.disconnect(), { once: true });
     draw(ctx);
   });
   G.app.on('step', H.refresh);

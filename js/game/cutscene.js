@@ -27,7 +27,7 @@
     function wait(ms, pause) {
       return new Promise((resolve) => {
         let timer;
-        const cleanup = () => { clearTimeout(timer); ctx.signal.removeEventListener('abort', abort); stage.el.removeEventListener('click', advance); stage.dialogue.removeEventListener('keydown', key); };
+        const cleanup = () => { clearTimeout(timer); ctx.signal.removeEventListener('abort', abort); stage.el.removeEventListener('click', advance); stage.dialogue.removeEventListener('click', advance); stage.dialogue.removeEventListener('keydown', key); };
         const end = (value) => { cleanup(); resolve(value); };
         const advance = () => end(true);
         const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advance(); } };
@@ -37,7 +37,7 @@
         if (!pause && canSkip()) controls.push(h('button.btn.small', { type: 'button', dataset: { act: 'skip' }, on: { click: () => { skipped = true; end(true); } } }, '건너뛰기'));
         ctx.tray(controls);
         ctx.signal.addEventListener('abort', abort, { once: true });
-        if (!pause) { stage.el.addEventListener('click', advance); stage.dialogue.addEventListener('keydown', key); }
+        if (!pause) { stage.el.addEventListener('click', advance); stage.dialogue.addEventListener('click', advance); stage.dialogue.addEventListener('keydown', key); }
         if (!pause) timer = setTimeout(advance, ms);
         if (!ctx.alive()) abort();
       });

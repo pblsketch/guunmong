@@ -20,7 +20,11 @@
       if (!hits.length) { p.append(text); break; }
       const hit = hits[0]; p.append(text.slice(0, hit.at), h('mark', hit.word)); text = text.slice(hit.at + hit.word.length);
     }
-    return h('section.clue-card', h('h2', '단서 짚기'), p, h('p', (sc.clues || []).join(' · ') + ' → ' + sc.core.map((id) => G.prep.labels('abilities')[id]).join(' · ')));
+    const actions = G.prep.labels('actions');
+    const preparation = (G.save.state.events[sc.id]?.turns || []).map((action) => h('li', h('b', actions[action]), ' · ', sc.core.includes(G.sim.actions[action]) ? '단서와 이어지는 준비' : '다른 능력을 키운 준비'));
+    return h('section.clue-card', h('h2', '단서 짚기'), p,
+      h('p', (sc.clues || []).join(' · ') + ' → ' + sc.core.map((id) => G.prep.labels('abilities')[id]).join(' · ')),
+      h('div.prep-reflection', h('h3', '내 준비 돌아보기'), h('ul', preparation), h('p.small', '준비에 따라 평판은 달라져도 사건의 결말은 같아요. 다음 예고에서도 단서와 준비를 이어 보세요.')));
   }
   async function scene(ctx, sc) {
     ctx.step('scene'); ctx.main.replaceChildren();
