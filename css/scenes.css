@@ -1,0 +1,34 @@
+/* 꿈 밖 장면은 기존 무대 위에 대사를 유지한다. */
+.cut-figures { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.cut-figure { position: absolute; transform: translate(-50%, -100%); }
+.cut-figure img { display: block; }
+.cut-sprite { background-repeat: no-repeat; image-rendering: pixelated; animation: cut-frames .8s steps(var(--frames)) infinite; }
+@keyframes cut-frames { to { background-position-x: var(--sheet-end); } }
+.cut-fallback { padding: 4px 8px; background: var(--paper); color: var(--ink); border: 1px solid var(--ink-3); }
+.cut-light, .cut-shatter { position: absolute; inset: 0; pointer-events: none; background: #fff5ce77; animation: cut-light 1.5s ease-out forwards; }
+@keyframes cut-light { to { opacity: 0; } }
+.cut-shatter { background: repeating-linear-gradient(60deg, #fff5ce77 0 12px, transparent 12px 18px); }
+.dream-shatter { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px; }
+.shatter-piece { overflow: hidden; max-height: 220px; padding: 8px; background: var(--paper); border: 2px solid var(--ink-3); animation: dream-break 1.8s ease-in forwards; }
+.shatter-piece:nth-child(2n) { --drift: 42px; }
+.shatter-piece:nth-child(2n + 1) { --drift: -42px; }
+.shatter-piece strong { font-family: var(--pixel); font-size: 2rem; }
+@keyframes dream-break { 20% { opacity: 1; } to { opacity: 0; transform: translate(var(--drift), 100px) rotate(12deg); filter: blur(2px); } }
+.wish-passage { white-space: pre-wrap; line-height: 2.2; padding: 14px; background: #f8f0dc; border: 2px solid var(--ink-3); border-radius: 8px; }
+.wish-word { display: inline; font: inherit; color: var(--ink); background: #e8d5a8; border: 1px dashed var(--ink-3); border-radius: 4px; padding: 2px 4px; margin: 0 2px; }
+.wish-word.selected { background: #d6e4c8; border-style: solid; opacity: 1; }
+.wish-word.wrong { border-color: var(--seal); text-decoration: line-through; }
+.wish-word.answer { outline: 3px solid var(--fiction); }
+.wish-found-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.wish-found { padding: 8px; border: 1px solid var(--ink-3); border-radius: 5px; }
+.wish-found meter { display: block; width: 70px; }
+.wish-memo { padding: 12px; background: #f8efd7; border-left: 4px solid var(--fiction); }
+.wish-help { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.journal-match, .bond-link, .journal-fairies { margin: 20px 0; }
+.journal-fairies .fairy-card { max-width: 130px; }
+.interp-pick-box h3 { margin: 0 0 16px; }
+.interp-pick-box small { display: block; margin-top: 6px; color: var(--ink-3); }
+.jp-score { margin: 16px 0; padding: 14px; text-align: center; border: 2px solid var(--fiction); background: #e0efea; }
+.jp-score strong { font-family: var(--pixel); font-size: 1.1rem; }
+.jp-score p { margin: 8px 0 0; }
+@media (prefers-reduced-motion: reduce) { .cut-sprite, .cut-light, .shatter-piece { animation-duration: .2s; } }

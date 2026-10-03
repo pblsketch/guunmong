@@ -28,6 +28,8 @@
       interp: fin ? plain(opt(fin.option)) : '(고르지 않음)',
       evidence: fin ? plain(ev(fin.evidence).text) : '',
       trace: '',
+      score: '꿈에서 쌓은 것 ' + st.best + ' → 깨고 남은 것 0',
+      scoreNotice: '점수로 평가하지 않아요',
     };
     if (it.revised && it.first && it.changed) {
       // 조사는 해석 글(「」 안)의 마지막 글자로 고르고, 근거 구절은 뒤에 따로 적는다(두 꼴을 함께 찍지 않음)
@@ -48,11 +50,12 @@
     return h('div.journal-page', { role: 'region', 'aria-label': '꿈 일지 마지막 장' },
       h('div.jp-head', h('span.seal', '夢'), h('h2', '꿈 일지 마지막 장')),
       h('div.jp-meta', h('label', h('span', '이름 '), nameIn), h('span.jp-date', L.date)),
+      h('div.jp-score', h('strong', L.score), h('p', L.scoreNotice)),
       h('div.jp-q', h('b', '물음 '), L.question),
       h('div.jp-block', h('h4', '나의 해석'), h('p.jp-interp', L.interp)),
       h('div.jp-block', h('h4', '근거 구절'), h('p.jp-ev', L.evidence || '—')),
       h('div.jp-block.jp-trace', h('h4', it.revised ? '고친 흔적' : '고친 흔적 없음'), h('p', L.trace || '—')),
-      h('div.jp-keep', D.wishList(), D.pearlKeep()),
+      h('div.jp-keep', h('section', h('h4', '성진의 소원'), h('ul.result-wishes', app.wishes().map((w) => h('li', w.name)))), D.pearlKeep()),
       h('p.small.muted', '해석은 채점하지 않아요. 친구의 해석과 근거를 견주어 보세요.'));
   }
 
@@ -69,14 +72,16 @@
         h('div.stat', h('b', String(helped)), h('span', '도움 사용한 활동')),
         h('div.stat', h('b', '찾은 구슬 ' + found + ' / ' + ps.length), h('span', '점수로 치지 않아요'))),
       app.ledgerTable(),
-      // 선생님용: 장부 보는 법(notes.teacher.ledger)
-      S().teacher && ((G.data.notes || {}).teacher || {}).ledger ? h('p.small.teacher-note', h('b', '선생님께 · 장부 보는 법 '), T.inline(G.data.notes.teacher.ledger)) : null);
+      ((G.data.notes || {}).teacher || {}).ledger ? h('details.teacher-guide', { open: S().teacher },
+        h('summary', '선생님께 · 장부 보는 법'), h('p', T.inline(G.data.notes.teacher.ledger)),
+        G.data.notes.teacher.when ? h('p', T.inline(G.data.notes.teacher.when)) : null,
+        G.data.notes.teacher.time ? h('p', T.inline(G.data.notes.teacher.time)) : null) : null);
   }
 
   app.screens.result = async function (ctx) {
     ctx.step('result');
     const st = S();
-    if (!st.finishedAt) { st.finishedAt = Date.now(); G.save.write(); }
+    if (!ctx.readonly && !st.finishedAt) { st.finishedAt = Date.now(); G.save.write(); }
     G.audio.fanfare();
     const s = ctx.section('result');
     s.appendChild(pageEl());
@@ -95,7 +100,7 @@
     if ((N.work || []).length) s.appendChild(h('div.notes', h('h3', '작품 노트'), N.work.map((w) => T.block(typeof w === 'string' ? { mark: 'note', body: w } : Object.assign({ mark: 'note' }, w)))));
     if ((N.variants || []).length) s.appendChild(h('div.notes', h('h3', '이본 노트'), N.variants.map((w) => T.block(Object.assign({ mark: 'variant' }, w)))));
     ctx.tray(h('button.btn', { type: 'button', on: { click: () => app.title() } }, '처음 화면'));
-    await new Promise(() => {}); // 결과가 끝이다
+    await new Promise((resolve) => ctx.signal.addEventListener('abort', resolve, { once: true }));
   };
 
   // ───────── 마지막 장을 그림 파일로(글자를 캔버스에 직접 그린다. 「사씨남정기」 필사기 저장을 고쳐 씀)
@@ -104,7 +109,13 @@
     for (const para of String(text || '').split('\n')) {
       let line = '';
       for (const ch of para) {
-        if (g.measureText(line + ch).width > maxW && line) { out.push(line); line = ch === ' ' ? '' : ch; } else line += ch;
+        if (g.measureText(line + ch).width > maxW && line) {
+          if (/[.,!?。？！…]/.test(ch)) {
+            const last = line.match(/\S+$/)?.[0] || line.slice(-1);
+            const keep = last.length < line.length ? last : line.slice(-1);
+            out.push(line.slice(0, -keep.length).trimEnd()); line = keep + ch;
+          } else { out.push(line); line = ch === ' ' ? '' : ch; }
+        } else line += ch;
       }
       out.push(line);
     }
@@ -121,17 +132,17 @@
     const px = 70, inner = W - px * 2 - 60;
     g0.font = `26px ${serif}`;
     const blocks = [
+      ['꿈의 기록', L.score + '\n' + L.scoreNotice, '#2b2320'],
       ['물음', L.question, '#2b2320'],
       ['나의 해석', L.interp, '#34508f'],
       ['근거 구절', L.evidence || '—', '#2b2320'],
       [st.interp && st.interp.revised ? '고친 흔적' : '고친 흔적 없음', L.trace || '—', '#5b4a3c'],
+      ['소원', G.app.wishes().map((w) => w.name).join(' · '), '#5b4a3c'],
+      ['구슬', '찾은 구슬 ' + D.pearlScenes().filter((s) => st.pearls[s.meet]).length + ' / ' + D.pearlScenes().length + ' (점수로 치지 않음)', '#5b4a3c'],
     ].map(([k, v, col]) => ({ k, col, lines: wrap(g0, v, inner) }));
-    const wishes = G.app.wishes().map((w) => w.name).join(' · ');
-    const ps = D.pearlScenes();
-    const found = ps.filter((s) => st.pearls[s.meet]).length;
     let H = 250;
     for (const b of blocks) H += 52 + b.lines.length * 40 + 18;
-    H += 150;
+    H += 90;
     c.width = W; c.height = H;
     const g = c.getContext('2d');
     g.fillStyle = '#efe3c6'; g.fillRect(0, 0, W, H);
@@ -157,9 +168,6 @@
       for (const ln of b.lines) { g.fillText(ln, px + 40, y); y += 40; }
       y += 30;
     }
-    g.fillStyle = '#5b4a3c'; g.font = `22px ${serif}`;
-    g.fillText('남은 것 · 소원: ' + wishes, px + 20, y + 10);
-    g.fillText('찾은 구슬 ' + found + ' / ' + ps.length + ' (점수로 치지 않음)', px + 20, y + 48);
     g.fillStyle = '#8a7862'; g.font = `18px ${serif}`; g.textAlign = 'right';
     g.fillText('김만중 「구운몽」 학습 게임 · 해석은 채점하지 않아요', W - px - 20, H - 74);
     return c;

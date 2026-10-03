@@ -3,33 +3,34 @@
 // 같은 기기에서 탭 두 개로 열면 나중에 저장한 쪽이 남는다(한 사람이 한 기기에서 하는 게임이라 따로 막지 않는다).
 // 임시 데이터(?fixture=…)로 열면 다른 칸에 저장해 실제 진행과 섞이지 않게 한다.
 (function () {
-  const BASE_KEY = 'guunmong-v1';
+  const BASE_KEY = 'guunmong-v2';
   // 새로 시작해도 남기는 것(기록이 아니라 설정)
-  const SETTINGS = ['music', 'sound', 'big', 'teacher', 'mode'];
+  const SETTINGS = ['music', 'sound', 'big', 'teacher'];
+  const ACTIVITIES = ['a-wish', 'j-match'];
   const fresh = () => ({
-    v: 1,
+    v: 2,
     // ── 설정
     music: true,            // 배경음
     sound: true,            // 효과음
     big: false,             // 큰 글자
     teacher: false,         // 선생님용
-    mode: 'first',          // 읽기 방식: first 처음 읽기 / review 다시 읽기
     // ── 진행
     started: false,
     pos: null,              // 지금 장면 id(끄면 이 장면 처음부터 이어 한다)
+    step: 'preview',
     reach: 0,               // 열린 가장 먼 장의 순번(0~6)
     done: {},               // 마친 장면 id → true
     awake: false,           // 깨어남(3장 지팡이 소리). 새로 시작하기 전까지 되돌릴 수 없다
     awakeAt: 0,
+    abil: { munjang: 0, eumak: 0, muye: 0, jiryak: 0 },
+    res: { gong: 0, fame: 0, wealth: 0 },
+    best: 0,
+    events: {},
     // ── 기록
     ledger: {},             // 채점 활동 id → { first: 첫 시도 정확도, help: null|'student'|'teacher', final: 마침 }
     wrong: [],              // 오답 노트 [{ act, slot, picked, answer }]
-    picks: {},              // 채점하지 않는 활동의 고른 답: 활동 id → { 칸 id: 고른 것 }
-    mind: {},               // 마음 고르기: 장면 id → 선택지 id
-    items: {},              // 얻은 물건: 물건 id → { scene }
-    house: {},              // 집 배치: 물건 id → 칸 id
-    bonds: {},              // 인연첩: 인연 id → true
-    bondNotes: {},          // 다시 만나 덧붙은 사연: 장면 id → true
+    items: [],
+    bonds: [],
     pearls: {},             // 찾은 구슬: 인연 id → true
     seenFiction: {},        // 이미 본 게임 설정(처음 볼 때만 '실제로는 →')
     journal: {},            // 꿈 일지(4장) 기록
@@ -51,7 +52,19 @@
       S = fresh();
       try {
         const raw = localStorage.getItem(KEY);
-        if (raw) S = Object.assign(fresh(), JSON.parse(raw));
+        const saved = raw && JSON.parse(raw);
+        if (saved && saved.v === 2) {
+          for (const key of Object.keys(S)) {
+            const value = saved[key];
+            if (value === undefined || key === 'v') continue;
+            if (Array.isArray(S[key])) {
+              if (Array.isArray(value)) S[key] = value;
+            } else if (S[key] && typeof S[key] === 'object') {
+              if (value && typeof value === 'object' && !Array.isArray(value)) S[key] = { ...S[key], ...value };
+            } else if (typeof value === typeof S[key] || (key === 'pos' && typeof value === 'string')) S[key] = value;
+          }
+          S.ledger = Object.fromEntries(Object.entries(S.ledger).filter(([id]) => ACTIVITIES.includes(id)));
+        }
       } catch (e) { /* 저장소를 못 쓰는 환경: 새로 시작 */ }
       return S;
     },
@@ -71,6 +84,7 @@
     // 첫 제출에서만 first가 정해진다. 마친(final) 활동은 다시 풀어도 바뀌지 않는다.
     // 학생이 풀기 전에 선생님용 도움(정답 채우기·보기)을 썼으면 first는 null(시도 안 함)로 둔다.
     ledgerTry(id, ok) {
+      if (!ACTIVITIES.includes(id)) return;
       const L = S.ledger[id];
       if (L && L.final) return;
       if (!L) S.ledger[id] = { first: !!ok, help: null, final: false };
@@ -78,6 +92,7 @@
       this.write();
     },
     ledgerHelp(id, who) {
+      if (!ACTIVITIES.includes(id)) return;
       let L = S.ledger[id];
       if (L && L.final) return;
       if (!L) L = S.ledger[id] = { first: null, help: null, final: false };
@@ -85,13 +100,37 @@
       this.write();
     },
     ledgerDone(id) {
+      if (!ACTIVITIES.includes(id)) return;
       const L = S.ledger[id];
       if (!L || L.final) return;
       L.final = true;
       this.write();
     },
     wrongNote(entry) {
+      if (!ACTIVITIES.includes(entry.act)) return;
       if (!S.wrong.some((w) => w.act === entry.act && w.slot === entry.slot)) S.wrong.push(entry);
+    },
+    prepare(event, turn, action) {
+      const rec = G.sim.prepare(S, event, turn, action);
+      this.write();
+      return rec;
+    },
+    finishEvent(event) {
+      const rec = G.sim.finish(S, event);
+      this.write();
+      return rec;
+    },
+    fillBefore(scenes, targetId) {
+      const ids = G.sim.normalPrep(S, scenes, targetId);
+      this.write();
+      return ids;
+    },
+    peekEvent(event) {
+      if (!S.teacher) return S.events[event.id];
+      G.sim.normalTurns(event);
+      const rec = S.events[event.id] || (S.events[event.id] = G.sim.record());
+      if (!rec.grade) { rec.peek = true; this.write(); }
+      return rec;
     },
   };
 })();

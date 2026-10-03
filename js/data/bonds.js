@@ -1,77 +1,127 @@
-// 인연첩 — 여덟 인연 카드(기획서 §9). 처음 만나는 장면에서 생기고, 다시 만나는 장면은 사연을 덧붙이기만 한다.
-// 인연은 소원을 채우지 않고(fills 없음), 개수로 세지 않고, 점수에 들어가지 않는다.
-// fairy: 4장에서 구슬로 카드가 뒤집힐 때 보이는 글. color·fairyFace(같은 색 띠의 선녀)는 게임 설정이다.
 (window.GUUN = window.GUUN || {}).bonds = [
   {
-    id: 'chae', name: '진채봉', face: 'chae',
-    status: '화주 진 어사의 딸. 뒤에 집안이 화를 입어 궁녀(여중서)가 됨',
-    ability: '시. 처음 본 사람에게 먼저 화답시를 보내 혼인을 청한 결단',
-    story: '누각 앞 버들 노래에 화답시를 보내, 그날로 소유와 혼인을 약속했다.',
-    place: '화음현 누각',
-    fairy: '돌다리의 선녀 · 연두 띠',
-    color: '연두(버들)', fairyFace: 'fairy_chae',
+    "id": "chae",
+    "name": "진채봉",
+    "face": "chae",
+    "status": "진 어사의 딸, 뒤에는 궁중의 여중서",
+    "ability": "시로 자기 마음을 먼저 전한다.",
+    "story": "버들 노래에 답시를 보내 소유와 혼약했다.",
+    "place": "화음현 버들 아래와 누각",
+    "fairy": "돌다리의 선녀 · 연두 띠",
+    "color": "연두(버들)",
+    "fairyFace": "fairy_chae",
+    "aliases": [
+      "채봉"
+    ]
   },
   {
-    id: 'seomwol', name: '계섬월', face: 'seomwol',
-    status: '낙양의 이름난 기생',
-    ability: '시를 알아보는 눈과 노래. 소유에게 어울릴 사람을 천거함',
-    story: '천진교 시회에서 소유의 시를 골라 노래했고, 그날 밤 제 사연을 털어놓았다.',
-    place: '낙양 천진교 주루',
-    fairy: '돌다리의 선녀 · 다홍 띠',
-    color: '다홍', fairyFace: 'fairy_seomwol',
+    "id": "seomwol",
+    "name": "계섬월",
+    "face": "seomwol",
+    "status": "낙양에서 이름난 기생",
+    "ability": "좋은 시를 가려 노래로 펼친다.",
+    "story": "주루에서 소유의 시를 노래하고 정씨 집 이야기를 전했다.",
+    "place": "천진교의 주루",
+    "fairy": "돌다리의 선녀 · 다홍 띠",
+    "color": "다홍",
+    "fairyFace": "fairy_seomwol",
+    "aliases": [
+      "섬월"
+    ]
   },
   {
-    id: 'gyeongpae', name: '정경패', face: 'gyeongpae',
-    status: '정 사도의 딸. 뒤에 태후의 양녀 영양공주가 됨',
-    ability: '곡조 하나에 그 내력까지 알아듣는 귀, 속은 일을 되갚는 꾀',
-    story: '여도사로 꾸민 소유의 거문고를 듣고 곡마다 평을 하다가, 봉구황에 얼굴을 붉히고 들어갔다.',
-    place: '장안 정 사도 댁, 발 너머',
-    fairy: '돌다리의 선녀 · 상아빛 띠',
-    color: '상아(흰빛)', fairyFace: 'fairy_gyeongpae',
+    "id": "gyeongpae",
+    "name": "정경패",
+    "face": "gyeongpae",
+    "status": "정 사도의 딸, 뒤에는 영양공주",
+    "ability": "곡조의 내력을 알아듣고 장난으로 응수한다.",
+    "story": "여도사 차림의 소유가 타는 곡을 알아들었다. 봉구황에는 얼굴을 붉혔다.",
+    "place": "정씨 집의 발 너머",
+    "fairy": "돌다리의 선녀 · 상아빛 띠",
+    "color": "상아(흰빛)",
+    "fairyFace": "fairy_gyeongpae",
+    "aliases": [
+      "경패",
+      "정 소저",
+      "영양공주"
+    ]
   },
   {
-    id: 'chunun', name: '가춘운', face: 'chunun',
-    status: '정경패의 몸종. 정은 자매 같은 사이',
-    ability: '재치와 연기. 선녀도 되고 귀신도 되어 봄',
-    story: '정 소저의 앙갚음을 맡아 선녀로, 다시 장여랑의 혼령으로 소유 앞에 나타났다.',
-    place: '종남산 산장',
-    fairy: '돌다리의 선녀 · 분홍 띠',
-    color: '분홍(복사꽃)', fairyFace: 'fairy_chunun',
+    "id": "chunun",
+    "name": "가춘운",
+    "face": "chunun",
+    "status": "경패의 몸종이자 가까운 벗",
+    "ability": "다른 인물을 연기하며 장난을 이끈다.",
+    "story": "선녀와 귀신으로 나타나 소유를 속이고 병풍 뒤에서 정체를 밝혔다.",
+    "place": "정씨 산장과 화원",
+    "fairy": "돌다리의 선녀 · 분홍 띠",
+    "color": "분홍(복사꽃)",
+    "fairyFace": "fairy_chunun",
+    "aliases": [
+      "춘운"
+    ]
   },
   {
-    id: 'gyeonghong', name: '적경홍', face: 'gyeonghong',
-    status: '하북의 이름난 기생. 연왕의 궁에 있던 사람',
-    ability: '남장과 말타기. 스스로 길을 찾아 나선 용기',
-    story: '연왕의 궁을 빠져나와 남자 옷을 입고 소유를 뒤쫓았다. 한단 길의 소년 \'적생\'이 바로 그였다.',
-    place: '한단 길, 낙양 객관',
-    fairy: '돌다리의 선녀 · 보라 띠',
-    color: '보라', fairyFace: 'fairy_gyeonghong',
+    "id": "gyeonghong",
+    "name": "적경홍",
+    "face": "gyeonghong",
+    "status": "연왕의 궁을 떠난 기생",
+    "ability": "남장으로 길을 열고 말을 달린다.",
+    "story": "적생이라는 소년 차림으로 길벗이 되었고 낙양에서 정체가 밝혀졌다.",
+    "place": "한단에서 낙양으로 가는 길",
+    "fairy": "돌다리의 선녀 · 보라 띠",
+    "color": "보라",
+    "fairyFace": "fairy_gyeonghong",
+    "aliases": [
+      "경홍",
+      "적생",
+      "적백란"
+    ]
   },
   {
-    id: 'nanyang', name: '난양공주(이소화)', face: 'nanyang',
-    status: '황제의 누이',
-    ability: '꿈에서 배운 퉁소 곡. 공주가 불면 학이 날아와 춤을 춤',
-    story: '소유의 퉁소에 춤춘 학은 공주의 퉁소에 춤추던 학이었다. 두 사람은 얼굴도 보기 전에 가락으로 먼저 이어졌다.',
-    place: '한림원의 퉁소와 학(얼굴은 혼례 날 처음 봄)',
-    fairy: '돌다리의 선녀 · 금빛 띠',
-    color: '노랑(금빛)', fairyFace: 'fairy_nanyang',
+    "id": "nanyang",
+    "name": "난양공주(이소화)",
+    "face": "nanyang",
+    "status": "황제의 누이, 이름은 이소화",
+    "ability": "퉁소로 학을 춤추게 한다.",
+    "story": "소유의 퉁소에 온 학은 공주의 가락에도 춤췄다. 가락이 먼저 둘을 이었다.",
+    "place": "한림원의 퉁소와 학, 대면은 혼례 때",
+    "fairy": "돌다리의 선녀 · 금빛 띠",
+    "color": "노랑(금빛)",
+    "fairyFace": "fairy_nanyang",
+    "aliases": [
+      "난양공주",
+      "이소화"
+    ]
   },
   {
-    id: 'yoyeon', name: '심요연', face: 'yoyeon',
-    status: '토번이 보낸 자객. 뒤에 소유 편으로 돌아섬',
-    ability: '검술과 하늘을 나는 재주',
-    story: '한밤에 비수를 들고 진영에 내려왔다가 칼을 던졌다. 떠나며 반사곡의 물을 조심하라고 일러 주었다.',
-    place: '적설산 아래 진영',
-    fairy: '돌다리의 선녀 · 남색 띠',
-    color: '남색', fairyFace: 'fairy_yoyeon',
+    "id": "yoyeon",
+    "name": "심요연",
+    "face": "yoyeon",
+    "status": "토번의 명을 받고 온 자객",
+    "ability": "칼을 다루며 자신의 뜻에 따라 길을 바꾼다.",
+    "story": "진영에 들어왔다가 비수를 내려놓고 반사곡의 위험을 알렸다.",
+    "place": "적설산 아래 군영",
+    "fairy": "돌다리의 선녀 · 남색 띠",
+    "color": "남색",
+    "fairyFace": "fairy_yoyeon",
+    "aliases": [
+      "요연"
+    ]
   },
   {
-    id: 'neungpa', name: '백능파', face: 'neungpa',
-    status: '동정 용왕의 딸',
-    ability: '물의 일을 앎. 남해 태자를 피해 숨어 살다 소유의 도움을 받음',
-    story: '반사곡의 못에 숨어 살았다. 그 때문에 차고 쓰던 물맛이 소유가 남해 태자를 물리치자 돌아왔다.',
-    place: '반사곡 백룡담',
-    fairy: '돌다리의 선녀 · 물빛 띠',
-    color: '청록(물빛)', fairyFace: 'fairy_neungpa',
-  },
+    "id": "neungpa",
+    "name": "백능파",
+    "face": "neungpa",
+    "status": "동정 용왕의 딸",
+    "ability": "물속 사정을 소유에게 전한다.",
+    "story": "백룡담에 숨어 있다가 소유에게 남해 태자의 위협을 알렸다.",
+    "place": "반사곡의 백룡담",
+    "fairy": "돌다리의 선녀 · 물빛 띠",
+    "color": "청록(물빛)",
+    "fairyFace": "fairy_neungpa",
+    "aliases": [
+      "능파"
+    ]
+  }
 ];

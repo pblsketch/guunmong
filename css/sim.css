@@ -1,0 +1,66 @@
+/* 꿈 수치는 문서 흐름 안에 둬 대사창과 진행 단추를 덮지 않는다. */
+.play:has(> .sim-hud) { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+.play:has(> .sim-hud) > .topbar { flex-shrink: 0; }
+.play:has(> .sim-hud) > .main { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sim-hud { flex-shrink: 0; padding: 6px 12px; background: #e4d6b3; border-bottom: 1px solid var(--ink-3); }
+.hud-top { display: flex; justify-content: space-between; align-items: center; max-width: 720px; margin: auto; }
+.hud-top strong { font-family: var(--pixel); font-size: 1.05rem; }
+.hud-top .btn { padding: 3px 9px; margin-left: 4px; }
+.hud-wishes { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 6px; max-width: 720px; margin: 5px auto; font-size: .72rem; }
+.hud-wish { min-width: 0; text-align: center; }
+.hud-wish > span { display: block; white-space: nowrap; }
+.hud-wish meter { display: block; width: 100%; height: 10px; }
+.hud-halves { display: flex !important; gap: 2px; font-size: .65rem; }
+.hud-halves i { flex: 1; font-style: normal; border-bottom: 3px solid #b5a488; }
+.hud-halves .filled { border-color: #466d61; }
+.hud-abilities { max-width: 720px; margin: auto; display: flex; justify-content: space-between; gap: 5px; font-size: .75rem; }
+.preview-card, .clue-card { background: #f5edd8; border: 2px solid var(--ink-3); border-radius: 8px; padding: 12px 14px; }
+.preview-card p { margin: 6px 0 0; }
+.prep-panel h2 { font-size: 1.2rem; margin: 0 0 8px; }
+.prep-display { min-height: 124px; display: grid; place-items: center; margin-top: 10px; }
+.prep-fallback { display: flex; align-items: center; gap: 14px; font-family: var(--pixel); }
+.prep-fallback img { display: block; }
+.training .prep-fallback { animation: prep-training .28s steps(2) infinite alternate; }
+@keyframes prep-training { to { transform: translateY(-4px); } }
+.prep-sprite { background-repeat: no-repeat; image-rendering: pixelated; animation: prep-frames .7s steps(var(--frames)) infinite; }
+@keyframes prep-frames { to { background-position-x: var(--sheet-end); } }
+.yunmok { width: 112px; margin: 6px auto; padding: 5px; text-align: center; background: #5d4130; color: #fff3d9; border-radius: 5px; font-family: var(--pixel); }
+.yunmok.rolling { animation: yunmok-roll .1s steps(2) infinite; }
+@keyframes yunmok-roll { 50% { transform: rotate(8deg) translateY(-3px); } }
+.prep-gain { text-align: center; min-height: 28px; }
+.prep-gain meter { display: block; margin: 4px auto; width: 70%; height: 15px; animation: gain-in .4s ease-out; }
+@keyframes gain-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+.prep-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.prep-action { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.prep-action.selected { background: #e1ebd8; border-color: #466d61; }
+.prep-panel .teacher-btn { margin-top: 4px; }
+.grade { text-align: center; padding: 18px 10px; background: #f5edd8; border: 3px solid #89745d; border-radius: 8px; }
+.grade[data-grade="fine"] { border-color: #466d61; box-shadow: 0 0 0 4px #466d6130; }
+.grade[data-grade="shine"] { border-color: #a7792c; box-shadow: 0 0 0 5px #c99c4540; animation: grade-glow .8s ease-out; }
+@keyframes grade-glow { from { box-shadow: 0 0 25px 8px #ead588; } }
+.grade h2 { font-family: var(--pixel); font-size: 1.45rem; }
+.reward-numbers { display: flex; justify-content: space-around; margin-top: 16px; gap: 8px; }
+.reward-count { display: inline-block; animation: reward-rise .5s ease-out; }
+@keyframes reward-rise { from { opacity: 0; transform: translateY(14px); } }
+.reward-items { display: grid; gap: 10px; margin: 14px 0; }
+.reward-item { display: flex; align-items: center; gap: 12px; padding: 10px; border: 1px solid var(--ink-3); border-radius: 6px; background: var(--paper); }
+.reward-item p { margin: 3px 0; }
+.item-placeholder { display: inline-grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--ink-3); }
+.clue-card mark { background: #e6cf81; color: var(--ink); font-weight: bold; }
+.stage-pearl { position: absolute; z-index: 2; transform: translate(-50%, -50%); padding: 6px; border: 0; background: transparent; cursor: pointer; }
+.stage-pearl img { display: block; }
+.pearl-origin { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.pearl-origin .small { font-size: .72rem; }
+.pearl-inspection .pic-frame { overflow: visible; }
+.pearl-inspection .inspect-spot { min-width: 32px; min-height: 32px; }
+.pearl-evidence { margin-top: 12px; }
+.stage-pearl:not(.found) { animation: pearl-pulse 1.4s ease-in-out infinite alternate; }
+@keyframes pearl-pulse { to { filter: brightness(1.6); } }
+.house-ornament { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+.house-sprig { position: absolute; bottom: 7%; width: 6px; height: 9px; background: #805b3c; box-shadow: 0 -5px #536f42, -4px -7px #536f42, 4px -7px #536f42, 0 -12px #6f8a4f; }
+.house-keeps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+.house-owned { display: flex; align-items: center; gap: 6px; font-size: .85rem; }
+.house-view[data-decor="1"] .auto-house { box-shadow: 0 0 0 3px #789572; }
+.house-view[data-decor="2"] .auto-house { box-shadow: 0 0 0 5px #789572, 0 0 0 8px #d6b46d; }
+.house-view[data-decor="3"] .auto-house { box-shadow: 0 0 0 5px #789572, 0 0 0 9px #d6b46d, 0 0 14px 12px #dccba8; }
+@media (prefers-reduced-motion: reduce) { .prep-display *, .yunmok, .grade, .reward-count, .stage-pearl { animation: none !important; } }

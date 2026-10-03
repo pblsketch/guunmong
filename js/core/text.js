@@ -2,16 +2,16 @@
 // 글 표시 규칙(명세 11절). 데이터의 글을 화면 요소로 바꾼다. 형식은 js/data/README.md의 '글 표기'.
 //
 //  덩이(블록)
-//    { orig, gloss }                → 붉은 낙관 原文 + 그 아래 한지 바탕 풀이(다시 읽기에서는 풀이를 가림)
+//    { orig, gloss }                → 붉은 낙관 原文 + 그 아래 한지 바탕 풀이(풀이를 함께 표시)
 //    { gloss }                      → 풀이만
-//    { say: 인물id, mood, text }    → 인물의 말(풀이 층). 처음 읽기에서는 얼굴이 함께 보인다
+//    { say: 인물id, mood, text }    → 인물의 말(풀이 층). 얼굴이 함께 보인다
 //    { text }                       → 이야기 글(풀이 층)
 //    { mark: 'fiction', id, title, body, real } → 청록 '게임 설정'. 처음 나올 때만 "실제로는 →"을 함께 보인다
 //    { mark: 'variant', title, body }           → 황토 '이본 노트'
 //    { mark: 'interp', title, body }            → 쪽빛 '해석'(채점하지 않음)
 //    { mark: 'note', title, body }              → 알아 두기
 //  줄 안 표기
-//    **굵게**        {호칭|인물id} → 처음 읽기에서 이름 옆에 얼굴이 자동으로 나온다
+//    **굵게**        {호칭|인물id} → 이름 옆에 얼굴이 자동으로 나온다
 //    [[칸id]]        → 읽기 활동의 빈칸(활동 화면에서만)
 //  옛한글(첫가끝 자모·아래아)이 든 原文은 옛한글 글꼴로 보인다.
 //  얼굴 그림(96×96)은 정해진 크기(줄 안 24px, 말풍선 48px) 가까이 기기 픽셀 기준 정수배로만 줄이고 키운다.
@@ -30,7 +30,6 @@
     return 'assets/pt/' + base + m + '.webp';
   };
   T.nameOf = (id) => ((G.data.people || {})[id] || {}).name || id;
-  const faces = () => S().mode !== 'review';
 
   // 줄 안 표기 → 조각
   T.parse = function (s) {
@@ -59,7 +58,7 @@
       else if (p.k === 'b') span.appendChild(h('b', p.t));
       else if (p.k === 'p') {
         const el = h('span.person', { dataset: { id: p.id } });
-        if (faces() && !opt.noFace) el.appendChild(pixImg(T.face(p.id), { cls: 'face', size: 24 }));
+        if (!opt.noFace && !((G.data.people || {})[p.id] || {}).noFace) el.appendChild(pixImg(T.face(p.id), { cls: 'face', size: 24 }));
         el.appendChild(document.createTextNode(p.t));
         span.appendChild(el);
       } else if (p.k === 'slot') span.appendChild(opt.slot ? opt.slot(p.id) : h('span.blank', '　　'));
@@ -77,7 +76,7 @@
     if (old) body.classList.add('old');
     return h('div.mark.orig', h('span.seal', '原文'), h('div.orig-text', body), opt.src ? h('div.src', opt.src) : null);
   };
-  // 풀이 한 덩이(다시 읽기에서는 가리고 '풀이 보기'로만 연다)
+  // 풀이 한 덩이
   T.gloss = function (text, opt = {}) {
     return h('div.gloss', h('span.tag', '풀이'), h('div.gloss-text', T.inline(text, opt)));
   };
@@ -98,8 +97,8 @@
 
   T.say = function (b) {
     const p = (G.data.people || {})[b.say] || {};
-    return h('div.say' + (faces() ? '' : '.noface'),
-      faces() ? h('div.who', pixImg(T.face(b.say, b.mood), { cls: 'face', size: 48 })) : null,
+    return h('div.say' + (p.noFace ? '.noface' : ''),
+      !p.noFace ? h('div.who', pixImg(T.face(b.say, b.mood), { cls: 'face', size: 48 })) : null,
       h('div.bubble', h('span.nm', p.name || b.say), T.inline(b.text, { noFace: true })));
   };
 
@@ -112,9 +111,7 @@
       const pair = h('div.pair', T.orig(b.orig, { old: b.old, src: b.src }));
       if (b.gloss) {
         pair.appendChild(T.gloss(b.gloss));
-        const peek = h('button.gloss-peek', { type: 'button' }, '풀이 보기');
-        peek.addEventListener('click', () => { pair.classList.toggle('peek'); peek.textContent = pair.classList.contains('peek') ? '풀이 가리기' : '풀이 보기'; });
-        pair.appendChild(peek);
+
       }
       return pair;
     }

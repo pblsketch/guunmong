@@ -19,17 +19,28 @@
   D.can = (tab) => D.tabs().includes(tab);
   const label = () => (D.alive() ? '꿈 보따리(말판·집·인연첩·소원)' : '남은 것(소원 목록과 구슬)');
 
+  G.app.bondCard = function (b, more) {
+    const person = G.data.people?.[b.face || b.id];
+    return h('div.bond-card', { dataset: { bond: b.id } },
+      b.face || (person && !person.noFace) ? h('div.bond-face', G.util.pixImg(T.face(b.face || b.id), { size: 48 })) : null,
+      h('div', h('span.act-kind', '인연첩'), h('h3', b.name),
+        b.status ? h('div.small', b.status) : null,
+        b.ability ? h('p', T.inline(b.ability)) : null,
+        b.story ? h('p', T.inline(b.story)) : null,
+        more ? h('p.more', T.inline(more)) : null,
+        b.place ? h('div.small.muted', '만난 곳 · ' + b.place) : null));
+  };
   // 인연첩
   D.bondPanel = function () {
     const box = h('div.bond-list');
-    const met = (G.data.bonds || []).filter((b) => S().bonds[b.id]);
+    const met = (G.data.bonds || []).filter((b) => S().bonds.includes(b.id));
     if (!met.length) box.appendChild(h('p.small.muted', '아직 인연첩이 비어 있어요.'));
     for (const b of met) {
       const card = G.app.bondCard(b);
       const body = card.lastElementChild;
       // 다시 만난 장면마다 덧붙은 사연(한 장면이 여러 사람의 카드에 사연을 덧붙일 수 있다)
       for (const s of G.app.list()) {
-        if (!S().bondNotes[s.id]) continue;
+        if (!S().done[s.id]) continue;
         for (const r of G.app.remeets(s)) if (r.bond === b.id && r.story) body.appendChild(h('p.more', h('b', '다시 만남 '), T.inline(r.story)));
       }
       box.appendChild(card);
@@ -39,6 +50,7 @@
   };
 
   function pane(tab) {
+    if (!D.can(tab)) return null;
     if (tab === 'board') return G.board.view();
     if (tab === 'house') return G.house.view();
     if (tab === 'bonds') return D.bondPanel();
@@ -46,38 +58,49 @@
     return D.pearlKeep();
   }
 
+  const openBags = new Map();
   D.open = function (tab) {
     if (tab && !D.can(tab)) { ui.toast(S().awake ? '꿈에서 깨어나 말판과 집은 사라졌어요.' : '아직 볼 수 없어요.'); return false; }
-    const tabs = D.tabs();
-    let curTab = tab || tabs[0];
+    let curTab = tab || D.tabs()[0], box;
     ui.sheet(() => {
       const body = h('div.bag-body');
       const bar = h('div.bag-tabs', { role: 'tablist' });
+      const title = h('h3');
       const draw = () => {
+        if (!D.can(curTab)) curTab = D.tabs()[0];
+        title.textContent = label();
+        bar.replaceChildren(...D.tabs().map((t) => h('button.bag-tab', { type: 'button', role: 'tab', dataset: { tab: t }, on: { click: () => {
+          if (!box.isConnected || !D.can(t)) return;
+          G.audio.tap(); curTab = t; draw();
+        } } }, TABS[t])));
         bar.querySelectorAll('[data-tab]').forEach((b) => { const on = b.dataset.tab === curTab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
         body.replaceChildren(pane(curTab));
       };
-      for (const t of tabs) bar.appendChild(h('button.bag-tab', { type: 'button', role: 'tab', dataset: { tab: t }, on: { click: () => { G.audio.tap(); curTab = t; draw(); } } }, TABS[t]));
-      const box = h('div.bag', h('h3', label()), bar, body);
+      box = h('div.bag', title, bar, body);
+      openBags.set(box, draw);
       draw();
       return box;
-    }, [{ label: '닫기', value: null, cls: 'primary' }], { cls: 'bag-sheet' });
+    }, [{ label: '닫기', value: null, cls: 'primary' }], { cls: 'bag-sheet' }).then(() => openBags.delete(box));
     return true;
   };
 
   // 위 막대 단추: 2장(꿈)부터 끝까지. 깨어난 뒤에는 '남은 것'만 보인다
   G.app.toolbar.push({
-    id: 'dream', icon: 'bag',
+    id: 'keep', icon: 'bag',
     get label() { return label(); },
-    when: () => (S().reach || 0) >= 2,
+    when: () => (S().reach || 0) >= 2 && !!S().awake,
     click: () => D.open(),
   });
-  // 깨어나는 순간 위 막대 단추도 '남은 것'으로 바뀐다
-  G.app.on('wake', () => {
-    G.util.$$('[data-tool="dream"]').forEach((b) => { b.setAttribute('aria-label', label()); b.title = label(); if (!D.alive()) b.innerHTML = ui.ICON.scroll; });
-  });
-  G.app.on('scene', (ctx) => {
-    const b = ctx.page.querySelector('[data-tool="dream"]');
-    if (b && !D.alive()) b.innerHTML = ui.ICON.scroll;
-  });
+  function refresh() {
+    for (const [box, draw] of openBags) {
+      if (box.isConnected) draw(); else openBags.delete(box);
+    }
+    G.util.$$('[data-tool="keep"]').forEach((b) => {
+      b.setAttribute('aria-label', label()); b.title = label();
+      b.innerHTML = ui.ICON[D.alive() ? 'bag' : 'scroll'];
+    });
+  }
+  G.app.on('wake', refresh);
+  G.app.on('settings', refresh);
+  G.app.on('scene', refresh);
 })();

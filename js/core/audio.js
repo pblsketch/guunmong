@@ -607,8 +607,14 @@
     wake: () => { pad(ctx.currentTime, 69, 2.2, 0.8, sfxBus); pl(81, 0.3, 0.35, 1.2, '~'); },          // 빈 선방
     fanfare: () => { [67, 69, 72, 74, 76, 79, 81].forEach((m, i) => pl(m, i * 0.08, 0.75, 0.9)); hit(ctx.currentTime + 0.6, 'jing', 0.8, sfxBus); hit(ctx.currentTime + 0.6, 'buk', 0.7, sfxBus); },
   };
+  SFX.roll = () => { [0, 0.06, 0.13, 0.22].forEach((t, i) => tone('triangle', 260 + i * 60, 140, 0.05, 0.12, t)); };
+  SFX.gradeNear = () => { [60, 64].forEach((m, i) => pl(m, i * 0.12, 0.35, 0.5)); };
+  SFX.gradeFine = () => { [60, 64, 67].forEach((m, i) => pl(m, i * 0.10, 0.45, 0.6)); };
+  SFX.gradeShine = () => { [60, 64, 67, 72].forEach((m, i) => pl(m, i * 0.08, 0.60, 0.7)); };
+  SFX.shatter = () => { hiss(1.1, 0.18, 5000, 160, 'highpass'); [0, 0.12, 0.28].forEach((t, i) => tone('triangle', 180 - i * 30, 40, 0.4, 0.12, t)); };
   for (const k of Object.keys(SFX)) A[k] = () => { if (!sfxOn()) return; try { SFX[k](); } catch (e) { /* 무시 */ } };
   A.SFX_NAMES = Object.keys(SFX);
+  A.grade = (grade) => A[{ near: 'gradeNear', fine: 'gradeFine', shine: 'gradeShine' }[grade] || 'gradeNear']();
 
   // ───────── 점검용: 곡을 오프라인으로 렌더해 AudioBuffer로 돌려준다(게임과 같은 소리 길)
   //  opt.synth === true 이면 녹음이 있어도 합성 곡을 렌더한다

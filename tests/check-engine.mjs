@@ -1,512 +1,489 @@
-// 엔진 점검: 임시 데이터(?fixture=1)로 장 진행, 이어 하기, 깨어남 잠금, 새로 시작, 도움 사다리와 장부,
-// 읽기 방식, 설정 저장, 선생님용(화면 접기 포함), 글 표시, 장면별 곡 바꾸기, 파일로 열기를 확인한다.
-//   node check-engine.mjs        (tests/ 안에서. run-all.mjs가 부른다)
-// 게임 폴더를 이 스크립트 안의 작은 서버로 띄우고, 설치된 크롬(channel: 'chrome')으로 연다.
-// 하나라도 어긋나면 '✗'를 찍고 종료 코드 1로 끝난다.
+// T2 계약 점검: 실제 engine/stage와 시험용 화면 확장을 Chrome에서 함께 실행한다.
+// T3/T5 화면은 로드하지 않는다. 진행·저장·잠금·완료 로직은 게임 코드를 그대로 쓴다.
+import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const issues = [];
-const log = (...a) => console.log(...a);
-const ok = (cond, where, msg) => { if (!cond) { issues.push(`${where}: ${msg}`); log('  ✗', `${where}: ${msg}`); } return !!cond; };
-
-// ───────── 작은 정적 서버(이 기기 안에서만)
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.md': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' };
+const errors = [];
+let passed = 0;
+function installScreens() {
+  const hold = async (ctx, text) => { ctx.main.append(G.util.h('p', text)); await ctx.next(); };
+  G.app.screens.cut = async (ctx, sc) => {
+    ctx.step('cut');
+    await G.stage.play(ctx, sc, { lines: [{ text: '시험 첫 줄' }, { say: 'yang', mood: 'smile', text: '시험 둘째 줄', shake: true }] });
+  };
+  G.app.screens.wish = async (ctx) => {
+    ctx.step('wish');
+    await hold(ctx, '소원 화면 확장');
+  };
+  G.app.screens.event = async (ctx, sc) => {
+    if (ctx.readonly) { ctx.step('preview'); await G.stage.play(ctx, sc, { lines: ['기록 다시 보기'] }); return; }
+    const steps = ['preview', 'prep1', 'prep2', 'scene', 'grade', 'clue', 'walk'];
+    const begin = steps.indexOf(ctx.startStep);
+    for (const step of steps.slice(Math.max(0, begin))) {
+      if (!ctx.alive()) return;
+      if (step === 'grade') ctx.finishEvent();
+      ctx.step(step);
+      ctx.main.replaceChildren(G.util.h('p', step));
+      if (step === 'prep1' || step === 'prep2') {
+        const turn = step === 'prep1' ? 0 : 1;
+        await new Promise((resolve) => {
+          const b = G.util.h('button', { type: 'button', dataset: { act: 'prep', action: 'study' } }, '준비');
+          b.onclick = () => { if (ctx.alive()) { G.save.prepare(sc, turn, 'study'); resolve(); } };
+          ctx.tray(b);
+          ctx.signal.addEventListener('abort', resolve, { once: true });
+        });
+      } else await ctx.next();
+    }
+  };
+  G.app.screens.waking = async (ctx) => {
+    ctx.step('staff');
+    const b = G.util.h('button', { type: 'button', dataset: { act: 'staff' } }, '난간 치기');
+    await new Promise((resolve) => {
+      b.onclick = () => { if (ctx.alive()) { G.app.wake(); resolve(); } };
+      ctx.tray(b);
+      ctx.signal.addEventListener('abort', resolve, { once: true });
+    });
+    if (ctx.alive()) { ctx.step('after'); await ctx.next(); }
+  };
+  for (const kind of ['journal', 'interp']) G.app.screens[kind] = async (ctx) => { ctx.step(kind); await hold(ctx, kind); };
+  G.app.screens.result = async (ctx) => { ctx.step('result'); await new Promise((r) => ctx.signal.addEventListener('abort', r, { once: true })); };
+  G.app.hook('scene', (ctx) => { ctx.page.dataset.mounted = 'yes'; });
+  window.chaptersSeen = [];
+  G.app.hook('chapter', (ctx) => { window.chaptersSeen.push(ctx.ch); });
+  G.app.on('scene', (ctx) => { window.testCtx = ctx; });
+}
+const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')
+  .replace('<head>', '<head><base href="../../">')
+  .replace(/<script src="js\/game\/(?!app\.js|stage\.js)[^"]+"><\/script>/g, '')
+  .replace('  <script src="js/main.js"></script>', '<script>(' + installScreens.toString() + ')();</script><script src="js/main.js"></script>');
+const scratch = path.join(ROOT, 'tests/shots/engine-contract.html');
+fs.mkdirSync(path.dirname(scratch), { recursive: true });
+fs.writeFileSync(scratch, html);
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.webp': 'image/webp', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
 const server = http.createServer((req, res) => {
-  const u = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const f = path.join(ROOT, u === '/' ? 'index.html' : u);
-  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
-  fs.createReadStream(f).pipe(res);
+  const relative = decodeURIComponent(new URL(req.url, 'http://local').pathname).slice(1);
+  const file = path.resolve(ROOT, relative || 'index.html');
+  if (!file.startsWith(path.resolve(ROOT) + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end(); return; }
+  res.setHeader('content-type', types[path.extname(file)] || 'application/octet-stream');
+  fs.createReadStream(file).pipe(res);
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
-const ORIGIN = `http://127.0.0.1:${server.address().port}`;
-const BASE = `${ORIGIN}/index.html`;
-const FIX = `${BASE}?fixture=1`;
-
+const origin = 'http://127.0.0.1:' + server.address().port;
+const url = origin + '/tests/shots/engine-contract.html?fixture=1';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
-
-// 아직 없는 그림·글꼴·소리 파일(뒤 작업이 만든다)은 404여도 넘어간다
-// 임시 데이터의 그림·곡(stub_*·stub-*, 물건 it1…·인연 b2…)은 일부러 없는 파일이다(그림이 없을 때 숨기는지 본다). 글꼴은 글꼴 작업(T9)이 만든다. 그 밖의 /assets/ 404는 실패
-const KNOWN_MISSING = /\/assets\/(.*\/stub[-_]|items\/it\d+\.webp|pt\/b\d+\.webp)/;
-async function newPage(name, opt = {}) {
-  const ctx = await browser.newContext({ viewport: opt.viewport || { width: 390, height: 844 }, isMobile: opt.mobile !== false, hasTouch: opt.mobile !== false, deviceScaleFactor: 1 });
-  const page = await ctx.newPage();
-  page.errs = [];
-  page.reqs = [];
-  page.tag = name;
-  const allowMissing = opt.allowMissing || KNOWN_MISSING;
-  page.on('pageerror', (e) => page.errs.push('pageerror: ' + e.message));
-  page.on('console', (m) => {
-    if (m.type() !== 'error') return;
-    const url = (m.location() || {}).url || '';
-    if (/Failed to load resource/.test(m.text()) && allowMissing.test(url)) return;
-    if (/Failed to load resource/.test(m.text()) && !url) return; // 위치 없는 자원 오류는 response 쪽에서 본다
-    page.errs.push('console: ' + m.text() + ' @' + url);
+let page;
+async function fresh(target = url, viewport = { width: 390, height: 844 }) {
+  if (page) await page.context().close();
+  const context = await browser.newContext({ viewport });
+  page = await context.newPage();
+  page.setDefaultTimeout(3500);
+  page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+  page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/nodata.js')) errors.push('HTTP ' + r.status() + ' ' + r.url()); });
+  page.on('request', (r) => { if (!r.url().startsWith(origin) && !/^(file|data|blob):/.test(r.url())) errors.push('외부 요청 ' + r.url()); });
+  await page.goto(target);
+  await ready();
+}
+const ready = () => page.waitForFunction(() => G.app.booted);
+const current = () => page.evaluate(() => G.app.current());
+const state = () => page.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
+async function at(id, step) { await page.waitForFunction(({ id, step }) => G.app.current()?.scene === id && (!step || G.app.current().step === step), { id, step }); }
+async function clickNext() { await page.locator('#tray [data-act="next"]').click(); }
+async function chapter() { if ((await current())?.step === 'chapter') await clickNext(); }
+async function start() { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); await chapter(); }
+async function reloadResume() { await page.reload(); await ready(); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('.play'); await chapter(); }
+async function seed(spec) {
+  await page.evaluate((spec) => {
+    G.save.reset();
+    Object.assign(G.save.state, { started: true, pos: spec.pos, step: spec.step || 'preview', teacher: !!spec.teacher, awake: !!spec.awake, awakeAt: spec.awake ? 123 : 0 });
+    if (spec.turns != null) {
+      const sc = G.app.byId(spec.pos);
+      for (let turn = 0; turn < spec.turns; turn++) G.save.prepare(sc, turn, 'study');
+      if (spec.grade) G.save.finishEvent(sc);
+    }
+    if (spec.step) G.save.state.step = spec.step;
+    G.save.write();
+  }, spec);
+  await reloadResume();
+}
+async function advance() {
+  const prep = page.locator('[data-act="prep"]');
+  const staff = page.locator('[data-act="staff"]');
+  if (await prep.count()) await prep.click();
+  else if (await staff.count()) await staff.click();
+  else await clickNext();
+}
+async function until(id, limit = 100) { for (let i = 0; i < limit; i++) { if ((await current())?.scene === id) return; await advance(); } throw Error('도달 실패: ' + id); }
+async function test(name, fn) {
+  const n = errors.length;
+  try { await fn(); assert.equal(errors.length, n, errors.slice(n).join(' | ')); passed++; console.log('✓ ' + name); }
+  catch (e) { errors.push(name + ': ' + e.message); console.error('✗ ' + name + ': ' + e.stack); }
+}
+try {
+  await fresh();
+  await test('무대 API와 읽기 방식 제거', async () => {
+    assert.equal(await page.evaluate(() => typeof G.stage?.play), 'function');
+    await page.getByRole('button', { name: '설정', exact: true }).click();
+    assert.equal(await page.locator('[data-set="mode"]').count(), 0);
+    await page.keyboard.press('Escape');
+    await start();
+    assert.equal(await page.locator('.sheet').count(), 0);
   });
-  page.on('response', (r) => { if (r.status() >= 400 && !allowMissing.test(r.url())) page.errs.push('http ' + r.status() + ': ' + r.url()); });
-  page.on('request', (r) => page.reqs.push(r.url()));
-  return page;
-}
-const W = (page, ms = 150) => page.waitForTimeout(ms);
-const cur = (page) => page.evaluate(() => (window.G && G.app && G.app.current ? G.app.current() : null));
-const state = (page) => page.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
-const vbtn = (page, label) => page.locator('button:visible', { hasText: label });
-
-async function ready(page) {
-  await page.waitForFunction(() => window.G && G.app && G.app.booted === true, null, { timeout: 8000 });
-}
-async function startNew(page, mode = '처음 읽기') {
-  await ready(page);
-  await page.waitForSelector('.title-screen');
-  await vbtn(page, '시작하기').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, mode).first().click();
-  await page.waitForSelector('.play');
-}
-
-// 지금 장면의 활동을 맞게(또는 틀리게) 채운다
-async function fill(page, how = 'right') {
-  const plan = await page.evaluate((how) => {
-    const a = G.app.current().data.activity;
-    const choices = [...document.querySelectorAll('.activity .choice')].map((b) => b.dataset.choice);
-    const used = new Set();
-    return a.slots.map((s) => {
-      const ans = [].concat(s.answer || []);
-      let pick;
-      if (how === 'right' && ans.length) pick = ans.find((x) => !used.has(x));
-      else if (a.scored === false || !ans.length) pick = choices.find((c) => !used.has(c));
-      else pick = choices.find((c) => !used.has(c) && !ans.includes(c));
-      used.add(pick);
-      return { slot: s.id, pick };
+  if (errors.length) throw Error('기초 계약 실패');
+  await test('장 순서와 사건 일곱 걸음·완료 선저장', async () => {
+    await fresh(); await start();
+    assert.equal(await page.evaluate(() => G.app.open('c4-journal', { quiet: true })), false);
+    await page.locator('[data-tool="toc"]').click();
+    assert.equal(await page.locator('.toc-scene[data-scene="e01-stub"]').isDisabled(), true);
+    await page.keyboard.press('Escape');
+    const seen = [], steps = [];
+    for (let i = 0; i < 130; i++) {
+      const c = await current();
+      if (seen.at(-1) !== c.ch) seen.push(c.ch);
+      if (c.scene === 'e01-stub' && steps.at(-1) !== c.step) steps.push(c.step);
+      if (c.scene === 'e01-stub' && c.step === 'grade') assert.equal((await state()).pos, 'l-namjeon');
+      if (c.ch === 'R') break;
+      await advance();
+    }
+    assert.deepEqual(seen, ['0', '1', '2', '3', '4', '5', 'R']);
+    assert.deepEqual(await page.evaluate(() => window.chaptersSeen), ['0', '1', '2', '3', '4', '5']);
+    assert.deepEqual(steps.filter((s) => s !== 'chapter'), ['preview', 'prep1', 'prep2', 'scene', 'grade', 'clue', 'walk']);
+    assert.equal((await state()).awake, true);
+    assert.equal(await page.locator('.play[data-mounted="yes"]').count(), 1);
+  });
+  await test('준비 중 저장 주입: 남은 턴·사건 첫 줄·기록 보존', async () => {
+    for (const [turns, step] of [[0, 'prep1'], [1, 'prep2'], [2, 'scene']]) {
+      await fresh(); await seed({ pos: 'e01-stub', turns, step: turns === 0 ? 'prep1' : undefined });
+      await at('e01-stub', step);
+      const before = (await state()).events;
+      await reloadResume(); await at('e01-stub', step);
+      assert.deepEqual((await state()).events, before);
+    }
+  });
+  await test('결과·단서·걷기에서 다시 열면 다음 단위', async () => {
+    for (const step of ['grade', 'clue', 'walk']) {
+      await fresh(); await seed({ pos: 'e01-stub', turns: 2, grade: true, step });
+      await at('l-namjeon');
+      assert.ok((await state()).events['e01-stub'].grade);
+    }
+    await fresh(); await seed({ pos: 'e01-stub', turns: 2 });
+    await at('e01-stub', 'scene'); await clickNext(); await at('e01-stub', 'grade');
+    const before = await state();
+    assert.equal(before.pos, 'l-namjeon');
+    await reloadResume(); await at('l-namjeon');
+    assert.deepEqual((await state()).res, before.res);
+  });
+  await test('컷신 새로 고침은 첫 줄·무대 줄 넘김', async () => {
+    await fresh(); await start();
+    assert.equal(await page.locator('.stage-dialogue').innerText(), '시험 첫 줄');
+    await page.locator('.stage-dialogue').click();
+    await page.waitForFunction(() => document.querySelector('.stage-dialogue')?.textContent.includes('시험 둘째 줄'));
+    assert.equal(await page.locator('.stage-portrait img').count(), 1);
+    await reloadResume();
+    assert.equal(await page.locator('.stage-dialogue').innerText(), '시험 첫 줄');
+    await page.locator('.stage-dialogue').focus(); await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.querySelector('.stage-dialogue')?.textContent.includes('시험 둘째 줄'));
+  });
+  await test('마친 사건 다시 열기 불변·취소된 화면의 완료 차단', async () => {
+    await fresh(); await seed({ pos: 'e01-stub', turns: 2 });
+    await clickNext(); await until('l-namjeon');
+    const before = await state();
+    await page.evaluate(() => G.app.open('e01-stub'));
+    await at('e01-stub', 'preview');
+    assert.equal((await current()).revisit, true);
+    await clickNext(); await at('l-namjeon');
+    assert.deepEqual(await state(), before);
+    await page.evaluate(() => { window.oldCtx = window.testCtx; window.cancelled = false; oldCtx.next().then(() => { window.cancelled = true; }); G.app.title(); });
+    await page.waitForFunction(() => window.cancelled);
+    assert.equal(await page.evaluate(() => oldCtx.alive()), false);
+    const snapshot = await state();
+    await page.evaluate(() => oldCtx.step('grade'));
+    assert.deepEqual(await state(), snapshot);
+    await fresh(); await start(); await until('c3-staff');
+    const atStaff = await state();
+    await page.evaluate(() => G.app.open('c1-bridge'));
+    await at('c1-bridge'); await clickNext(); await at('c3-staff');
+    assert.deepEqual(await state(), atStaff);
+  });
+  await test('깨어남 직전·직후 이어 하기와 잠금 네 길', async () => {
+    await fresh(); await seed({ pos: 'c3-staff' }); await at('c3-feast');
+    await until('c3-staff');
+    assert.equal((await state()).awake, false);
+    await page.locator('[data-act="staff"]').click();
+    assert.equal((await state()).awake, true);
+    await clickNext(); await at('c3-awake');
+    await page.evaluate(() => history.back()); await page.waitForTimeout(150); await at('c3-awake');
+    await reloadResume(); await at('c3-awake');
+    await page.locator('[data-tool="toc"]').click();
+    for (const id of ['cut-josin', 'c1-bridge', 'e01-stub', 'c3-feast', 'c3-staff']) assert.equal(await page.locator('.toc-scene[data-scene="' + id + '"]').isDisabled(), true);
+    await page.keyboard.press('Escape');
+    for (const q of ['&ch=0', '&ch=2', '&ch=3', '&scene=c1-bridge', '&scene=c3-staff']) {
+      await page.goto(url + q); await ready(); await at('c3-awake');
+    }
+    assert.equal(await page.evaluate(() => G.app.open('e01-stub', { quiet: true })), false);
+    await page.goto(url + '&teacher=1&scene=e02-stub'); await ready(); await at('e02-stub');
+    await page.goto(url + '&teacher=0&ch=1'); await ready(); await at('c3-awake');
+    assert.equal((await state()).teacher, false);
+  });
+  await test('선생님 바로가기: 순차 보통 준비·부분 기록 보존·중복 보상 없음', async () => {
+    await fresh();
+    await page.evaluate(() => { G.save.prepare(G.app.byId('e01-stub'), 0, 'sword'); });
+    const partial = (await state()).events['e01-stub'];
+    await page.goto(url + '&teacher=1&scene=e03-stub'); await ready(); await chapter();
+    let s = await state();
+    assert.deepEqual(s.events['e01-stub'], partial);
+    assert.equal(s.events['e02-stub'].auto, true);
+    assert.equal(s.done['e02-stub'], undefined);
+    assert.equal(await page.locator('[data-tool="fold"]').count(), 1);
+    const res = s.res;
+    await page.goto(url + '&teacher=1&scene=e03-stub'); await ready();
+    assert.deepEqual((await state()).res, res);
+    const row = await page.evaluate(() => G.app.ledgerRows().find((r) => r.id === 'e02-stub'));
+    assert.equal(row.gradeLabel, '—');
+    await page.locator('[data-tool="toc"]').click();
+    assert.equal(await page.locator('.teacher-guide').count(), 1);
+    await page.keyboard.press('Escape');
+    const beforeReplay = await state();
+    await page.evaluate(() => G.app.open('e02-stub')); await at('e02-stub', 'preview');
+    assert.equal((await current()).revisit, true);
+    await clickNext(); await at('e03-stub');
+    assert.deepEqual(await state(), beforeReplay);
+  });
+  await test('설정 저장·화면 접기·전체 화면', async () => {
+    await fresh(url, { width: 1280, height: 800 });
+    assert.equal(await page.locator('.title-screen [data-tool="full"]').count(), 1);
+    await start();
+    assert.equal(await page.locator('[data-tool="fold"]').count(), 0);
+    await page.locator('[data-tool="settings"]').click();
+    assert.match(await page.locator('.credit-full').innerText(), /국립국악원/);
+    for (const key of ['music', 'sound', 'big', 'teacher']) await page.locator('[data-set="' + key + '"]').click();
+    assert.equal(await page.locator('[data-set="mode"]').count(), 0);
+    await page.locator('[data-set="full"]').click();
+    await page.waitForFunction(() => !!document.fullscreenElement);
+    await page.waitForFunction(() => document.querySelector('[data-set="full"]').getAttribute('aria-pressed') === 'true');
+    assert.equal('full' in (await state()), false);
+    await page.locator('[data-set="full"]').click();
+    await page.waitForFunction(() => !document.fullscreenElement);
+    await page.waitForFunction(() => document.querySelector('[data-set="full"]').getAttribute('aria-pressed') === 'false');
+    await page.keyboard.press('Escape');
+    await reloadResume();
+    const s = await state();
+    assert.deepEqual([s.music, s.sound, s.big, s.teacher], [false, false, true, true]);
+    assert.equal('mode' in s, false);
+    assert.equal(await page.evaluate(() => document.documentElement.classList.contains('big')), true);
+    await page.locator('[data-tool="fold"]').click();
+    assert.equal(await page.locator('.fold-ov').evaluate((el) => { const r = el.getBoundingClientRect(); return r.width >= innerWidth - 1 && r.height >= innerHeight - 1; }), true);
+    assert.equal(await page.evaluate(() => G.audio.hushed()), true);
+    await page.getByRole('button', { name: '다시 펼치기', exact: true }).click();
+    assert.equal(await page.evaluate(() => G.audio.hushed()), false);
+    await page.locator('[data-tool="settings"]').click();
+    await page.locator('[data-set="clear"]').click();
+    await page.getByRole('button', { name: '그대로 두기', exact: true }).click();
+    assert.equal((await state()).started, true);
+    await page.locator('[data-tool="settings"]').click();
+    await page.locator('[data-set="clear"]').click();
+    await page.getByRole('button', { name: '지우기', exact: true }).click();
+    await page.waitForSelector('.title-screen');
+    assert.deepEqual((await state()).done, {});
+    assert.deepEqual([(await state()).music, (await state()).big], [false, true]);
+  });
+  await test('새로 시작 확인 취소·수락', async () => {
+    await fresh(); await seed({ pos: 'c3-awake', awake: true });
+    await page.locator('[data-tool="home"]').click();
+    await page.getByRole('button', { name: '처음부터 새로', exact: true }).click();
+    await page.getByRole('button', { name: '그만두기', exact: true }).click();
+    assert.equal((await state()).awake, true);
+    await page.getByRole('button', { name: '처음부터 새로', exact: true }).click();
+    await page.getByRole('button', { name: '새로 시작', exact: true }).click();
+    await at('cut-josin');
+    const s = await state();
+    assert.equal(s.awake, false);
+    assert.deepEqual(s.events, {});
+    assert.deepEqual(s.items, []);
+  });
+  await test('글 표시·설정 카드·기본 선택지·도움 사다리·장부 보존', async () => {
+    await fresh(); await start();
+    await page.evaluate(() => {
+      G.app.title();
+      const root = document.getElementById('app'); root.replaceChildren();
+      root.append(G.text.block({ gloss: '풀이 표시' }), G.text.block({ say: 'yang', text: '인물 대사' }));
+      root.append(G.text.block({ mark: 'fiction', id: 'fc-check', body: '설정', real: '첫 설명' }));
+      root.append(G.text.block({ mark: 'fiction', id: 'fc-check', body: '설정', real: '첫 설명' }));
+      root.append(G.text.block({ mark: 'variant', body: '이본' }), G.text.block({ mark: 'interp', body: '해석' }));
+      window.activity = { id: 'j-match', slots: [{ id: 'a', answer: '답', memo: '힌트' }], choices: ['답', '오답'], extra: ['추가'] };
+      window.mount = () => { const box = G.util.h('div'); const tray = G.util.h('div'); root.append(box, tray); G.activity.mount(box, activity, { tray: (el) => tray.replaceChildren(el) }); };
+      mount();
     });
-  }, how);
-  for (const p of plan) {
-    await page.locator(`.activity .slot[data-slot="${p.slot}"]`).click();
-    await page.locator(`.activity .choice[data-choice="${p.pick}"]`).first().click();
-  }
-}
-
-// 한 걸음 진행(활동은 맞게 푼다)
-async function act(page) {
-  const st = await page.evaluate(() => {
-    const play = document.querySelector('.play');
-    return {
-      step: play && play.dataset.step,
-      unsolved: !!document.querySelector('.activity:not(.solved)'),
-      mind: !!document.querySelector('.mind-opt:not([disabled])'),
-      staff: !!document.querySelector('[data-act="staff"]:not([disabled])'),
-      must: !!document.querySelector('[data-must]:not([disabled])'), // 꼭 골라야 하는 것(인연 잇기·해석 고르기 등)
-      next: !!document.querySelector('#tray button[data-act="next"]'),
-      sheet: !!document.querySelector('.sheet-back'),
-    };
+    assert.equal(await page.locator('.gloss:visible').count(), 1);
+    assert.equal(await page.locator('.say .face').count(), 1);
+    assert.equal(await page.locator('.mark.fiction .real').count(), 1);
+    assert.equal(await page.locator('.mark.variant').count(), 1);
+    assert.equal(await page.locator('.mark.interp').count(), 1);
+    assert.equal(await page.locator('[data-choice="추가"]').count(), 0);
+    await page.locator('[data-choice="오답"]').click(); await page.locator('[data-act="check"]').click();
+    assert.equal(await page.locator('.slot.wrong').count(), 1);
+    assert.equal((await state()).ledger['j-match'].first, false);
+    assert.equal((await state()).wrong.length, 1);
+    await page.locator('[data-help="memo"]').click(); await page.locator('[data-help="answer"]').click(); await page.locator('[data-act="check"]').click();
+    const ledger = (await state()).ledger;
+    assert.deepEqual(ledger['j-match'], { first: false, help: 'student', final: true });
+    await page.evaluate(() => { document.getElementById('app').replaceChildren(); mount(); });
+    await page.locator('[data-choice="오답"]').click(); await page.locator('[data-act="check"]').click();
+    assert.deepEqual((await state()).ledger, ledger);
   });
-  if (st.sheet) throw new Error('예상하지 못한 시트가 떠 있음');
-  if (st.step === 'activity' && st.unsolved) { await fill(page, 'right'); await page.locator('button[data-act="check"]').click(); await W(page, 80); return; }
-  if (st.step === 'mind' && st.mind) { await page.locator('.mind-opt').first().click(); await W(page, 60); return; }
-  if (st.staff) { await page.locator('[data-act="staff"]').click(); await W(page, 80); return; }
-  if (st.must) { await page.locator('[data-must]:not([disabled])').first().click(); await W(page, 60); return; }
-  if (st.next) { await page.locator('#tray button[data-act="next"]').click(); await W(page, 60); return; }
-  await W(page, 120);
-}
-async function playUntil(page, pred, limit = 300) {
-  for (let i = 0; i < limit; i++) {
-    const c = await cur(page);
-    if (c && pred(c)) return c;
-    await act(page);
-  }
-  throw new Error('playUntil: 도달하지 못함 ' + JSON.stringify(await cur(page)));
-}
-const at = (scene) => (c) => c.scene === scene;
-
-async function finish(page) {
-  ok(page.errs.length === 0, page.tag, '오류: ' + page.errs.slice(0, 5).join(' | '));
-  const outside = page.reqs.filter((u) => !u.startsWith(ORIGIN) && !u.startsWith('file:') && !u.startsWith('data:') && !u.startsWith('blob:'));
-  ok(outside.length === 0, page.tag, '바깥으로 나간 요청: ' + outside.slice(0, 3).join(', '));
-  await page.context().close();
-}
-
-async function run(name, fn) {
-  log('▶', name);
-  try { await fn(); } catch (e) { ok(false, name, '예외: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' / ') : e)); }
-}
-
-// ───────── 1. 장 진행: 0→1→2→3→4→5→R 순서뿐
-await run('장 진행', async () => {
-  const page = await newPage('nav');
-  await page.goto(FIX);
-  await startNew(page);
-  let c = await cur(page);
-  ok(c && c.ch === '0', 'nav', '처음 장면이 0장이 아님: ' + JSON.stringify(c));
-  // 아직 열리지 않은 장은 주소로도 못 연다
-  await page.goto(FIX + '&ch=4'); await ready(page);
-  c = await cur(page);
-  ok(c && c.ch === '0', 'nav', '열리지 않은 4장이 주소로 열림: ' + JSON.stringify(c));
-  // 목차: 2장은 아직 고를 수 없다
-  await page.locator('[data-tool="toc"]').click();
-  await page.waitForSelector('.toc');
-  ok(await page.locator('.toc-ch[data-ch="2"].locked').count() === 1, 'nav', '목차에서 열리지 않은 2장이 잠겨 있지 않음');
-  await page.keyboard.press('Escape');
-  await W(page);
-  const seen = [];
-  for (let i = 0; i < 400; i++) {
-    c = await cur(page);
-    if (!seen.length || seen[seen.length - 1] !== c.ch) seen.push(c.ch);
-    if (c.ch === 'R') break;
-    await act(page);
-  }
-  ok(seen.join('') === '012345R', 'nav', '장 순서가 0123 45R이 아님: ' + seen.join(','));
-  const s = await state(page);
-  ok(s.awake === true, 'nav', '3장을 지나왔는데 깨어남이 기록되지 않음');
-  await finish(page);
-});
-
-// ───────── 2. 장면 중간에 새로 고침 → 그 장면 처음부터 / 3장은 깨어나기 전후 규칙
-await run('이어 하기', async () => {
-  const page = await newPage('resume');
-  await page.goto(FIX);
-  await startNew(page);
-  // 장면 안에서 읽기를 지나 활동까지
-  await playUntil(page, (c) => c.scene === 'c2-a' && c.step === 'activity');
-  ok(await page.evaluate(() => document.querySelector('.play').dataset.step) !== 'read', 'resume', '장면 안에서 다음 걸음으로 가지 않음');
-  await page.reload(); await ready(page);
-  await page.waitForSelector('.title-screen');
-  await vbtn(page, '이어 하기').first().click();
-  await page.waitForSelector('.play');
-  let c = await cur(page);
-  ok(c.scene === 'c2-a', 'resume', '새로 고침 뒤 같은 장면이 아님: ' + c.scene);
-  const step = await page.evaluate(() => document.querySelector('.play').dataset.step);
-  ok(step === 'read' || step === 'chapter', 'resume', '장면 처음부터가 아님: ' + step);
-  // 3장 지팡이 앞에서 끄면 3장 처음(취미궁 잔치)부터
-  await playUntil(page, at('c3-staff'));
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click();
-  await page.waitForSelector('.play');
-  c = await cur(page);
-  ok(c.scene === 'c3-feast', 'resume', '깨어나기 전에 끄면 3장 처음이어야 함: ' + c.scene);
-  // 지팡이 소리 뒤에 끄면 깨어난 선방부터
-  await playUntil(page, at('c3-staff'));
-  for (let i = 0; i < 20 && !(await page.locator('[data-act="staff"]:not([disabled])').count()); i++) await act(page);
-  await page.locator('[data-act="staff"]').click();
-  await W(page, 100);
-  ok((await state(page)).awake === true, 'resume', '지팡이 소리 순간에 깨어남이 기록되지 않음');
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click();
-  await page.waitForSelector('.play');
-  c = await cur(page);
-  ok(c.scene === 'c3-room', 'resume', '깨어난 뒤에 끄면 선방 장면이어야 함: ' + c.scene);
-  await finish(page);
-});
-
-// ───────── 3. 깨어남 잠금: 뒤로 가기·새로 고침·목차·주소로 0~3장을 못 연다. 선생님용은 연다
-await run('깨어남 잠금', async () => {
-  const page = await newPage('lock');
-  await page.goto(FIX);
-  await startNew(page);
-  // 깨어나기 전에는 뒤로 가기로 마친 장면을 다시 읽을 수 있다
-  await playUntil(page, at('c1-a'));
-  await page.evaluate(() => history.back()); await W(page, 300);
-  let c = await cur(page);
-  ok(c.scene === 'c0-a' && c.revisit === true, 'lock', '깨어나기 전 뒤로 가기가 마친 장면 다시 읽기가 아님: ' + JSON.stringify(c));
-  await page.evaluate(() => G.app.resume()); await W(page);
-  await playUntil(page, at('c3-room'));
-  ok((await state(page)).awake === true, 'lock', '깨어남이 기록되지 않음');
-  // 뒤로 가기
-  for (let i = 0; i < 3; i++) { await page.evaluate(() => history.back()); await W(page, 250); }
-  c = await cur(page);
-  ok(c && c.scene === 'c3-room', 'lock', '깨어난 뒤 뒤로 가기로 꿈이 열림: ' + JSON.stringify(c));
-  // 새로 고침
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  c = await cur(page);
-  ok(c.scene === 'c3-room', 'lock', '새로 고침 뒤 선방이 아님: ' + c.scene);
-  // 목차
-  await page.locator('[data-tool="toc"]').click(); await page.waitForSelector('.toc');
-  for (const ch of ['0', '1', '2']) ok(await page.locator(`.toc-ch[data-ch="${ch}"].locked`).count() === 1, 'lock', `목차에서 ${ch}장이 잠기지 않음`);
-  ok(await page.locator('.toc-scene[data-scene="c0-a"]:not([disabled])').count() === 0, 'lock', '목차에서 0장 장면을 누를 수 있음');
-  ok(await page.locator('.toc-scene[data-scene="c3-feast"]:not([disabled])').count() === 0, 'lock', '목차에서 3장 잔치(꿈)를 누를 수 있음');
-  await page.keyboard.press('Escape'); await W(page);
-  // 열 수 없는 것을 직접 불러도 열리지 않는다(엔진 API)
-  const opened = await page.evaluate(() => G.app.open('c1-a'));
-  ok(opened === false, 'lock', 'G.app.open이 깨어난 뒤 꿈 장면을 엶');
-  // 주소
-  for (const q of ['&ch=0', '&ch=2', '&scene=c1-a', '&scene=c3-feast', '&ch=3']) {
-    await page.goto(FIX + q); await ready(page);
-    c = await cur(page);
-    ok(c && c.scene === 'c3-room', 'lock', `주소 ${q}로 꿈이 열림: ` + JSON.stringify(c));
-  }
-  // 선생님용은 연다
-  await page.goto(FIX + '&teacher=1&ch=0'); await ready(page);
-  c = await cur(page);
-  ok(c && c.scene === 'c0-a', 'lock', '선생님용인데 0장이 열리지 않음: ' + JSON.stringify(c));
-  await page.locator('[data-tool="toc"]').click(); await page.waitForSelector('.toc');
-  ok(await page.locator('.toc-scene[data-scene="c1-a"]:not([disabled])').count() === 1, 'lock', '선생님용 목차에서 1장 장면이 열리지 않음');
-  await page.keyboard.press('Escape'); await W(page);
-  // 끄면 다시 잠긴다
-  await page.goto(FIX + '&teacher=0&ch=1'); await ready(page);
-  c = await cur(page);
-  ok(c && c.ch !== '1' && c.ch !== '0', 'lock', '선생님용을 끈 뒤에도 꿈이 열림: ' + JSON.stringify(c));
-  ok((await state(page)).teacher === false, 'lock', '?teacher=0이 선생님용을 끄지 않음');
-  await finish(page);
-});
-
-// ───────── 4. 새로 시작: 확인을 받고 모든 기록을 지운다
-await run('새로 시작', async () => {
-  const page = await newPage('newgame');
-  await page.goto(FIX);
-  await startNew(page);
-  await playUntil(page, at('c3-room'));
-  await page.locator('[data-tool="home"]').click();
-  await page.waitForSelector('.title-screen');
-  await vbtn(page, '처음부터 새로').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, '그만두기').first().click();
-  await W(page);
-  let s = await state(page);
-  ok(s.awake === true && Object.keys(s.done).length > 0, 'newgame', '그만두기를 눌렀는데 기록이 지워짐');
-  await vbtn(page, '처음부터 새로').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, '새로 시작').first().click();
-  await page.waitForSelector('.sheet .btn');
-  s = await state(page);
-  ok(s.awake === false, 'newgame', '새로 시작했는데 깨어남이 남음');
-  ok(Object.keys(s.done).length === 0 && Object.keys(s.ledger).length === 0, 'newgame', '새로 시작했는데 진행·장부가 남음');
-  ok(Object.keys(s.mind).length === 0 && Object.keys(s.items).length === 0 && Object.keys(s.pearls).length === 0, 'newgame', '마음·물건·구슬 기록이 남음');
-  await vbtn(page, '처음 읽기').first().click();
-  await page.waitForSelector('.play');
-  const c = await cur(page);
-  ok(c.scene === 'c0-a', 'newgame', '새로 시작 뒤 0장이 아님: ' + c.scene);
-  await finish(page);
-});
-
-// ───────── 5. 도움 사다리와 장부
-await run('도움 사다리', async () => {
-  const page = await newPage('help');
-  await page.goto(FIX);
-  await startNew(page);
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'activity');
-  ok(await page.locator('[data-help="memo"]:visible').count() === 0, 'help', '틀리기 전에 여백 메모가 보임');
-  await fill(page, 'wrong');
-  await page.locator('button[data-act="check"]').click(); await W(page);
-  ok(await page.locator('.activity .slot.wrong').count() > 0, 'help', '틀린 칸 표시가 없음');
-  ok(await page.locator('[data-help="memo"]:visible').count() === 1, 'help', '틀린 뒤 여백 메모 단추가 없음');
-  ok(await page.locator('[data-help="answer"]:visible').count() === 0, 'help', '여백 메모 전에 정답 보기가 열림');
-  let s = await state(page);
-  ok(s.ledger['a-c0'] && s.ledger['a-c0'].first === false && !s.ledger['a-c0'].help, 'help', '첫 시도 틀림이 장부에 바로 남지 않음: ' + JSON.stringify(s.ledger['a-c0']));
-  ok((s.wrong || []).some((w) => w.act === 'a-c0'), 'help', '오답 노트에 남지 않음');
-  await page.locator('[data-help="memo"]').click(); await W(page);
-  ok(await page.locator('.activity .memo:visible').count() > 0, 'help', '여백 메모가 보이지 않음');
-  ok(await page.locator('[data-help="answer"]:visible').count() === 1, 'help', '여백 메모 뒤 정답 보기가 열리지 않음');
-  await page.locator('[data-help="answer"]').click(); await W(page);
-  await page.locator('button[data-act="check"]').click(); await W(page);
-  ok(await page.locator('.activity.solved').count() === 1, 'help', '정답 보기 뒤 확인했는데 끝나지 않음');
-  s = await state(page);
-  const L0 = s.ledger['a-c0'];
-  ok(L0 && L0.first === false && L0.help === 'student' && L0.final === true, 'help', '장부 기록이 이상함: ' + JSON.stringify(L0));
-  // 첫 시도에 맞히면 도움 없음
-  await playUntil(page, (c) => c.scene === 'c1-a' && c.step === 'activity');
-  await fill(page, 'right'); await page.locator('button[data-act="check"]').click(); await W(page);
-  s = await state(page);
-  ok(s.ledger['a-c1'] && s.ledger['a-c1'].first === true && !s.ledger['a-c1'].help, 'help', '첫 시도 맞힘 기록이 이상함: ' + JSON.stringify(s.ledger['a-c1']));
-  // 선생님용 켜고 '정답 채우기' → 도움 사용(선생님용)
-  await playUntil(page, (c) => c.scene === 'c2-a' && c.step === 'activity');
-  await page.locator('[data-tool="settings"]').click(); await page.waitForSelector('.settings');
-  await page.locator('button[data-set="teacher"]').click(); await W(page);
-  await page.keyboard.press('Escape'); await W(page);
-  ok(await page.locator('[data-teacher="fill"]:visible').count() === 1, 'help', '선생님용 정답 채우기 단추가 없음');
-  ok(await page.locator('[data-teacher="show"]:visible').count() === 1, 'help', '선생님용 정답 보기 단추가 없음');
-  await page.locator('[data-teacher="fill"]').click(); await W(page);
-  await page.locator('button[data-act="check"]').click(); await W(page);
-  s = await state(page);
-  ok(s.ledger['a-c2'] && s.ledger['a-c2'].help === 'teacher', 'help', '정답 채우기가 선생님용 도움으로 남지 않음: ' + JSON.stringify(s.ledger['a-c2']));
-  // 학생이 한 번도 풀기 전에 선생님이 채웠으면 첫 시도는 '시도 안 함'(null)이지 맞힘이 아니다
-  ok(s.ledger['a-c2'] && s.ledger['a-c2'].first === null && s.ledger['a-c2'].final === true, 'help', '시도 전 선생님용 정답 채우기가 첫 시도 기록을 남김: ' + JSON.stringify(s.ledger['a-c2']));
-  const label = await page.evaluate(() => G.app.ledgerRows().find((r) => r.id === 'a-c2').helpLabel);
-  ok(label === '도움 사용(선생님용)', 'help', '장부 표시가 도움 사용(선생님용)이 아님: ' + label);
-  const firstLabel = await page.evaluate(() => G.app.ledgerRows().find((r) => r.id === 'a-c2').firstLabel);
-  ok(firstLabel !== '첫 시도에 맞힘', 'help', '시도 전 선생님용 정답 채우기가 장부에 첫 시도에 맞힘으로 보임: ' + firstLabel);
-  const label0 = await page.evaluate(() => G.app.ledgerRows().find((r) => r.id === 'a-c0').helpLabel);
-  ok(label0 === '도움 사용', 'help', '학생 도움 표시가 도움 사용이 아님: ' + label0);
-  // 채점하지 않는 활동은 장부에 들어가지 않는다
-  await playUntil(page, (c) => c.scene === 'c2-b' && c.step === 'mind');
-  s = await state(page);
-  ok(!s.ledger['a-c2b'], 'help', '채점하지 않는 활동이 장부에 들어감');
-  ok(!G_ledgerHasBond(s), 'help', '장부에 인연(사람)이 들어감');
-  // 선생님용 끄고, 깨어나기 전 마친 장면 다시 읽기 → 장부가 바뀌지 않는다
-  await page.goto(FIX + '&teacher=0'); await ready(page);
-  const before = JSON.stringify((await state(page)).ledger);
-  const opened = await page.evaluate(() => G.app.open('c0-a'));
-  ok(opened === true, 'help', '깨어나기 전 마친 장면을 다시 열지 못함');
-  await page.waitForSelector('.play');
-  ok((await cur(page)).revisit === true, 'help', '다시 읽기 표시가 없음');
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'activity');
-  await fill(page, 'right'); await page.locator('button[data-act="check"]').click(); await W(page);
-  ok(JSON.stringify((await state(page)).ledger) === before, 'help', '다시 읽기에서 장부가 바뀜');
-  // 결과 화면의 장부 표시
-  await page.evaluate(() => G.app.resume()); await W(page);
-  await playUntil(page, (c) => c.ch === 'R');
-  const txt = await page.locator('.play').innerText();
-  ok(/도움 사용\(선생님용\)/.test(txt), 'help', '결과 장부에 도움 사용(선생님용)이 보이지 않음');
-  await finish(page);
-});
-function G_ledgerHasBond(s) { return Object.keys(s.ledger).some((k) => /^b\d/.test(k)); }
-
-// ───────── 6. 읽기 방식
-await run('읽기 방식', async () => {
-  const page = await newPage('mode');
-  await page.goto(FIX);
-  await startNew(page, '처음 읽기');
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'read');
-  ok(await page.locator('.gloss:visible').count() > 0, 'mode', '처음 읽기인데 풀이가 보이지 않음');
-  ok(await page.locator('.face').count() > 0, 'mode', '처음 읽기인데 인물 얼굴 자동 표시가 없음');
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'activity');
-  ok(await page.locator('.activity .choice[data-choice="정"]').count() === 0, 'mode', '처음 읽기에 다시 읽기용 헷갈리는 선택지가 들어감');
-  // 설정에서 다시 읽기로
-  await page.locator('[data-tool="settings"]').click(); await page.waitForSelector('.settings');
-  await page.locator('button[data-set="mode"]').click(); await W(page);
-  await page.keyboard.press('Escape'); await W(page);
-  ok((await state(page)).mode === 'review', 'mode', '설정에서 읽기 방식이 바뀌지 않음');
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'read');
-  ok(await page.locator('.gloss:visible').count() === 0, 'mode', '다시 읽기인데 풀이가 보임');
-  ok(await page.locator('.face').count() === 0, 'mode', '다시 읽기인데 얼굴 자동 표시가 있음');
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'activity');
-  ok(await page.locator('.activity .choice[data-choice="정"]').count() === 1, 'mode', '다시 읽기에 헷갈리는 선택지가 늘지 않음');
-  // 다시 읽기의 장 시작에는 지난 이야기가 없다 / 처음 읽기에는 있다
-  await playUntil(page, (c) => c.ch === '1');
-  ok(await page.locator('.recap').count() === 0, 'mode', '다시 읽기인데 지난 이야기가 나옴');
-  await finish(page);
-
-  const p2 = await newPage('mode2');
-  await p2.goto(FIX);
-  await startNew(p2, '처음 읽기');
-  await playUntil(p2, (c) => c.ch === '1');
-  ok(await p2.locator('.recap').count() > 0, 'mode', '처음 읽기인데 장마다 지난 이야기가 없음');
-  await finish(p2);
-});
-
-// ───────── 7. 설정 저장
-await run('설정', async () => {
-  const page = await newPage('settings');
-  await page.goto(FIX);
-  await startNew(page);
-  await page.locator('[data-tool="settings"]').click(); await page.waitForSelector('.settings');
-  const credit = await page.locator('.settings .credit-full').innerText();
-  ok(/국립국악원/.test(credit) && /임시 출처/.test(credit), 'settings', '설정에 음원 출처 문구가 없음: ' + credit);
-  for (const k of ['music', 'sound', 'big']) await page.locator(`button[data-set="${k}"]`).click();
-  await W(page);
-  ok(await page.evaluate(() => document.documentElement.classList.contains('big')), 'settings', '큰 글자가 바로 적용되지 않음');
-  ok(await page.locator('button[data-set="clear"]').count() === 1, 'settings', '기록 지우기 단추가 없음');
-  await page.keyboard.press('Escape'); await W(page);
-  await page.reload(); await ready(page);
-  const s = await state(page);
-  ok(s.music === false && s.sound === false && s.big === true, 'settings', '설정이 새로 고침 뒤 남지 않음: ' + JSON.stringify({ m: s.music, s: s.sound, b: s.big }));
-  ok(await page.evaluate(() => document.documentElement.classList.contains('big')), 'settings', '새로 고침 뒤 큰 글자가 풀림');
-  // 기록 지우기(확인 후)
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  await playUntil(page, at('c1-a'));
-  await page.locator('[data-tool="settings"]').click(); await page.waitForSelector('.settings');
-  await page.locator('button[data-set="clear"]').click();
-  await page.waitForSelector('.sheet >> text=지울까요');
-  await vbtn(page, '지우기').last().click();
-  await page.waitForSelector('.title-screen');
-  const s2 = await state(page);
-  ok(Object.keys(s2.done).length === 0, 'settings', '기록 지우기 뒤 진행이 남음');
-  ok(s2.music === false && s2.big === true, 'settings', '기록 지우기가 설정까지 지움');
-  await finish(page);
-});
-
-// ───────── 8. 선생님용: ?teacher=1, 화면 접기(소리 멈춤)
-await run('선생님용', async () => {
-  const page = await newPage('teacher', { viewport: { width: 1366, height: 860 }, mobile: false });
-  await page.goto(FIX + '&teacher=1');
-  await ready(page);
-  ok((await state(page)).teacher === true, 'teacher', '?teacher=1이 켜지 않음');
-  await startNew(page);
-  ok(await page.locator('[data-tool="fold"]:visible').count() === 1, 'teacher', '화면 접기 단추가 없음');
-  await page.locator('[data-tool="fold"]').click();
-  await page.waitForSelector('.fold-ov');
-  const cover = await page.evaluate(() => { const r = document.querySelector('.fold-ov').getBoundingClientRect(); return r.width >= innerWidth - 1 && r.height >= innerHeight - 1; });
-  ok(cover, 'teacher', '화면 접기가 화면을 덮지 않음');
-  ok(await page.evaluate(() => G.audio.hushed()), 'teacher', '화면 접기가 소리를 멈추지 않음');
-  await vbtn(page, '다시 펼치기').click(); await W(page);
-  ok(await page.locator('.fold-ov').count() === 0, 'teacher', '다시 펼치기가 안 됨');
-  ok(!(await page.evaluate(() => G.audio.hushed())), 'teacher', '다시 펼친 뒤에도 소리가 멈춰 있음');
-  // 선생님 안내
-  await page.locator('[data-tool="toc"]').click(); await page.waitForSelector('.toc');
-  ok(await page.locator('.toc .teacher-guide').count() === 1, 'teacher', '목차에 교사용 안내가 없음');
-  await page.keyboard.press('Escape'); await W(page);
-  // 키보드로 진행(Enter)
-  await page.locator('#tray button[data-act="next"]').focus();
-  const before = await page.evaluate(() => document.querySelector('.play').dataset.step + G.app.current().scene);
-  await page.keyboard.press('Enter'); await W(page);
-  const after = await page.evaluate(() => document.querySelector('.play').dataset.step + G.app.current().scene);
-  ok(before !== after, 'teacher', '키보드 Enter로 진행되지 않음');
-  await finish(page);
-});
-
-// ───────── 9. 글 표시(原文·풀이·게임 설정·이본 노트·해석)와 곡 바꾸기
-await run('글 표시와 곡', async () => {
-  const page = await newPage('marks', { viewport: { width: 820, height: 1180 } });
-  await page.goto(FIX);
-  await startNew(page);
-  await playUntil(page, (c) => c.scene === 'c0-a' && c.step === 'read');
-  ok(await page.locator('.mark.orig .seal', { hasText: '原文' }).count() > 0, 'marks', '原文 낙관이 없음');
-  ok(await page.locator('.gloss').count() > 0, 'marks', '풀이 층이 없음');
-  ok(await page.locator('.mark.fiction .real', { hasText: '실제로는 →' }).count() === 1, 'marks', '게임 설정이 처음 나올 때 실제로는 →이 없음');
-  ok(await page.locator('.orig .old').count() > 0, 'marks', '옛한글 원문에 옛한글 글꼴 표시가 없음');
-  const t0 = await page.evaluate(() => G.audio.track);
-  ok(t0 === 'stub-a', 'marks', '0장 곡이 stub-a가 아님: ' + t0);
-  await playUntil(page, (c) => c.scene === 'c1-a' && c.step === 'read');
-  ok(await page.locator('.mark.variant').count() > 0, 'marks', '이본 노트 표시가 없음');
-  ok(await page.locator('.mark.interp').count() > 0, 'marks', '해석 표시가 없음');
-  ok(await page.locator('.mark.fiction').count() > 0 && await page.locator('.mark.fiction .real').count() === 0, 'marks', '같은 게임 설정이 두 번째에도 실제로는 →을 보임');
-  const t1 = await page.evaluate(() => G.audio.track);
-  ok(t1 === 'stub-b', 'marks', '장면별 곡이 바뀌지 않음: ' + t1);
-  await W(page, 400);
-  ok(await page.evaluate(() => !!G.audio.now()), 'marks', '배경음이 흐르지 않음(합성음 대체 포함)');
-  // 효과음·배경음 따로 끄기
-  await page.evaluate(() => { G.save.state.music = false; G.audio.music(false); });
-  await W(page, 300);
-  ok(await page.evaluate(() => !G.audio.now()), 'marks', '배경음을 껐는데 곡이 흐름');
-  // 그림은 정수배·부드럽게 하지 않기
-  const pix = await page.evaluate(() => getComputedStyle(document.querySelector('.scene-img img, img.pix') || document.body).imageRendering);
-  ok(pix === 'pixelated', 'marks', '그림에 image-rendering: pixelated가 없음: ' + pix);
-  await finish(page);
-});
-
-// ───────── 10. 내용 데이터가 없을 때 멈추지 않는다
-// 실제 내용(js/data/)이 생긴 뒤에도 '데이터 없음'을 재현하려고, 없는 임시 데이터 파일(tests/fixtures/nodata.js)을 가리킨다.
-await run('데이터 없음', async () => {
-  const page = await newPage('nodata', { allowMissing: /\/assets\/|\/js\/data\/|\/tests\/fixtures\/nodata\.js/ });
-  await page.goto(BASE + '?fixture=nodata');
-  await ready(page);
-  await page.waitForSelector('.title-screen');
-  ok(await page.locator('.data-missing').count() === 1, 'nodata', '데이터가 없다는 안내가 없음');
-  await finish(page);
-});
-
-// ───────── 11. 파일로 열기(file://): 시작·저장·소리
-await run('파일로 열기', async () => {
-  const page = await newPage('file');
-  const url = pathToFileURL(path.join(ROOT, 'index.html')).href + '?fixture=1';
-  await page.goto(url);
-  await startNew(page);
-  await playUntil(page, at('c1-a'));
-  await W(page, 400);
-  ok(await page.evaluate(() => !!G.audio.now()), 'file', '파일로 열었을 때 배경음(또는 합성 대체)이 흐르지 않음');
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  ok((await cur(page)).scene === 'c1-a', 'file', '파일로 열었을 때 저장·이어 하기가 안 됨');
-  await finish(page);
-});
-
-await browser.close();
-server.close();
-log(issues.length ? `\n✗ ${issues.length}개 문제` : '\n✓ 엔진 점검 통과');
-process.exit(issues.length ? 1 : 0);
+  await test('선생님 도움을 먼저 쓰면 첫 시도 없음·새로 고침 보존', async () => {
+    await fresh(); await start();
+    const mount = () => {
+      G.app.title(); G.save.state.teacher = true; G.app.applySettings();
+      const box = G.util.h('div'), tray = G.util.h('div'); document.getElementById('app').replaceChildren(box, tray);
+      G.activity.mount(box, { id: 'j-match', slots: [{ id: 'a', answer: '답' }], choices: ['답', '오답'] }, { tray: (el) => tray.replaceChildren(el) });
+    };
+    await page.evaluate(mount); await page.locator('[data-teacher="fill"]').click();
+    await page.reload(); await ready(); await page.evaluate(mount);
+    await page.locator('[data-teacher="fill"]').click(); await page.locator('[data-act="check"]').click();
+    assert.deepEqual((await state()).ledger['j-match'], { first: null, help: 'teacher', final: true });
+  });
+  await test('무대 그림 정수배·효과·양소유 걷기·취소', async () => {
+    await fresh(); await start();
+    await page.evaluate(() => {
+      G.app.title();
+      G.app.screens.scene = async (ctx) => {
+        window.stage = G.stage.mount(ctx, { img: 'sc_huayin', title: '시험 무대' });
+        stage.effect('petals'); stage.effect('mist'); stage.effect('ripples'); stage.effect('candle'); stage.effect('fire');
+        window.walked = stage.walk({ from: { x: 10, y: 70 }, to: { x: 80, y: 70 }, duration: 200 });
+        stage.show({ say: 'yang', mood: 'smile', text: '시험용 대사창입니다. 다음 줄로 이야기가 이어집니다.', shake: true });
+        await ctx.next();
+        stage.dispose();
+        window.overlayResult = await G.stage.play(ctx, { img: 'sc_huayin', title: '시험 무대' }, { lines: [
+          { say: 'yang', mood: 'smile', text: '버들 아래에서 들려온 노래를 가만히 들어 본다.', effect: 'petals' },
+          { say: 'yang', text: '노래에 담긴 뜻을 헤아리며 다음 길을 준비한다.', effect: 'petals' },
+        ] });
+      };
+      G.save.state.teacher = true; G.app.open('c1-bridge');
+    });
+    await chapter();
+    await page.waitForSelector('.stage-actor');
+    await page.evaluate(() => window.walked);
+    assert.equal(await page.locator('.stage-effect').count(), 5);
+    const scale = await page.locator('.stage-background img').evaluate((img) => img.getBoundingClientRect().width * devicePixelRatio / img.naturalWidth);
+    assert.ok(Number.isInteger(scale) || Number.isInteger(1 / scale), String(scale));
+    assert.equal(await page.locator('.stage-actor').getAttribute('data-person'), 'yang');
+    await clickNext();
+    await page.waitForFunction(() => document.querySelector('.stage-dialogue')?.textContent.includes('버들 아래'));
+    const geometry = async () => {
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.stage-background img');
+        return img?.naturalWidth > 0 && img.getBoundingClientRect().width > 0;
+      });
+      const boxes = await page.evaluate(() => {
+        const rect = (selector) => { const r = document.querySelector(selector).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height }; };
+        const img = document.querySelector('.stage-background img');
+        return { stage: rect('.stage'), image: rect('.stage-background img'), speech: rect('.stage-speech'), next: rect('#tray [data-act="next"]'),
+          scale: img.getBoundingClientRect().width * devicePixelRatio / img.naturalWidth,
+          naturalRatio: img.naturalWidth / img.naturalHeight, rendering: getComputedStyle(img).imageRendering };
+      });
+      const { stage: s, image: i, speech: d, next: n } = boxes;
+      const visible = { left: Math.max(s.left, i.left), right: Math.min(s.right, i.right), top: Math.max(s.top, i.top), bottom: Math.min(s.bottom, i.bottom) };
+      assert.ok(Number.isInteger(boxes.scale) || Number.isInteger(1 / boxes.scale), '정수/역정수배');
+      assert.ok(Math.abs(i.width / i.height - boxes.naturalRatio) < 0.001, '그림 비율 보존');
+      assert.equal(boxes.rendering, 'pixelated');
+      assert.ok(d.left >= visible.left && d.right <= visible.right && d.top >= visible.top && d.bottom <= visible.bottom, '대사창 전체가 실제 그림의 보이는 영역 안에 겹쳐야 함');
+      assert.ok(d.top - visible.top >= (visible.bottom - visible.top) * 0.35, '그림 윗부분 35% 이상 유지');
+      assert.ok(s.height <= i.height + 4, '그림 밖 빈 무대 높이 금지');
+      assert.ok(d.bottom <= n.top || d.top >= n.bottom || d.right <= n.left || d.left >= n.right, '대사창과 다음 단추 겹침 금지');
+      return boxes;
+    };
+    for (const width of [390, 320, 820, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.waitForTimeout(120);
+      await geometry();
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(120);
+    console.log('  390px 무대 좌표 ' + JSON.stringify(await geometry()));
+    assert.equal(await page.locator('.stage-effect').count(), 1);
+    assert.equal(await page.locator('.stage-effect').getAttribute('data-effect'), 'petals');
+    await page.screenshot({ path: path.join(ROOT, 'tests/shots/engine-stage.png') });
+    await page.locator('.stage-dialogue').click();
+    await page.waitForFunction(() => document.querySelector('.stage-dialogue')?.textContent.includes('노래에 담긴'));
+    await geometry();
+    await page.evaluate(() => G.app.title());
+    await page.waitForFunction(() => window.overlayResult === false);
+    assert.equal(await page.evaluate(() => stage.active()), false);
+    assert.equal(await page.locator('.stage').count(), 0);
+  });
+  await test('소원 비율·인연 비가산·미색 숨김과 장부 새 계약', async () => {
+    await fresh();
+    const result = await page.evaluate(() => {
+      const before = G.app.wishes();
+      G.save.state.bonds = G.data.bonds.map((b) => b.id);
+      const bondsOnly = G.app.wishes();
+      G.save.state.res = { gong: 100, fame: 10, wealth: 10 };
+      const resources = G.app.wishes();
+      G.save.state.items.push('it-stub-music');
+      const music = G.app.wishes();
+      G.save.state.journal.revealed = { misaek: true };
+      const revealed = G.app.wishes();
+      return { before, bondsOnly, resources, music, revealed, rows: G.app.ledgerRows() };
+    });
+    assert.deepEqual(result.before, result.bondsOnly);
+    for (const id of ['bugwi', 'gongmyeong']) assert.ok(result.resources.find((w) => w.id === id).fill > 0);
+    assert.ok(result.music.find((w) => w.id === 'pungryu').fill > 0);
+    assert.deepEqual(result.resources.find((w) => w.id === 'misaek').fill, 0);
+    assert.equal(result.resources.find((w) => w.id === 'misaek').hidden, true);
+    assert.equal(result.revealed.find((w) => w.id === 'misaek').hidden, false);
+    assert.equal(result.revealed.find((w) => w.id === 'misaek').fill, 1);
+    assert.deepEqual(result.rows.map((r) => r.id), ['a-wish', 'e01-stub', 'e02-stub', 'e03-stub', 'j-match']);
+    for (const row of result.rows) assert.equal('score' in row, false);
+    for (const wish of result.revealed) assert.ok(wish.fill >= 0 && wish.fill <= 1);
+  });
+  for (const resume of [false, true]) await test('자동 준비 사건: 직접 다시 보기와 ' + (resume ? '새로 고침 재개' : '순차 진행') + ' 구분', async () => {
+    await fresh(); await seed({ pos: 'e01-stub', turns: 1 });
+    await page.goto(url + '&teacher=1&scene=e03-stub'); await ready();
+    const auto = (await state()).events['e02-stub'];
+    assert.equal(auto.auto, true);
+    const atThird = await state();
+    await page.evaluate(() => G.app.open('e02-stub')); await at('e02-stub');
+    assert.equal((await current()).autoAdvance, false);
+    await clickNext(); await at('e03-stub');
+    assert.deepEqual(await state(), atThird, '직접 다시 보기는 원래 e03 진행과 상태 보존');
+    await page.evaluate(() => G.app.open('e01-stub')); await at('e01-stub'); await chapter(); await at('e01-stub', 'prep2');
+    await until('e02-stub');
+    const before = await state();
+    assert.deepEqual(before.events['e02-stub'], auto);
+    assert.equal(before.done['e02-stub'], undefined);
+    if (resume) { await reloadResume(); await at('e02-stub'); }
+    assert.equal((await current()).autoAdvance, true);
+    assert.equal(await page.locator('.revisit-bar').count(), 0);
+    for (let i = 0; i < 3 && (await current()).scene === 'e02-stub'; i++) await clickNext();
+    assert.equal((await current()).scene, 'e03-stub', '자동 준비 e02에서 반복되지 않고 e03으로 진행');
+    const after = await state();
+    assert.equal(after.pos, 'e03-stub');
+    assert.deepEqual(after.events['e02-stub'], auto, '자동 준비 기록 불변');
+    assert.deepEqual(after.res, before.res, '자동 준비 보상 재지급 금지');
+    assert.deepEqual(after.abil, before.abil, '자동 준비 능력 재상승 금지');
+    assert.equal(after.done['e02-stub'], undefined, '학생이 마친 것으로 바꾸지 않음');
+    assert.deepEqual(after.ledger, before.ledger);
+    assert.equal(await page.evaluate(() => G.app.ledgerRows().find((r) => r.id === 'e02-stub').gradeLabel), '—');
+  });
+  await test('데이터 없음은 안내·시작 불가', async () => {
+    await fresh(url.replace('fixture=1', 'fixture=nodata'));
+    assert.equal(await page.locator('.data-missing').count(), 1);
+    assert.equal(await page.getByRole('button', { name: '시작하기', exact: true }).isDisabled(), true);
+  });
+  await test('파일로 열기: 시작·저장·합성 소리', async () => {
+    await fresh(pathToFileURL(scratch).href + '?fixture=1'); await start();
+    await until('c1-bridge'); await chapter();
+    await page.waitForFunction(() => !!G.audio.now());
+    await reloadResume(); await at('c1-bridge');
+    assert.equal((await state()).started, true);
+  });
+} catch (e) { if (!errors.length) errors.push(e.stack); }
+finally { await browser.close(); await new Promise((r) => server.close(r)); fs.unlinkSync(scratch); }
+console.log('점검 묶음 ' + passed + '개 통과');
+if (errors.length) console.error(errors.join('\n'));
+process.exit(errors.length ? 1 : 0);

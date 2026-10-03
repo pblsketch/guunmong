@@ -1,263 +1,61 @@
-// 내용 점검: 실제 내용 데이터(js/data/*.js, ?fixture 없이)를 확인하고, 그 데이터로 0장부터 결과 화면까지 학생처럼 끝까지 해 본다.
-//   node check-content.mjs        (tests/ 안에서. run-all.mjs가 부른다)
-//   ONLY=<점검 이름 일부> node check-content.mjs   (그 화면 점검만. 예: ONLY=태블릿)
-// 정적 점검(node에서 데이터 파일을 읽어서)
-//   - 原文 표시: 영인 대조 전이므로 데이터 어디에도 orig가 없고, 활동 글은 모두 풀이 바탕, 회목은 '대조 대기'
-//   - 그림·소리 이름이 기획서 §17·§18의 이름을 따르는지(파일이 있는지는 보지 않는다. 그림·소리는 만드는 중)
-//   - 얼굴 그림: say·{호칭|id}가 얼굴이 있는 인물만 가리키는지, 표정이 그 인물의 표정 목록에 있는지
-//   - 쓰면 안 되는 낱말, 교과서 본문 추출본과 15자 이상 겹치는 글(추출본이 이 기기에 있을 때만)
-// 화면 점검(크롬으로, 이 기기 안의 작은 서버)
-//   - G.checkData() 경고 없음, 장면마다 활동·마음·물건, 처음 만나는 여덟 장면에 구슬 하나씩, 채점 일지 짝의 근거, 해석 3~4개
-//   - 선생님용 단추 없이 0장 → 결과 화면 완주(휴대폰·처음 읽기 + 해석 한 번 고치기, 데스크톱·다시 읽기). 걸음마다 原文 낙관이 없는지
-// 하나라도 어긋나면 '✗'를 찍고 종료 코드 1로 끝난다.
+// v2 실제 학생 GUI 완주. 데이터 정적 규칙은 check-data, 권리 전체 이력은 check-rights가 함께 검사한다.
+// 저장 주입·선생님용·가상 자산 없이 실제 index.html과 등록 자산을 사용한다.
+import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const TEXTBOOK = 'E:/github/고전 문학 게임/구운몽/design/source/교과서_본문추출.txt';
-const issues = [];
-const log = (...a) => console.log(...a);
-const ok = (cond, where, msg) => { if (!cond) { issues.push(`${where}: ${msg}`); log('  ✗', `${where}: ${msg}`); } return !!cond; };
-
-// ───────── 기획서 §17·§18의 이름(그림·소리를 만드는 작업이 이 이름을 따른다)
-const SC = ['sc_josin_dream', 'sc_josin_wake', 'sc_bridge', 'sc_cell', 'sc_exile', 'sc_hell', 'sc_rebirth', 'sc_huayin', 'sc_namjeon', 'sc_tianjin', 'sc_geomungo', 'sc_chunun', 'sc_hebei', 'sc_handan', 'sc_tungso', 'sc_bongnae', 'sc_wonsu', 'sc_yoyeon', 'sc_neungpa', 'sc_seungsang', 'sc_honrye', 'sc_c3_feast', 'sc_c3_monk', 'sc_c3_awake', 'sc_c4_journal', 'sc_c5_dialogue', 'sc_c5_ordination'];
-const FACES = {
-  seongjin: ['troubled', 'awake'], yuk: ['stern', 'smile'], yang: ['smile', 'shock', 'disguise'], hoseung: ['laugh'], josin: ['aged'],
-  dosa: ['smile'], yeomra: ['stern'], jeong13: ['laugh'], chae: ['shy', 'tears'], seomwol: ['smile', 'sly'], gyeongpae: ['blush', 'sly'],
-  chunun: ['ghost', 'giggle'], gyeonghong: ['disguise', 'smile'], nanyang: ['smile'], yoyeon: ['blade', 'smile'], neungpa: ['sad', 'smile'],
-};
-const BONDS8 = ['chae', 'seomwol', 'gyeongpae', 'chunun', 'gyeonghong', 'nanyang', 'yoyeon', 'neungpa'];
-for (const b of BONDS8) FACES['fairy_' + b] = [];
-const NOFACE = ['jeongsado', 'dusa', 'taehu', 'hwangje', 'wolwang', 'yeonwang', 'yongwang', 'hwanggeon', 'jijang', 'yumo', 'seodong'];
-const ITEMS = { 'it-yangryu': 'item_yangryu', 'it-geomungo': 'item_geomungo', 'it-sijeon': 'item_sijeon', 'it-yeogwan': 'item_yeogwan', 'it-bujeok': 'item_bujeok', 'it-bujeol': 'item_bujeol', 'it-cheonrima': 'item_cheonrima', 'it-tungso': 'item_tungso', 'it-mungbang': 'item_mungbang', 'it-chammageom': 'item_chammageom', 'it-bisu': 'item_bisu', 'it-mulbyeong': 'item_mulbyeong', 'it-hasa': 'item_hasa', 'it-girinpo': 'item_girinpo' };
-const HOUSE = ['house_inn', 'house_byeoldang', 'house_seungsang', 'house_chwimi'];
-const BGM = ['calm', 'josin', 'lotus', 'hell', 'spring', 'mountain', 'feast', 'geomungo', 'prank', 'march', 'tungso', 'palace', 'night', 'water', 'dream', 'chwimi', 'awake', 'reflect'];
-// 출판사·유통사 이름(이 파일에도 그대로 쓰지 않으려고 나누어 적는다)과 임시 데이터 표시
-const FORBIDDEN = ['지학' + '사', '티솔' + '루션', 'T' + 'solution', '(임시)', 'TODO'];
-
-// ───────── 1. 정적 점검: 데이터 파일을 node에서 읽는다
-log('▶ 데이터 파일');
-const DATA_DIR = path.join(ROOT, 'js', 'data');
-const FILES = ['people', 'chapters', 'board', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes'];
-const sandbox = { window: {} };
-vm.createContext(sandbox);
-for (const f of FILES) {
-  const p = path.join(DATA_DIR, f + '.js');
-  if (!ok(fs.existsSync(p), 'files', f + '.js가 없음')) continue;
-  try { vm.runInContext(fs.readFileSync(p, 'utf8'), sandbox, { filename: p }); } catch (e) { ok(false, 'files', f + '.js를 읽다 오류: ' + e.message); }
-}
-const D = sandbox.window.GUUN || {};
-
-// 모든 글과 그 자리를 모은다(getter도 읽는다)
-const strings = [];
-const objs = [];
-(function walk(v, at) {
-  if (typeof v === 'string') { strings.push({ at, s: v }); return; }
-  if (!v || typeof v !== 'object') return;
-  objs.push({ at, o: v });
-  if (Array.isArray(v)) v.forEach((x, i) => walk(x, at + '[' + i + ']'));
-  else for (const k of Object.keys(v)) walk(v[k], at + '.' + k);
-})(D, 'GUUN');
-
-// 原文: 대조 전이므로 orig가 하나도 없어야 한다
-const origs = objs.filter((x) => !Array.isArray(x.o) && Object.prototype.hasOwnProperty.call(x.o, 'orig'));
-ok(origs.length === 0, 'orig', '대조 전인 글에 orig(原文)가 있음: ' + origs.map((x) => x.at).slice(0, 5).join(', '));
-for (const sc of D.scenes || []) {
-  const a = sc.activity;
-  if (a && a.passage) ok(a.passageKind === 'gloss', 'orig', sc.id + ': 활동 글이 풀이 바탕(passageKind: gloss)이 아니면 原文 낙관이 붙음');
-  for (const hd of [].concat(sc.heading || [])) {
-    ok(hd.status === '대조 대기' && !hd.orig && hd.gloss && hd.hoe >= 1 && hd.hoe <= 16, 'orig', sc.id + ': 회목은 풀이만, 대조 대기 표시로 둔다');
+const SHOTS = path.join(ROOT, 'tests/shots'); fs.mkdirSync(SHOTS, { recursive: true });
+const EXPECTED_CHECKS = 6;
+const issues = []; let passed = 0, networkViolation = null;
+for (const folder of ['core', 'game', 'data']) for (const file of fs.readdirSync(path.join(ROOT, 'js', folder)).filter((f) => f.endsWith('.js'))) {
+  const source = fs.readFileSync(path.join(ROOT, 'js', folder, file), 'utf8');
+  for (const m of source.matchAll(/([을이은와])\(([를가는과])\)|\(([을이은와])\)([를가는과])/g)) {
+    if (!['을를', '이가', '은는', '와과'].includes((m[1] || m[3]) + (m[2] || m[4]))) continue;
+    assert.ok(/\]\]$/.test(source.slice(Math.max(0, m.index - 2), m.index)), file + ': 두 꼴 조사');
   }
 }
-ok(!(D.interp && D.interp.lastWords && D.interp.lastWords.orig), 'orig', '대사의 대답에 orig가 있음(대조 대기)');
-ok(!(D.journal && D.journal.bondLink && D.journal.bondLink.evidence), 'orig', '인연 잇기의 evidence는 엔진이 原文 낙관으로 그림 — 대조 전에는 reveal(풀이)로 둔다');
-
-// 그림·소리 이름
-const usedSC = new Set();
-for (const sc of D.scenes || []) {
-  for (const k of ['img', 'imgAfter', 'roomImg']) if (sc[k]) { ok(SC.includes(sc[k]), 'asset', sc.id + '.' + k + ' = ' + sc[k] + ' (기획서 §17-2에 없는 이름)'); usedSC.add(sc[k]); }
-  if (sc.bgm) ok(BGM.includes(sc.bgm), 'asset', sc.id + '.bgm = ' + sc.bgm + ' (기획서 §18에 없는 곡)');
-  if (sc.item) ok(ITEMS[sc.item.id] && ITEMS[sc.item.id] === sc.item.img, 'asset', sc.id + ': 물건 ' + sc.item.id + '의 그림 이름 ' + sc.item.img + '가 §17-6과 다름');
-}
-for (const n of SC) ok(usedSC.has(n), 'asset', '§17-2의 장면 그림 ' + n + '을(를) 쓰는 장면이 없음');
-ok(Object.keys(ITEMS).every((id) => (D.scenes || []).some((s) => s.item && s.item.id === id)), 'asset', '§17-6의 물건 14개가 모두 장면에 있지 않음');
-for (const [ch, c] of Object.entries(D.chapters || {})) if (c.bgm) ok(BGM.includes(c.bgm), 'asset', ch + '장 bgm = ' + c.bgm);
-for (const st of (D.house || {}).stages || []) ok(HOUSE.includes(st.img), 'asset', '집 단계 ' + st.id + '의 그림 ' + st.img);
-for (const [id, p] of Object.entries(D.people || {})) {
-  if (p.noFace) { ok(NOFACE.includes(id), 'asset', '얼굴 없는 인물 목록에 없는 ' + id); continue; }
-  ok(FACES[p.face] !== undefined, 'asset', '인물 ' + id + '의 얼굴 ' + p.face + '가 §17-3에 없음');
-  for (const m of p.moods || []) ok((FACES[p.face] || []).includes(m), 'asset', '인물 ' + id + '의 표정 ' + m + '가 §17-3에 없음');
-}
-for (const f of Object.keys(FACES)) ok(Object.values(D.people || {}).some((p) => p.face === f), 'asset', '§17-3의 얼굴 ' + f + '을(를) 가진 인물이 없음');
-for (const b of D.bonds || []) {
-  ok(FACES[b.face] !== undefined, 'asset', '인연 ' + b.id + '의 얼굴');
-  ok(b.fairyFace === 'fairy_' + b.id, 'asset', '인연 ' + b.id + '의 선녀 얼굴은 fairy_' + b.id);
-}
-// 얼굴이 나오는 표기: say와 {호칭|id}
-const faceOK = (id, mood) => { const p = (D.people || {})[id]; return !!p && !p.noFace && (!mood || (p.moods || []).includes(mood)); };
-(function walkSay(v, at) {
-  if (!v || typeof v !== 'object') return;
-  if (Array.isArray(v)) { v.forEach((x, i) => walkSay(x, at + '[' + i + ']')); return; }
-  if (v.say) ok(faceOK(v.say, v.mood), 'face', at + ': say ' + v.say + (v.mood ? '_' + v.mood : '') + '는 얼굴(표정) 그림이 있는 인물이 아님');
-  for (const k of Object.keys(v)) walkSay(v[k], at + '.' + k);
-})(D, 'GUUN');
-for (const { at, s } of strings) for (const m of s.matchAll(/\{([^}|]+)\|([\w-]+)\}/g)) ok(faceOK(m[2]), 'face', at + ': {' + m[1] + '|' + m[2] + '}는 얼굴이 있는 인물만');
-
-// 쓰면 안 되는 낱말(데이터와 데이터 약속 문서)
-for (const f of [...FILES.map((n) => path.join(DATA_DIR, n + '.js')), path.join(DATA_DIR, 'README.md')]) {
-  if (!fs.existsSync(f)) continue;
-  const t = fs.readFileSync(f, 'utf8');
-  for (const w of FORBIDDEN) ok(!t.includes(w), 'words', path.basename(f) + '에 쓰면 안 되는 낱말: ' + w);
-}
-
-// 교과서 본문 추출본과 15자 이상 겹치는 글(공백·문장부호를 뺀 글자로 잰다)
-const N = 15;
-const norm = (s) => String(s).replace(/\*\*/g, '').replace(/\{([^}|]+)\|[\w-]+\}/g, '$1').replace(/\[\[[\w-]+\]\]/g, '').replace(/[\s.,!?'"“”‘’·…\-—–()\[\]{}「」『』《》〈〉:;~|\/\\]/g, '');
-if (fs.existsSync(TEXTBOOK)) {
-  const tb = norm(fs.readFileSync(TEXTBOOK, 'utf8'));
-  const grams = new Set();
-  for (let i = 0; i + N <= tb.length; i++) grams.add(tb.slice(i, i + N));
-  let hits = 0;
-  for (const { at, s } of strings) {
-    const t = norm(s);
-    for (let i = 0; i + N <= t.length; i++) {
-      if (grams.has(t.slice(i, i + N))) { hits++; ok(false, 'overlap', at + ' — 교과서 본문과 ' + N + '자 이상 겹침: "' + t.slice(i, i + N) + '"'); break; }
-    }
-  }
-  log('  교과서 본문 추출본 ' + tb.length + '자와 견줌 · 겹친 글 ' + hits + '개');
-} else log('  교과서 본문 추출본이 이 기기에 없어 겹침 점검을 건너뜀');
-
-// 규칙(정적)
-const scenes = D.scenes || [];
-const dream = scenes.filter((s) => s.ch === '2');
-ok(dream.length === 14, 'rules', '꿈 장면이 14개가 아님: ' + dream.length);
-for (const s of dream) {
-  ok(s.activity && s.activity.slots && s.activity.slots.length, 'rules', s.id + ': 읽기 활동이 없음');
-  ok(s.mind && (s.mind.options || []).length >= 2, 'rules', s.id + ': 마음 고르기 선택지가 없음');
-  ok(s.item && s.item.id, 'rules', s.id + ': 집에 놓을 물건이 없음');
-  ok((D.board || []).some((q) => q.id === s.square && q.scene === s.id), 'rules', s.id + ': 말판 칸과 이어지지 않음');
-  for (const o of (s.mind || {}).options || []) ok(o.evidence, 'rules', s.id + ': 마음 ' + o.id + '에 원문 근거가 없음');
-}
-for (const s of scenes.filter((x) => ['0', '1', '3'].includes(x.ch) && (x.kind || 'scene') === 'scene' && x.id !== 'c1-bridge')) {
-  ok(s.activity, 'rules', s.id + ': 읽기 활동이 없음');
-}
-const meets = scenes.filter((s) => s.meet);
-ok(meets.length === 8 && new Set(meets.map((s) => s.meet)).size === 8 && BONDS8.every((b) => meets.some((s) => s.meet === b)), 'pearl', '여덟 인연을 처음 만나는 장면이 여덟이 아님');
-for (const s of meets) ok(s.pearl && typeof s.pearl.x === 'number' && typeof s.pearl.y === 'number', 'pearl', s.id + ': 처음 만나는 장면에 구슬이 없음');
-ok(scenes.filter((s) => s.pearl).length === 8, 'pearl', '구슬은 처음 만나는 여덟 장면에만, 하나씩');
-const canon = meets.filter((s) => s.pearl && s.pearl.trace === 'canon').map((s) => s.meet).sort();
-ok(JSON.stringify(canon) === JSON.stringify(['gyeongpae', 'nanyang']), 'pearl', '원작 근거가 있는 구슬은 정경패·난양공주 둘뿐이어야 함: ' + canon);
-ok(meets.filter((s) => s.pearl && s.pearl.trace === 'fiction').length === 6, 'pearl', '나머지 여섯 구슬은 게임 설정(trace: fiction)');
-// 소원 채움(출장입상은 'chuljang.chul'처럼 점 표기로 반 칸씩 — 소원 id만 떼어 본다)
-const fillsOf = (ids) => [].concat(ids || []).map((w) => String(w).split('.')[0]);
-const allFills = [...scenes.flatMap((s) => [...fillsOf(s.fills).map((w) => [s.id, w]), ...fillsOf(s.item && s.item.fills).map((w) => [s.item.id, w])]), ...(D.board || []).flatMap((q) => fillsOf(q.fills).map((w) => [q.id, w]))];
-ok(!allFills.some(([, w]) => w === 'misaek'), 'wish', '미색을 채우는 것이 있음');
-const music = new Set(['it-geomungo', 'it-tungso', 's04-geomungo', 's12-neungpa']);
-ok(allFills.filter(([, w]) => w === 'pungryu').every(([src]) => music.has(src)), 'wish', '풍류는 음악·악기로만 채운다: ' + allFills.filter(([, w]) => w === 'pungryu').map(([s]) => s));
-ok((D.bonds || []).every((b) => !b.fills && !b.wish), 'wish', '인연이 소원을 채움');
-// 일지·해석
-for (const p of (D.journal || {}).pairs || []) {
-  if (p.scored !== false) ok(p.evidence && p.wish, 'journal', p.id + ': 채점하는 짝에 근거가 없음');
-  ok(!BONDS8.includes(p.event), 'journal', p.id + ': 인연을 소원 칸에 넣음');
-}
-ok(((D.journal || {}).pairs || []).filter((p) => p.scored !== false).length === 5, 'journal', '채점하는 일지 짝은 다섯');
-const I = D.interp || {};
-ok((I.options || []).length >= 3 && (I.options || []).length <= 4, 'interp', '해석 선택지는 3~4개');
-const evIds = new Set((I.evidence || []).map((e) => e.id));
-ok(evIds.size >= 3 && (I.evidence || []).every((e) => e.text), 'interp', '근거 구절 후보가 모자람');
-for (const o of I.options || []) ok((o.fits || []).length && o.fits.every((e) => evIds.has(e)), 'interp', o.id + ': 어울리는 근거 후보가 없음');
-// 엔진이 after를 스스로 거르므로 데이터는 after 표시가 붙은 맨 배열이다(읽는 때에 따라 바뀌는 getter 없음)
-const evDesc = Object.getOwnPropertyDescriptor(I, 'evidence') || {};
-ok(Array.isArray(evDesc.value) && !evDesc.get && !I.allEvidence, 'interp', 'interp.evidence가 after 표시를 단 맨 배열이 아님(getter·allEvidence 임시 장치가 남음)');
-ok(JSON.stringify((I.evidence || []).filter((e) => e.after).map((e) => e.id)) === '["E8","E9","E10"]', 'interp', '대사의 대답 뒤에만 보일 근거(after)는 E8~E10');
-
-// ───────── 기획서가 더한 항목(README 17절)
-// 출장입상의 두 칸: 장수는 정서대원수, 재상은 대승상 칸이 반씩 채운다(점 표기, part 항목 없음)
-const sqOf = (id) => (D.board || []).find((q) => q.id === id) || {};
-ok((sqOf('sq-wonsu').fills || []).includes('chuljang.chul') && (sqOf('sq-seungsang').fills || []).includes('chuljang.ip'), 'wish', '출장입상은 sq-wonsu(chuljang.chul)·sq-seungsang(chuljang.ip)이 반씩 채운다');
-ok(!(D.board || []).some((q) => q.part), 'wish', '말판 칸의 part는 fills의 점 표기로 합친다');
-ok(JSON.stringify(((D.wishes || []).find((w) => w.id === 'chuljang') || {}).parts) === JSON.stringify([{ id: 'chul', name: '장수' }, { id: 'ip', name: '재상' }]), 'wish', '출장입상의 parts가 장수·재상 두 칸이 아님');
-// 다시 만남 여러 명
-const scOf = (id) => scenes.find((s) => s.id === id) || {};
-const remeetIds = (id) => [].concat(scOf(id).remeet || []).map((r) => r.bond);
-ok(Array.isArray(scOf('s13-seungsang').remeet) && ['gyeongpae', 'nanyang'].every((b) => remeetIds('s13-seungsang').includes(b)), 'bond', 's13의 remeet는 정경패·난양공주 두 사람의 배열');
-ok(Array.isArray(scOf('s14-honrye').remeet) && remeetIds('s14-honrye').includes('chae') && remeetIds('s14-honrye').length >= 2, 'bond', 's14의 remeet는 진채봉을 포함한 여러 사람의 배열');
-for (const s of scenes) for (const r of [].concat(s.remeet || [])) ok(BONDS8.includes(r.bond) && r.story && !r.fills, 'bond', s.id + ': 다시 만남 ' + r.bond + '의 모양');
-// 꿈 일지: 다시 읽기에서 더하는 칩, '어느 칸도 아님' 짝
-ok(((D.journal || {}).extra || []).includes('학문(어려서 성현의 글을 읽음)'), 'journal', '다시 읽기 더함 칩 \'학문\'(기획서 §13-1)이 journal.extra에 없음');
-ok((((D.journal || {}).pairs) || []).some((p) => p.id === 'h-prison' && p.wish === null && p.scored === false), 'journal', 'h-prison은 어느 소원과도 잇지 않는 해석 짝');
-// 화면 문구를 엔진에서 노트 데이터로: 빈 선방의 글(향로의 불은 꺼졌다)과 구슬 찾기의 게임 설정 카드
-const NU = (D.notes || {}).ui || {};
-ok(NU.zenCaption && /꺼/.test(NU.zenCaption) && !/식지 않/.test(NU.zenCaption), 'notes', 'notes.ui.zenCaption: 원작대로 향로의 불이 꺼진 선방이어야 함');
-ok(NU.pearlFiction && NU.pearlFiction.id && NU.pearlFiction.body && NU.pearlFiction.real, 'notes', 'notes.ui.pearlFiction(구슬 찾기 게임 설정 카드)이 없음');
-ok(NU.pearlCanon && NU.pearlCanon.title, 'notes', 'notes.ui.pearlCanon(원작 근거 구슬의 알아 두기 제목)이 없음');
-const GAME_DIR = path.join(ROOT, 'js', 'game');
-const src = (f) => fs.readFileSync(path.join(GAME_DIR, f), 'utf8');
-ok(!/식지 않았/.test(src('wake.js')), 'notes', 'wake.js에 원작과 어긋난 선방 문구가 남음');
-ok(!/구슬 찾기는 게임 장치예요/.test(src('pearl.js')), 'notes', 'pearl.js에 구슬 게임 설정 문구가 박혀 있음(notes 데이터로 옮긴다)');
-ok((D.notes || {}).teacher && D.notes.teacher.extra && D.notes.teacher.ledger, 'notes', '교사용 안내 덧붙임(extra·ledger)이 없음');
-// README 17절: 이번에 엔진이 읽게 된 항목은 '엔진 대기'가 남지 않는다(13번 해석 선택지의 어울리는 근거 표시만 남음)
-{
-  const md = fs.readFileSync(path.join(DATA_DIR, 'README.md'), 'utf8');
-  const sec = md.slice(md.indexOf('## 17.'), md.indexOf('## 18.'));
-  const waiting = sec.split('\n').filter((l) => /^\| \d+ \|/.test(l) && /엔진 대기/.test(l)).map((l) => l.split('|')[1].trim());
-  ok(JSON.stringify(waiting) === '["13"]', 'readme', 'README 17절에서 아직 \'엔진 대기\'인 항목: ' + waiting.join(', '));
-}
-// 조사 두 꼴을 함께 찍지 않는다: 엔진·데이터 글에 '을(를)'·'(을)를'·'이(가)'·'은(는)'·'와(과)'가 없어야 한다(G.util.josa로 고른다).
-// 단, 읽기 활동의 빈칸([[칸]]) 바로 뒤는 낱말이 정해지지 않았으니 두 꼴을 둔다(시험지 표기)
-{
-  const JOSA2 = /([을이은와])\(([를가는과])\)|\(([을이은와])\)([를가는과])/g;
-  const PAIRS = new Set(['을를', '이가', '은는', '와과']);
-  const jsFiles = ['core', 'game', 'data'].flatMap((d) => fs.readdirSync(path.join(ROOT, 'js', d)).filter((f) => f.endsWith('.js')).map((f) => path.join(ROOT, 'js', d, f)));
-  for (const f of jsFiles) {
-    const t = fs.readFileSync(f, 'utf8');
-    for (const m of t.matchAll(JOSA2)) {
-      if (!PAIRS.has((m[1] || m[3]) + (m[2] || m[4]))) continue;
-      if (/\]\]$/.test(t.slice(Math.max(0, m.index - 2), m.index))) continue; // 빈칸 뒤
-      const line = t.slice(0, m.index).split('\n').length;
-      ok(false, 'josa', path.relative(ROOT, f).replace(/\\/g, '/') + ':' + line + ' 조사 두 꼴을 함께 찍음: ' + m[0]);
-    }
-  }
-}
-
-// ───────── 2. 화면 점검: 실제 데이터로 크롬에서
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.md': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' };
+const ok = (condition, where, message) => assert.ok(condition, where + ': ' + message);
+function critical(condition, message) { if (!condition) { const e = Error('CRITICAL: ' + message); e.critical = true; throw e; } }
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png', '.webp': 'image/webp', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
 const server = http.createServer((req, res) => {
-  const u = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-  const f = path.join(ROOT, u === '/' ? 'index.html' : u);
-  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
-  res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
-  fs.createReadStream(f).pipe(res);
+  const file = path.resolve(ROOT, '.' + decodeURIComponent(new URL(req.url, 'http://local').pathname));
+  if (!file.startsWith(path.resolve(ROOT) + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); res.end(); return; }
+  res.setHeader('content-type', TYPES[path.extname(file)] || 'application/octet-stream'); fs.createReadStream(file).pipe(res);
 });
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
-const ORIGIN = `http://127.0.0.1:${server.address().port}`;
-const BASE = `${ORIGIN}/index.html`;
+const ORIGIN = 'http://127.0.0.1:' + server.address().port, BASE = ORIGIN + '/index.html';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
-
-// 그림·소리는 모두 있어야 한다(완주 중 /assets/ 404는 실패). 글꼴만 글꼴 작업(T9)이 아직 만들지 않았다
-const ALLOW_MISSING = /(?!)/; // 글꼴 파일이 생겨 봐주는 404가 없다
-async function newPage(name, opt = {}) {
-  const ctx = await browser.newContext({ viewport: opt.viewport || { width: 390, height: 844 }, isMobile: opt.mobile !== false, hasTouch: opt.mobile !== false, deviceScaleFactor: 1, acceptDownloads: true });
-  const page = await ctx.newPage();
-  page.errs = []; page.reqs = []; page.tag = name;
-  page.on('pageerror', (e) => page.errs.push('pageerror: ' + e.message));
-  page.on('console', (m) => {
-    if (m.type() !== 'error') return;
-    const url = (m.location() || {}).url || '';
-    if (/Failed to load resource/.test(m.text()) && (ALLOW_MISSING.test(url) || !url)) return;
-    page.errs.push('console: ' + m.text() + ' @' + url);
+async function newPage(name, viewport, dpr = 1) {
+  const page = await (await browser.newContext({ viewport, deviceScaleFactor: dpr, acceptDownloads: true })).newPage();
+  page.setDefaultTimeout(10000); page.tag = name; page.errs = []; page.reqs = [];
+  page.on('pageerror', (e) => page.errs.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') page.errs.push(m.text()); });
+  page.on('response', (r) => { if (r.status() >= 400) page.errs.push(r.status() + ' ' + r.url()); });
+  page.on('request', (r) => {
+    const url = r.url(); page.reqs.push(url);
+    const local = new URL(url).origin === ORIGIN || /^(data|blob):/.test(url) || (name === 'file' && url.startsWith(pathToFileURL(ROOT).href));
+    if (!local) {
+      networkViolation = Object.assign(Error('CRITICAL: 바깥 요청 ' + url), { critical: true });
+      console.error(networkViolation.message);
+      page.close().catch((error) => console.error('종료 오류: ' + error.message));
+    }
   });
-  page.on('response', (r) => { if (r.status() >= 400 && !ALLOW_MISSING.test(r.url())) page.errs.push('http ' + r.status() + ': ' + r.url()); });
-  page.on('request', (r) => page.reqs.push(r.url()));
-  if (opt.toasts) await watchToasts(page);
+  await watchToasts(page);
+  await page.addInitScript(() => {
+    window.pngText = [];
+    const draw = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (...a) { window.pngText.push(String(a[0])); return draw.apply(this, a); };
+    window.audioNodes = 0;
+    const audio = (window.AudioContext || window.webkitAudioContext)?.prototype;
+    if (audio) for (const key of ['createOscillator', 'createBufferSource']) {
+      const fn = audio[key]; audio[key] = function (...a) { window.audioNodes++; return fn.apply(this, a); };
+    }
+  });
   return page;
 }
-// 알림(.toast)이 뜰 때마다(뜬 직후와 0.5초 뒤) 읽는 글 칸(.main-inner 가운데 위 막대 아래로 보이는 부분)과 진행 단추에 겹치는지 잰다.
-// 새로 고침·주소 이동을 지나도 page.toasts에 모인다
 async function watchToasts(page) {
   page.toasts = [];
   await page.exposeFunction('__toastSeen', (r) => page.toasts.push(r));
@@ -312,7 +110,7 @@ async function contrastCheck(page, where) {
     const rgb = (s) => (s.match(/[\d.]+/g) || []).map(Number);
     const lum = (c) => { const v = c.slice(0, 3).map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
     const out = [];
-    for (const e of document.querySelectorAll('.muted, .topbar .where small, .sq .sq-kind, .unscored, .credit')) {
+    for (const e of document.querySelectorAll('.muted, .topbar .where small, .sq .sq-kind, .unscored, .credit, .stage-speech .tx, .hud-wish, .hud-abilities span, .jp-score, .jp-block p')) {
       if (!e.offsetParent || !e.textContent.trim()) continue;
       let bg = null, faded = false;
       for (let n = e; n; n = n.parentElement) {
@@ -348,598 +146,313 @@ async function overflowCheck(page, where) {
   });
   ok(r.length === 0, where, '넘친 글: ' + r.join(', '));
 }
-const W = (page, ms = 150) => page.waitForTimeout(ms);
-const cur = (page) => page.evaluate(() => (window.G && G.app && G.app.current ? G.app.current() : null));
-const vbtn = (page, label) => page.locator('button:visible', { hasText: label });
-async function ready(page) { await page.waitForFunction(() => window.G && G.app && G.app.booted === true, null, { timeout: 8000 }); }
-async function finish(page) {
-  ok(page.errs.length === 0, page.tag, '오류: ' + page.errs.slice(0, 5).join(' | '));
-  const outside = page.reqs.filter((u) => !u.startsWith(ORIGIN) && !u.startsWith('data:') && !u.startsWith('blob:'));
-  ok(outside.length === 0, page.tag, '바깥으로 나간 요청: ' + outside.slice(0, 3).join(', '));
-  await page.context().close();
+
+const current = (page) => page.evaluate(() => G.app.current());
+const state = (page) => page.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
+const ready = (page) => page.waitForFunction(() => window.G?.app?.booted);
+const next = (page) => page.locator('#tray [data-act="next"]').click();
+async function start(page) { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); }
+async function resume(page) { await page.reload(); await ready(page); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('.play'); }
+async function boardReadiness(page) {
+  return page.evaluate(() => {
+    const boards = [...document.querySelectorAll('.board-art')];
+    // 선택과 판정을 같은 실행 안에서 끝내야 사이에 끝난 이미지 로딩을 오판하지 않는다.
+    const unready = boards.filter((art) => !art.classList.contains('has-img')).flatMap((art) =>
+      [...art.querySelectorAll('.board-img')].map((img) => ({ parentClass: art.className,
+        display: getComputedStyle(img).display, width: img.getBoundingClientRect().width,
+        naturalWidth: img.naturalWidth })));
+    return { count: boards.length, unready, exposed: unready.filter((img) => img.display !== 'none') };
+  });
 }
-// ONLY=휴대폰 node check-content.mjs 처럼 이름 일부를 주면 그 화면 점검만 돌린다(고치는 동안 빨리 보려고. 정적 점검은 늘 돈다)
+async function checks(page, where) {
+  const board = await boardReadiness(page);
+  if (board.count) {
+    assert.deepEqual(board.exposed, [], where + ': 배율 계산 전 원본 그림은 임시 틀에 늘려 그리지 않음');
+    await page.waitForSelector('.board-art.has-img .board-img');
+  }
+  await integerCheck(page, where); await contrastCheck(page, where); await overflowCheck(page, where);
+  assert.equal(await page.locator('.mark.orig:visible').count(), 0, '대조 전 原文 표시');
+}
+async function healthy(page) {
+  assert.deepEqual(page.errs, [], page.tag + ' 오류·404');
+  critical(!networkViolation, networkViolation?.message || '바깥 요청 없음');
+}
 async function run(name, fn) {
-  if (process.env.ONLY && !name.includes(process.env.ONLY)) return;
-  log('▶', name);
-  try { await fn(); } catch (e) { ok(false, name, '예외: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' / ') : e)); }
+  console.log('▶ ' + name);
+  try { await fn(); passed++; console.log('✓ ' + name); }
+  catch (error) { const e = networkViolation || error; issues.push(name + ': ' + e.message); console.error('✗ ' + name + ': ' + e.stack); if (e.critical) throw e; }
 }
-
-// 지금 장면(또는 꿈 일지)의 활동을 맞게 채운다(채점하지 않는 활동은 아무것이나)
-async function fill(page) {
-  const plan = await page.evaluate(() => {
-    const a = G.app.current().data.activity;
-    const choices = [...document.querySelectorAll('.activity:not(.solved) .choice')].map((b) => b.dataset.choice);
-    const used = new Set();
-    return a.slots.map((s) => {
-      const ans = [].concat(s.answer == null ? [] : s.answer);
-      const pick = ans.length ? (a.reusable ? ans[0] : ans.find((x) => !used.has(x))) : choices.find((c) => !used.has(c));
-      used.add(pick);
-      return { slot: s.id, pick };
-    });
-  });
-  for (const p of plan) {
-    await page.locator(`.activity:not(.solved) .slot[data-slot="${p.slot}"]`).click();
-    await page.locator(`.activity:not(.solved) .choice[data-choice="${p.pick.replace(/"/g, '\\"')}"]`).first().click();
+async function dismissToast(page) { const toast = page.locator('.toast:visible'); if (await toast.count()) await toast.click(); }
+async function lockChecks(page, memo) {
+  const saved = await state(page); critical(saved.awake, '선방 도착 전 깨어남 없음');
+  memo.awakeAt = saved.awakeAt;
+  const verify = async () => {
+    critical((await current(page))?.scene === 'c3-awake', '학생 잠금 뒤 꿈 장면 열림');
+    const s = await state(page); critical(s.awake && s.awakeAt === memo.awakeAt, '깨어남 기록 소실');
+  };
+  await page.evaluate(() => history.back()); await page.waitForTimeout(550); await verify(); await dismissToast(page);
+  await resume(page); await verify();
+  await page.locator('[data-tool="toc"]').click();
+  const blocked = await page.evaluate(() => G.app.list().slice(0, G.app.list().findIndex((s) => s.awakened)).map((s) => s.id));
+  for (const id of blocked) critical(await page.locator('.toc-scene[data-scene="' + id + '"]').isDisabled(), '목차 잠금 해제: ' + id);
+  await page.keyboard.press('Escape');
+  for (const query of ['?ch=0', '?ch=2', '?scene=e01-huayin', '?scene=c3-staff']) {
+    await page.goto(BASE + query); await ready(page); await verify(); await page.waitForTimeout(550); await dismissToast(page);
   }
+  memo.lock = true;
 }
-// 걸음마다: 原文 낙관이 화면에 있는지 본다(대조 전이라 하나도 없어야 한다)
-async function sealCheck(page, where) {
-  const n = await page.evaluate(() => [...document.querySelectorAll('.seal, .mark.orig')].filter((e) => /原文/.test(e.textContent)).length);
-  return ok(n === 0, where, '대조 전인데 原文 낙관이 화면에 보임(' + n + '개)');
+async function wrongWish(page) {
+  const words = await page.evaluate(() => G.app.current().data.words.filter((w) => !G.app.current().data.answers.includes(w.id)).map((w) => w.id));
+  assert.ok(words.length);
+  await page.locator('[data-word="' + words[0] + '"]').click();
+  assert.equal(await page.locator('[data-help="answer"]:visible').count(), 0);
+  await page.locator('[data-word="' + words[0] + '"]').click();
+  assert.equal(await page.locator('.wish-memo:visible').count(), 1);
+  await page.locator('[data-help="answer"]').click();
+  const answers = await page.evaluate(() => G.app.current().data.answers);
+  for (const id of answers) await page.locator('[data-word="' + id + '"]').click();
+  assert.deepEqual((await state(page)).ledger['a-wish'], { first: false, help: 'student', final: true });
 }
-
-// 걸음마다 화면을 살펴 적어 둔다(README 17절 항목이 화면에 나오는지). 끝난 뒤 fullRun이 확인한다
-async function observe(page, st, opt, memo) {
-  const o = (memo.obs = memo.obs || { heading: {}, walks: [], imgs: {}, pearls: {}, bonds: {} });
-  // 회목 카드(대조 대기: 原文 낙관 없이 풀이만)
-  if (st.step && st.step !== 'chapter' && st.step !== 'walk' && !(st.scene in o.heading)) {
-    o.heading[st.scene] = await page.evaluate(() => [...document.querySelectorAll('.scene-head .hoe-card')].map((e) => e.innerText));
-  }
-  // 말 걷기: 다 걸은 뒤(다음 단추가 있을 때) 말의 칸·옷·교지 카드·회목 카드·소원 상태
-  if (st.step === 'walk' && st.next) {
-    const w = await page.evaluate(() => {
-      const v = document.querySelector('.walk-blk .board-view');
-      const p = v && v.querySelector('.piece');
-      const g = document.querySelector('.walk-blk .gyoji-card');
-      const ch = G.app.wishes().find((x) => x.id === 'chuljang') || {};
-      return {
-        scene: document.querySelector('.play').dataset.scene, at: p && p.dataset.at, from: p && p.dataset.from, outfit: p ? p.dataset.outfit || '' : null,
-        gyoji: g ? g.innerText : null, hoe: [...document.querySelectorAll('.walk-blk .hoe-card')].map((e) => e.innerText).join(' / '),
-        chul: { filled: ch.filled, half: ch.half }, halfDom: !!document.querySelector('.walk-blk .wish-list [data-wish="chuljang"].half'),
-      };
-    });
-    if (!o.walks.length || o.walks[o.walks.length - 1].at !== w.at) o.walks.push(w);
-  }
-  // 장면 뒤 그림: 활동을 마친 뒤 그림이 바뀐다
-  if ((st.scene === 'c0-josin' || st.scene === 'c1-rebirth') && st.step === 'activity' && st.next) {
-    o.imgs[st.scene] = await page.evaluate(() => { const i = document.querySelector('.scene-head .scene-img img'); return i ? i.getAttribute('src') : null; });
-  }
-  // 숨은 구슬: 원작 근거 구슬은 알아 두기, 나머지는 게임 설정 카드
-  if (st.step === 'pearl' && !(st.scene in o.pearls)) {
-    o.pearls[st.scene] = await page.evaluate(() => ({ fic: document.querySelectorAll('.pearl-blk .mark.fiction').length, note: document.querySelectorAll('.pearl-blk .mark.note').length, text: (document.querySelector('.pearl-blk') || {}).innerText || '' }));
-  }
-  // 인연첩: 한 장면에서 여러 사람을 다시 만난다
-  if (st.step === 'bond' && !(st.scene in o.bonds)) {
-    o.bonds[st.scene] = await page.evaluate(() => [...document.querySelectorAll('section.bond .bond-card')].map((c) => c.dataset.bond));
-  }
-  // 꿈 일지: '어느 칸도 아님'과 다시 읽기의 더함 칩
-  if (st.scene === 'c4-journal' && st.step === 'activity' && st.unsolved && !o.journal) {
-    o.journal = await page.evaluate(() => ({
-      none: !!document.querySelector('.interp-pair[data-pair="h-prison"] .ip-opt[data-wish="none"]'),
-      extra: !!document.querySelector('.activity .choice[data-choice="학문(어려서 성현의 글을 읽음)"]'),
-    }));
-    if (o.journal.none) { await page.locator('.interp-pair[data-pair="h-prison"] .ip-opt[data-wish="none"]').click(); await W(page, 60); }
-    o.journal.picked = await page.evaluate(() => ((G.save.state.journal || {}).picks || {})['h-prison']);
-  }
-  // 인연 잇기: 미색이 드러난 뒤 근거(풀이)와 해석 카드
-  if (st.step === 'journal-bond' && st.next && !o.reveal) {
-    o.reveal = await page.evaluate(() => {
-      const out = document.querySelector('.bond-link .link-out');
-      return { gloss: out ? out.querySelectorAll('.pair.gloss-only').length : 0, interp: out ? out.querySelectorAll('.mark.interp').length : 0, text: out ? out.innerText : '' };
-    });
-  }
-  // 빈 선방의 글
-  if (st.step === 'awake' && !o.zen) o.zen = await page.evaluate(() => (document.querySelector('.zen-cap') || {}).innerText || '');
+async function wrongMatch(page) {
+  const picks = await page.evaluate(() => G.data.journal.pairs.map((p) => ({ id: p.id, wrong: G.data.wishes.find((w) => !w.dreamHidden && w.id !== p.wish).name })));
+  assert.equal(picks.length, 5); assert.equal(await page.locator('[data-act="check"]').isDisabled(), true);
+  for (const p of picks) { await page.locator('[data-slot="' + p.id + '"]').click(); await page.locator('[data-choice="' + p.wrong + '"]').click(); }
+  await page.locator('[data-act="check"]').click(); assert.ok(await page.locator('.slot.wrong').count());
+  await page.locator('[data-help="memo"]').click(); await page.locator('[data-help="answer"]').click(); await page.locator('[data-act="check"]').click();
+  assert.deepEqual((await state(page)).ledger['j-match'], { first: false, help: 'student', final: true });
 }
-
-// 한 걸음 진행. 선생님용 단추는 쓰지 않는다. opt.pearls: 찾을 구슬 수, opt.revise: 해석 한 번 고치기
-async function act(page, opt, memo) {
-  const st = await page.evaluate(() => {
-    const play = document.querySelector('.play');
-    return {
-      step: play && play.dataset.step,
-      scene: play && play.dataset.scene,
-      unsolved: !!document.querySelector('.activity:not(.solved)'),
-      mind: !!document.querySelector('.mind-opt:not([disabled])'),
-      staff: !!document.querySelector('[data-act="staff"]:not([disabled])'),
-      must: !!document.querySelector('[data-must]:not([disabled])'),
-      revise: !!document.querySelector('[data-act="revise"]:not([disabled])'),
-      pearl: !!document.querySelector('.pearl-spot:not(.found):not([disabled])'),
-      next: !!document.querySelector('#tray button[data-act="next"]'),
-      sheet: !!document.querySelector('.sheet-back'),
-      teacherUsed: false,
-    };
-  });
-  if (st.sheet) throw new Error('예상하지 못한 시트가 떠 있음');
-  if (st.step && memo.lastStep !== st.scene + '/' + st.step) { memo.lastStep = st.scene + '/' + st.step; memo.steps++; if (!(await sealCheck(page, 'seal ' + memo.lastStep))) memo.sealFail = true; }
-  await observe(page, st, opt, memo);
-  const ch = st.step ? await page.evaluate(() => document.querySelector('.play').dataset.ch) : null;
-  // 장마다 대표 화면을 찍는다(tests/shots/, 사람이 보는 용도)
-  if (opt.shots && st.step && SHOT_STEPS.includes(ch + '/' + st.step) && !(memo.shot = memo.shot || {})[ch + '/' + st.step]) {
-    memo.shot[ch + '/' + st.step] = true;
-    await W(page, 450);
-    await integerCheck(page, opt.shots + ' ' + ch + '/' + st.step);
-    await overflowCheck(page, opt.shots + ' ' + ch + '/' + st.step);
-    await contrastCheck(page, opt.shots + ' ' + ch + '/' + st.step);
-    fs.mkdirSync(SHOTS, { recursive: true });
-    await page.screenshot({ path: path.join(SHOTS, `play_${opt.shots}_${ch}_${st.step}.png`) });
-  }
-  // 깨어난 뒤(4장 첫걸음): 뒤로 가기·새로 고침·목차·주소로 꿈(0~3장)에 못 돌아간다
-  if (opt.lock && ch === '4' && !memo.lockDone) { memo.lockDone = true; await lockChecks(page, opt.name); return; }
-  // 장면 중간(활동을 마친 뒤 마음 고르기)에 새로 고침 → 그 장면 처음부터
-  if (opt.reload && !memo.reloaded && st.step === 'mind' && st.scene === memo.reloadAt) {
-    memo.reloaded = true;
-    const before = await page.evaluate(() => JSON.stringify(G.save.state.ledger));
-    await page.reload(); await ready(page);
-    await page.waitForSelector('.title-screen');
-    await vbtn(page, '이어 하기').first().click();
-    await page.waitForSelector('.play');
-    const c = await cur(page);
-    ok(c.scene === st.scene && (c.step === 'read' || c.step === 'chapter'), opt.name, '장면 중간에 새로 고침한 뒤 그 장면 처음부터가 아님: ' + JSON.stringify({ scene: c.scene, step: c.step }));
-    memo.reloadLedger = before;
-    return;
-  }
-  // 일부러 틀려 도움 사다리(틀린 칸 표시 → 여백 메모 → 정답 보기)를 본다. opt.wrong에 적은 장마다 한 번
-  if (opt.wrong && st.step === 'activity' && st.unsolved && opt.wrong.includes(ch) && !(memo.wrongDone = memo.wrongDone || {})[ch]) {
-    const id = await ladder(page, opt.name);
-    if (id) { memo.wrongDone[ch] = true; (memo.wrongActs = memo.wrongActs || []).push(id); return; }
-  }
-  if (st.step === 'activity' && st.unsolved) { await fill(page); await page.locator('button[data-act="check"]').click(); await W(page, 80); return; }
-  if (st.step === 'mind' && st.mind) { await page.locator('.mind-opt').first().click(); await W(page, 60); return; }
-  if (st.step === 'pearl' && st.pearl && memo.pearls < (opt.pearls || 0)) { await page.locator('.pearl-spot').click(); memo.pearls++; await W(page, 80); return; }
-  if (st.staff) { await page.locator('[data-act="staff"]').click(); await W(page, 80); return; }
-  if (st.step === 'interp-pick' && st.must) {
-    memo.firstEv = memo.firstEv || await page.locator('.interp-pick-box .ev-opt').count();
-  }
-  if (st.must) { await page.locator('[data-must]:not([disabled])').first().click(); await W(page, 60); return; }
-  if (st.step === 'interp-revise' && st.revise && opt.revise && !memo.revised) {
-    memo.revised = true;
-    await page.locator('[data-act="revise"]').click(); await W(page, 120);
-    const box = page.locator('.interp-revise .interp-pick-box').last();
-    memo.reviseEv = await box.locator('.ev-opt').count();
-    await box.locator('.interp-opt[data-opt="i-nondual"]').click();
-    await box.locator('.ev-opt[data-ev="E9"]').click();
-    await W(page, 80);
-    return;
-  }
-  if (st.next) { await page.locator('#tray button[data-act="next"]').click(); await W(page, 60); return; }
-  await W(page, 120);
+const ACTION = { study: 'munjang', geomungo: 'eumak', sword: 'muye', strategy: 'jiryak' };
+function plannedAction(scene, step, mode) {
+  const n = Number(scene.id.slice(1, 3)), turn = step === 'prep1' ? 0 : 1;
+  const hit = mode === 'hit' || (mode === 'mix' && (n % 3 === 0 || (n % 3 === 1 && turn === 0)));
+  return Object.keys(ACTION).find((id) => scene.core.includes(ACTION[id]) === hit);
 }
-const SHOTS = path.join(ROOT, 'tests', 'shots');
-fs.mkdirSync(SHOTS, { recursive: true });
-// 장마다 찍을 걸음(장/걸음)
-const SHOT_STEPS = ['0/chapter', '0/read', '0/activity', '1/read', '1/activity', '2/walk', '2/read', '2/activity', '2/mind', '2/item', '2/pearl', '3/read', '3/strike', '3/awake',
-  '4/journal-wishes', '4/activity', '4/journal-bond', '4/journal-pearls', '5/read', '5/interp-pick', '5/interp-revise', '5/ending', 'R/result'];
-
-// 일부러 틀리기: 정답이 아닌 선택지(어느 칸의 정답도 아닌 것)를 첫 칸에 넣고 확인 → 틀린 칸 표시 → 여백 메모 → 정답 보기 → 확인.
-// 채점하지 않거나 헷갈리는 선택지가 없는 활동이면 null(그냥 맞게 푼다)
-async function ladder(page, where) {
-  const plan = await page.evaluate(() => {
-    const a = G.app.current().data.activity;
-    if (!a || a.scored === false) return null;
-    const choices = [...document.querySelectorAll('.activity:not(.solved) .choice')].map((b) => b.dataset.choice);
-    const answers = new Set(a.slots.flatMap((s) => [].concat(s.answer == null ? [] : s.answer)));
-    // 칸마다 다시 쓸 수 있는 선택지(꿈 일지 맞대기)면 첫 칸의 정답이 아닌 것, 아니면 어느 칸의 정답도 아닌 것
-    const first = new Set([].concat(a.slots[0].answer == null ? [] : a.slots[0].answer));
-    const decoy = a.reusable ? choices.find((c) => !first.has(c)) : choices.find((c) => !answers.has(c));
-    if (!decoy) return null;
-    const used = new Set(a.reusable ? [] : [decoy]);
-    return { id: a.id, picks: a.slots.map((s, i) => {
-      if (i === 0) return { slot: s.id, pick: decoy };
-      const ans = [].concat(s.answer == null ? [] : s.answer);
-      const pick = ans.length ? (a.reusable ? ans[0] : ans.find((x) => !used.has(x))) : choices.find((c) => !used.has(c));
-      used.add(pick);
-      return { slot: s.id, pick };
-    }) };
-  });
-  if (!plan) return null;
-  for (const p of plan.picks) {
-    await page.locator(`.activity:not(.solved) .slot[data-slot="${p.slot}"]`).click();
-    await page.locator(`.activity:not(.solved) .choice[data-choice="${p.pick.replace(/"/g, '\\"')}"]`).first().click();
+async function savePng(page, tag, s) {
+  await page.locator('.name-in').fill('검증');
+  const promise = page.waitForEvent('download'); await page.locator('[data-act="save-image"]').click(); const download = await promise;
+  assert.equal(download.suggestedFilename(), '구운몽_꿈일지_검증.png');
+  const file = path.join(SHOTS, 'complete_' + tag + '.png'); await download.saveAs(file);
+  const bytes = fs.readFileSync(file);
+  assert.ok(bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])));
+  let offset = 8, data = 0, ended = false;
+  while (offset < bytes.length) {
+    const length = bytes.readUInt32BE(offset), type = bytes.toString('ascii', offset + 4, offset + 8);
+    assert.ok(offset + length + 12 <= bytes.length);
+    if (offset === 8) { assert.equal(type, 'IHDR'); assert.equal(bytes.readUInt32BE(offset + 8), 900); assert.ok(bytes.readUInt32BE(offset + 12) >= 600); }
+    if (type === 'IDAT') data += length;
+    if (type === 'IEND') { assert.equal(length, 0); ended = true; }
+    offset += length + 12;
   }
-  ok(await page.locator('[data-help="memo"]:visible').count() === 0, where, plan.id + ': 틀리기 전에 여백 메모가 보임');
-  await page.locator('button[data-act="check"]').click(); await W(page, 150);
-  ok(await page.locator('.activity .slot.wrong').count() > 0, where, plan.id + ': 틀린 칸 표시가 없음');
-  ok(await page.locator('[data-help="answer"]:visible').count() === 0, where, plan.id + ': 여백 메모 전에 정답 보기가 열림');
-  if (!ok(await page.locator('[data-help="memo"]:visible').count() === 1, where, plan.id + ': 틀린 뒤 여백 메모 단추가 없음')) return plan.id;
-  await page.locator('[data-help="memo"]:visible').click(); await W(page, 120);
-  ok(await page.locator('.activity .memo:visible').count() > 0, where, plan.id + ': 여백 메모가 보이지 않음');
-  if (!ok(await page.locator('[data-help="answer"]:visible').count() === 1, where, plan.id + ': 여백 메모 뒤 정답 보기가 열리지 않음')) return plan.id;
-  await page.locator('[data-help="answer"]:visible').click(); await W(page, 120);
-  await page.locator('button[data-act="check"]').click(); await W(page, 150);
-  ok(await page.locator('.activity.solved').count() >= 1, where, plan.id + ': 정답 보기 뒤 확인했는데 끝나지 않음');
-  return plan.id;
+  assert.ok(ended && data > 10000 && offset === bytes.length);
+  const pixels = await page.evaluate(async (base64) => {
+    const img = new Image(); img.src = 'data:image/png;base64,' + base64; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0); const p = g.getImageData(0, 0, c.width, c.height).data;
+    const colors = new Set(); let dark = 0;
+    for (let i = 0; i < p.length; i += 4) { if (p[i] + p[i + 1] + p[i + 2] < 420) dark++; if (i % 128 === 0) colors.add(p.slice(i, i + 4).join(',')); }
+    return { colors: colors.size, dark };
+  }, bytes.toString('base64'));
+  assert.ok(pixels.colors > 10 && pixels.dark > 1000, '빈 PNG가 아님');
+  const texts = await page.evaluate(() => window.pngText.join(' '));
+  assert.ok(texts.includes('꿈에서 쌓은 것 ' + s.best + ' → 깨고 남은 것 0'));
+  for (const word of ['점수로 평가하지 않아요', '고친 흔적', '소원', '구슬', '검증']) assert.ok(texts.includes(word), 'PNG 내용 ' + word);
+  console.log('  실제 PNG ' + path.basename(file) + ' ' + bytes.length + 'B · 색 ' + pixels.colors + ' · 글 픽셀 ' + pixels.dark);
 }
-
-// 깨어난 뒤 잠금: 뒤로 가기·새로 고침·목차·주소 어느 것으로도 꿈(0~3장, 깨어난 선방 앞)을 열지 못한다
-async function lockChecks(page, where) {
-  const L = await page.evaluate(() => {
-    const list = G.app.list();
-    const wake = list.findIndex((s) => s.awakened);
-    return { locked: list.slice(0, wake).map((s) => s.id), firstDream: list.find((s) => s.ch === '2').id, feast: list.find((s) => s.ch === '3').id };
-  });
-  const isDream = (c) => !c || L.locked.includes(c.scene) || ['0', '1', '2'].includes(c.ch);
-  ok(L.locked.length > 20, where, '잠길 꿈 장면 목록이 이상함: ' + L.locked.length);
-  ok(await page.evaluate((ids) => ids.every((id) => !G.app.canOpen(id)), L.locked), where, '깨어난 뒤에도 G.app.canOpen이 꿈 장면을 허락함');
-  // 뒤로 가기
-  for (let i = 0; i < 4; i++) { await page.evaluate(() => history.back()); await W(page, 300); }
-  let c = await cur(page);
-  ok(!isDream(c), where, '깨어난 뒤 뒤로 가기로 꿈이 열림: ' + JSON.stringify(c && { scene: c.scene, ch: c.ch }));
-  // 새로 고침
-  await page.reload(); await ready(page);
-  await page.waitForSelector('.title-screen');
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  c = await cur(page);
-  ok(c && c.ch === '4', where, '깨어난 뒤 새로 고침하고 이어 하니 4장이 아님: ' + JSON.stringify(c && { scene: c.scene, ch: c.ch }));
-  // 목차
-  await page.locator('[data-tool="toc"]').click(); await page.waitForSelector('.toc');
-  for (const k of ['0', '1', '2']) ok(await page.locator(`.toc-ch[data-ch="${k}"].locked`).count() === 1, where, `목차에서 ${k}장이 잠기지 않음`);
-  const open = await page.evaluate((ids) => ids.filter((id) => { const b = document.querySelector(`.toc-scene[data-scene="${id}"]`); return b && !b.disabled; }), L.locked);
-  ok(open.length === 0, where, '목차에서 누를 수 있는 꿈 장면: ' + open.slice(0, 4).join(', '));
-  await page.keyboard.press('Escape'); await W(page);
-  // 주소
-  for (const q of ['?ch=0', '?ch=1', '?ch=2', '?ch=3', '?scene=' + L.firstDream, '?scene=' + L.feast]) {
-    await page.goto(BASE + q); await ready(page);
-    c = await cur(page);
-    ok(c && !isDream(c), where, `주소 ${q}로 꿈이 열림: ` + JSON.stringify(c && { scene: c.scene, ch: c.ch }));
-  }
-  await page.waitForSelector('.play');
+async function fullRun(tag, viewport, mode, dpr) {
+  const page = await newPage(tag, viewport, dpr);
+  const memo = { steps: new Set(), scenes: [], grades: new Set(), clues: new Set(), fiction: new Set(), variants: 0, reload: false, lock: false, wish: false, match: false, revised: false, pearls: new Set(), idle: 0 };
+  const started = Date.now();
+  try {
+    await page.goto(BASE); await ready(page);
+    const initial = await page.evaluate(() => ({ ok: G.data.ok, fixture: G.data.fixture, problems: G.data.problems, missing: G.data.missing, order: G.app.list().map((s) => s.id) }));
+    assert.ok(initial.ok && !initial.fixture); assert.deepEqual(initial.problems, []); assert.deepEqual(initial.missing, []);
+    await checks(page, tag + '/title'); await start(page);
+    for (let loop = 0; loop < 2500; loop++) {
+      const c = await current(page), s = await state(page);
+      assert.equal(s.teacher, false); assert.equal(await page.locator('[data-teacher]:visible').count(), 0);
+      if (memo.awakeAt) critical(s.awake && s.awakeAt === memo.awakeAt, '깨어남 기록 소실');
+      if (!s.awake) {
+        critical(await page.evaluate(() => G.app.wishes().find((w) => w.id === 'misaek').hidden), '꿈 동안 미색 노출');
+        for (const resource of ['gong', 'fame', 'wealth']) critical(s.res[resource] === Object.values(s.events).reduce((sum, e) => sum + (e.reward?.[resource] || 0), 0), '사건 보상 밖 자원 가산');
+      }
+      if (!c) throw Error('완주 중 화면 없음');
+      if (memo.scenes.at(-1) !== c.scene) memo.scenes.push(c.scene);
+      const stamp = c.scene + '/' + c.step;
+      if (!memo.steps.has(stamp)) {
+        memo.steps.add(stamp); await checks(page, tag + '/' + stamp);
+        if (['prep1', 'grade', 'staff', 'journal-bond', 'result'].includes(c.step) && (/^e01-/.test(c.scene) || c.ch !== '2')) await page.screenshot({ path: path.join(SHOTS, 'play_' + tag + '_' + c.scene + '_' + c.step + '.png'), scale: 'css' });
+      }
+      for (const title of await page.locator('.mark.fiction h4').allTextContents()) memo.fiction.add(title);
+      memo.variants += await page.locator('.mark.variant:visible').count();
+      if (c.ch === 'R') break;
+      if (c.scene === 'c3-awake' && !memo.lock) { await lockChecks(page, memo); continue; }
+      if (c.kind === 'wish' && !memo.wish) { await wrongWish(page); memo.wish = true; continue; }
+      if (c.kind === 'journal' && c.step === 'activity' && !memo.match) { await wrongMatch(page); memo.match = true; continue; }
+      if (c.step === 'journal-bond') { const link = page.locator('.link-opt:not([disabled])'); if (await link.count()) { await link.first().click(); continue; } }
+      if (c.step === 'interp-pick') {
+        assert.equal(await page.locator('.ev-opt').count(), 7);
+        await page.locator('.interp-opt').first().click(); await page.locator('.ev-opt').first().click(); await next(page); continue;
+      }
+      if (c.step === 'interp-revise' && !memo.revised) {
+        await page.locator('[data-act="revise"]').click(); assert.equal(await page.locator('.ev-opt').count(), 10);
+        memo.firstChoice = s.interp.first;
+        memo.changedOption = await page.locator('.interp-opt').nth(1).getAttribute('data-opt');
+        await page.locator('.interp-opt').nth(1).click(); await page.locator('.ev-opt[data-ev="E9"]').click(); await next(page); memo.revised = true; continue;
+      }
+      if (/^prep[12]$/.test(c.step)) {
+        const buttons = page.locator('[data-act="prep"]:not([disabled])');
+        if (await buttons.count()) {
+          const action = plannedAction(c.data, c.step, mode); await page.locator('[data-act="prep"][data-action="' + action + '"]').click();
+          const selected = (await state(page)).events[c.scene]; assert.equal(selected.turns.at(-1), action);
+          if (!memo.reload) {
+            const before = await state(page); await resume(page);
+            assert.equal((await current(page)).scene, c.scene); assert.equal((await current(page)).step, 'prep2');
+            const after = await state(page); assert.deepEqual(after.events, before.events); assert.deepEqual(after.abil, before.abil); memo.reload = true;
+          }
+          continue;
+        }
+      }
+      if (c.step === 'scene' && c.data.meet && !memo.pearls.has(c.scene)) {
+        const inspect = page.locator('[data-act="inspect-picture"]');
+        if (await inspect.count()) {
+          await inspect.click(); await page.waitForSelector('.pearl-evidence');
+          const type = c.data.pearl.trace;
+          assert.equal(await page.locator('.pearl-evidence[data-trace="' + type + '"]').count(), 1);
+          assert.equal(await page.locator('.pearl-evidence .mark.' + (type === 'canon' ? 'note' : 'fiction')).count(), 1);
+          if (type === 'canon') assert.ok((await page.locator('.pearl-evidence').innerText()).includes(c.data.pearl.canon));
+          if (mode !== 'miss') await page.locator('.inspect-spot:not([disabled])').click();
+          await page.keyboard.press('Escape'); memo.pearls.add(c.scene); continue;
+        }
+      }
+      if (c.step === 'grade' && !memo.grades.has(c.scene)) {
+        const e = s.events[c.scene]; assert.ok(e?.grade && !e.auto && !e.peek);
+        assert.equal(e.hits, mode === 'hit' ? 2 : mode === 'miss' ? 0 : Number(c.scene.slice(1, 3)) % 3 === 0 ? 2 : Number(c.scene.slice(1, 3)) % 3 === 1 ? 1 : 0);
+        if (mode === 'hit') assert.equal(e.grade, 'shine'); if (mode === 'miss') assert.notEqual(e.grade, 'shine');
+        assert.equal(await page.locator('.grade').getAttribute('data-grade'), e.grade); memo.grades.add(c.scene);
+        console.log('  ' + tag + ' ' + c.scene + ' 적중 ' + e.hits + ' / ' + e.grade);
+      }
+      if (c.step === 'clue') { assert.ok(await page.locator('.clue-card mark').count()); memo.clues.add(c.scene); }
+      const staff = page.locator('[data-act="staff"]:not([disabled])');
+      if (await staff.count()) {
+        critical(!s.awake, '지팡이 클릭 전 깨어남'); assert.equal(await page.locator('[data-act="skip"]').count(), 0);
+        await staff.click(); const awake = await state(page); critical(awake.awake && awake.awakeAt > 0, '난간 클릭 순간 미저장'); memo.awakeAt = awake.awakeAt; continue;
+      }
+      const skip = page.locator('[data-act="skip"]:visible');
+      if (await skip.count()) { if (c.kind === 'waking') critical(s.awake, '깨어남 전 건너뛰기'); await skip.click(); continue; }
+      const button = page.locator('#tray [data-act="next"]:not([disabled])');
+      if (await button.count()) { await button.click(); memo.idle = 0; }
+      else { await page.waitForTimeout(60); if (++memo.idle > 150) throw Error('진행 단추 없음: ' + stamp); }
+    }
+    await page.waitForSelector('.journal-page'); const s = await state(page);
+    critical(s.awake && s.awakeAt === memo.awakeAt, '결과에서 깨어남 소실');
+    assert.deepEqual(memo.scenes, initial.order);
+    assert.equal(memo.grades.size, 12); assert.equal(memo.clues.size, 12); assert.equal(Object.keys(s.events).length, 12);
+    assert.ok(memo.reload && memo.lock && memo.wish && memo.match && memo.revised);
+    assert.ok(memo.fiction.size >= 2 && memo.variants > 0, '설정·이본 카드를 실제로 읽음'); assert.equal(memo.pearls.size, 8);
+    assert.equal(await page.locator('.ledger tbody tr').count(), 14); assert.equal(await page.locator('.board-view, .house-view, .bond-list').count(), 0);
+    assert.equal(s.interp.changed.evidence, 'E9'); assert.ok(s.interp.final && s.interp.revised);
+    assert.equal(s.interp.changed.option, memo.changedOption); assert.deepEqual(s.interp.first, memo.firstChoice);
+    assert.equal(s.journal.revealed.misaek, true); assert.equal(s.ledger['a-wish'].help, 'student'); assert.equal(s.ledger['j-match'].help, 'student');
+    assert.ok(s.wrong.some((w) => w.act === 'a-wish') && s.wrong.some((w) => w.act === 'j-match'));
+    assert.equal(Object.keys(s.pearls).length, mode === 'miss' ? 0 : 8);
+    assert.match(await page.locator('.jp-score').innerText(), new RegExp(s.best + '.*0'));
+    await page.locator('[data-tool="toc"]').click(); await page.locator('.toc-scene[data-scene="c5-dialogue"]').click();
+    await page.waitForSelector('.play[data-scene="c5-dialogue"]');
+    for (let i = 0; i < 30 && (await current(page)).scene !== 'r-result'; i++) {
+      assert.equal(await page.locator('[data-act="revise"]').count(), 0, '확정한 해석의 두 번째 수정 금지'); await next(page);
+    }
+    assert.equal((await current(page)).scene, 'r-result'); assert.deepEqual((await state(page)).interp, s.interp);
+    await savePng(page, tag, s); await page.waitForTimeout(550);
+    await checks(page, tag + '/result'); await page.screenshot({ path: path.join(SHOTS, 'complete_' + tag + '_screen.png'), fullPage: true, scale: 'css' });
+    assert.ok(page.toasts.length > 0, '알림 검사가 실제 실행됨'); assert.deepEqual(page.toasts.filter((t) => t.hits.length), [], '알림이 본문·단추를 가리지 않음');
+    await healthy(page);
+    console.log('  ' + tag + ' 완주 · 사건 12 · 단서 12 · 재접속/잠금4길/오답2/수정/PNG · 알림 ' + page.toasts.length + '회 · ' + ((Date.now() - started) / 1000).toFixed(1) + '초');
+  } finally { await page.context().close(); }
 }
-
-async function playUntil(page, pred, opt, memo, limit = 900) {
-  for (let i = 0; i < limit; i++) {
-    const c = await cur(page);
-    if (c && pred(c)) return c;
-    await act(page, opt, memo);
-  }
-  throw new Error('playUntil: 도달하지 못함 ' + JSON.stringify(await cur(page)));
+async function credit(page, selector) {
+  const el = page.locator(selector); await el.scrollIntoViewIfNeeded();
+  const info = await el.evaluate((e) => ({ text: e.innerText, size: parseFloat(getComputedStyle(e).fontSize), rect: { top: e.getBoundingClientRect().top, bottom: e.getBoundingClientRect().bottom } }));
+  assert.ok(info.text.includes('국립국악원') && info.text.includes('공공누리 제1유형') && /퉁소/.test(info.text) && /단소/.test(info.text));
+  assert.ok(info.size >= 11 && info.rect.top >= 0 && info.rect.bottom <= (page.viewportSize().height + 1)); await contrastCheck(page, '출처');
 }
-
-await run('데이터 점검(화면)', async () => {
-  const page = await newPage('data');
-  await page.goto(BASE);
-  await ready(page);
-  const r = await page.evaluate(() => ({
-    ok: G.data.ok, fixture: G.data.fixture, problems: G.data.problems, missing: G.data.missing,
-    re: G.checkData(G.data), scenes: G.data.scenes.length,
-    dataMissingNote: !!document.querySelector('.data-missing'),
-  }));
-  ok(r.ok && !r.fixture, 'data', '실제 데이터를 읽지 못함');
-  ok(r.problems.length === 0 && r.re.length === 0, 'data', 'G.checkData() 경고: ' + r.problems.concat(r.re).slice(0, 5).join(' | '));
-  ok(r.missing.every((m) => /bgm\.js$/.test(m)), 'data', '읽지 못한 데이터 파일: ' + r.missing.join(', '));
-  ok(!r.dataMissingNote, 'data', '타이틀에 데이터가 없다는 안내가 보임');
-  log('  장면 ' + r.scenes + '개 · 읽지 못한 파일 ' + (r.missing.join(', ') || '없음'));
-  // 조사 고르기: 마지막 한글 글자의 받침으로 고르고, 닫는 문장부호·따옴표·괄호는 건너뛴다. 두 꼴을 함께 내지 않는다
-  const josa = await page.evaluate(() => {
-    if (typeof G.util.josa !== 'function') return null;
-    const J = G.util.josa;
-    return [
-      [J('사람', '을/를'), '을'], [J('나무', '을/를'), '를'], [J('「꿈은 가르침의 도구다.」', '을/를'), '를'],
-      [J('보게 하셨구나)', '을/를'), '를'], [J('"달빛"', '이/가'), '이'], [J('거문고', '은/는'), '는'],
-      [J('천리마', '은/는'), '는'], [J('비단 시전', '이/가'), '이'], [J('서울', '으로/로'), '로'], [J('집', '으로/로'), '으로'],
-      [J('성진(性眞)', '와/과'), '과'], [J('나무', '과/와'), '와'], [J('3', '이/가'), '이'], [J('2', '을/를'), '를'],
-    ].filter(([got, want]) => got !== want).map(([got, want]) => got + '≠' + want);
-  });
-  ok(josa !== null, 'josa', 'G.util.josa(조사 고르기)가 없음');
-  ok(!josa || josa.length === 0, 'josa', '조사를 잘못 고름: ' + (josa || []).join(', '));
-  await finish(page);
-});
-
-// 음원 출처 표시(명세 12·13절): 타이틀과 설정에 국립국악원 · 공공누리 제1유형 출처가 보이고, 퉁소 대신 단소를 썼다고 적혀 있다
-// 효과음·배경음을 따로 켜고 끈다(효과음은 소리 마디를 새로 만드는지로 잰다)
-await run('음원 출처와 소리 켜고 끄기', async () => {
-  for (const [tag, viewport, mobile] of [['phone', { width: 390, height: 844 }, true], ['desktop', { width: 1280, height: 860 }, false]]) {
-    const page = await newPage('credit-' + tag, { viewport, mobile });
-    await page.addInitScript(() => {
-      window.__nodes = 0;
-      const P = (window.AudioContext || window.webkitAudioContext).prototype;
-      for (const k of ['createOscillator', 'createBufferSource']) { const f = P[k]; P[k] = function (...a) { window.__nodes++; return f.apply(this, a); }; }
-    });
-    await page.goto(BASE);
-    await ready(page);
-    await page.waitForSelector('.title-screen');
-    const seen = async (loc, where) => {
-      if (!ok(await loc.count() === 1, where, '출처 문구가 없음')) return;
-      await loc.scrollIntoViewIfNeeded();
-      const v = await loc.evaluate((e) => {
-        const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
-        const rgb = (s) => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
-        const lum = (c) => { const [r1, g1, b1] = c.map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r1 + 0.7152 * g1 + 0.0722 * b1; };
-        let bg = 'rgb(239,227,198)';
-        for (let n = e; n; n = n.parentElement) { const b = getComputedStyle(n).backgroundColor; if (b && !/rgba\(.*,\s*0\)$|transparent/.test(b)) { bg = b; break; } }
-        const L1 = lum(rgb(cs.color)), L2 = lum(rgb(bg));
-        return { text: e.innerText, inView: r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth && r.width > 0, fs: parseFloat(cs.fontSize), contrast: (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05), hidden: cs.visibility === 'hidden' || +cs.opacity < 0.9 };
+let fatal = false;
+try {
+  await run('말판 준비 상태 관찰: 지연 로딩·실제 노출·캐시 재사용', async () => {
+    const page = await newPage('board-readiness', { width: 390, height: 844 }, 2);
+    let release;
+    try {
+      await page.goto(BASE); await ready(page);
+      const gate = new Promise((resolve) => { release = resolve; });
+      await page.route('**/assets/board/board.webp', async (route) => { await gate; await route.continue(); });
+      const selected = await page.evaluateHandle(() => {
+        document.getElementById('app').replaceChildren(G.board.view({ wishes: false }));
+        return [...document.querySelectorAll('.board-art:not(.has-img) .board-img')];
       });
-      ok(v.inView && !v.hidden, where, '출처 문구가 화면에 보이지 않음');
-      ok(/국립국악원/.test(v.text) && /공공누리\s*제1유형/.test(v.text), where, '국립국악원 · 공공누리 제1유형 출처가 없음: ' + v.text.slice(0, 80));
-      ok(/퉁소/.test(v.text) && /단소/.test(v.text), where, '퉁소 대신 단소를 썼다는 표시가 없음: ' + v.text.slice(0, 120));
-      ok(v.fs >= 11 && v.contrast >= 4.5, where, `출처 문구가 읽기 어려움(글자 ${v.fs}px, 명암비 ${v.contrast.toFixed(2)})`);
-    };
-    await seen(page.locator('.title-screen .credit', { hasText: '국립국악원' }), tag + '/타이틀');
-    await vbtn(page, '설정').first().click();
-    await page.waitForSelector('.settings');
-    await seen(page.locator('.settings .credit-full'), tag + '/설정');
-    await page.keyboard.press('Escape'); await W(page);
-    if (tag === 'phone') {
-      // 효과음 켜고 끄기(배경음은 꺼 두고 잰다)
-      await vbtn(page, '시작하기').first().click();
-      await page.waitForSelector('.sheet');
-      await vbtn(page, '처음 읽기').first().click();
-      await page.waitForSelector('.play');
-      await W(page, 400);
-      ok(await page.evaluate(() => !!G.audio.now()), 'sound', '배경음이 흐르지 않음');
-      await page.locator('[data-tool="settings"]').click(); await page.waitForSelector('.settings');
-      await page.locator('button[data-set="music"]').click(); await W(page, 400);
-      ok(await page.evaluate(() => !G.audio.now()), 'sound', '배경음을 껐는데 곡이 흐름');
-      const n0 = await page.evaluate(() => { const n = window.__nodes; G.audio.ok(); G.audio.pick(); return window.__nodes - n; });
-      ok(n0 > 0, 'sound', '효과음이 켜져 있는데 소리를 내지 않음');
-      await page.locator('button[data-set="sound"]').click(); await W(page);
-      const n1 = await page.evaluate(() => { const n = window.__nodes; G.audio.ok(); G.audio.pick(); G.audio.tap(); return window.__nodes - n; });
-      ok(n1 === 0, 'sound', '효과음을 껐는데 소리를 냄(' + n1 + ')');
-      await page.locator('button[data-set="music"]').click(); await W(page, 400);
-      ok(await page.evaluate(() => !!G.audio.now() && G.save.state.sound === false), 'sound', '배경음을 다시 켰는데 곡이 흐르지 않거나 효과음이 다시 켜짐');
-      await page.keyboard.press('Escape'); await W(page);
-    }
-    await finish(page);
-  }
-});
-
-// 파일로 열기(실제 데이터): index.html을 file://로 열어도 시작·저장(이어 하기)·소리가 된다
-await run('파일로 열기(실제 데이터)', async () => {
-  const page = await newPage('file-real');
-  await page.goto(pathToFileURL(path.join(ROOT, 'index.html')).href);
-  await ready(page);
-  await page.waitForSelector('.title-screen');
-  ok(await page.evaluate(() => G.data.ok && !G.data.fixture), 'file', '파일로 열었을 때 실제 데이터를 읽지 못함');
-  await vbtn(page, '시작하기').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, '처음 읽기').first().click();
-  await page.waitForSelector('.play');
-  const memo = { steps: 0, pearls: 0, lastStep: '', sealFail: false };
-  const second = await page.evaluate(() => G.app.list()[1].id);
-  await playUntil(page, (c) => c.scene === second, {}, memo);
-  await W(page, 800);
-  const snd = await page.evaluate(() => ({ now: G.audio.now(), via: G.audio.via() }));
-  ok(!!snd.now, 'file', '파일로 열었을 때 배경음(또는 합성 대체)이 흐르지 않음: ' + JSON.stringify(snd));
-  await page.reload(); await ready(page);
-  await vbtn(page, '이어 하기').first().click(); await page.waitForSelector('.play');
-  ok((await cur(page)).scene === second, 'file', '파일로 열었을 때 저장·이어 하기가 안 됨');
-  log('  파일로 열기: 곡 ' + snd.now + ' (' + snd.via + ')');
-  ok(page.errs.length === 0, page.tag, '오류: ' + page.errs.slice(0, 5).join(' | '));
-  const outside = page.reqs.filter((u) => !u.startsWith('file:') && !u.startsWith('data:') && !u.startsWith('blob:'));
-  ok(outside.length === 0, page.tag, '바깥으로 나간 요청: ' + outside.slice(0, 3).join(', '));
-  await page.context().close();
-});
-
-async function fullRun(name, mode, opt) {
-  await run(name, async () => {
-    const page = await newPage(name, Object.assign({ toasts: true }, opt.page || {}));
-    opt.name = name;
-    await page.goto(BASE);
-    await ready(page);
-    await page.waitForSelector('.title-screen');
-    if (opt.shots) { await W(page, 400); await integerCheck(page, opt.shots + ' title'); await page.screenshot({ path: path.join(SHOTS, `play_${opt.shots}_title.png`) }); }
-    await vbtn(page, '시작하기').first().click();
-    await page.waitForSelector('.sheet');
-    await vbtn(page, mode).first().click();
-    await page.waitForSelector('.play');
-    const memo = { steps: 0, pearls: 0, lastStep: '', sealFail: false };
-    // 장면 중간 새로 고침은 2장의 둘째 장면에서
-    memo.reloadAt = await page.evaluate(() => G.app.list().filter((s) => s.ch === '2')[1].id);
-    const t0 = Date.now();
-    // 꿈 동안 미색은 '?'
-    await playUntil(page, (c) => c.step === 'walk', opt, memo);
-    await page.waitForSelector('.board-view .wish-list');
-    ok((await page.locator('.board-view .wish-list [data-wish="misaek"]').innerText()).includes('?'), name, '꿈 동안 미색이 ?로 보이지 않음');
-    // 2장을 지나면 미색을 뺀 네 소원이 모두 찬다
-    await playUntil(page, (c) => c.scene === 'c3-monk', opt, memo);
-    const w = await page.evaluate(() => G.app.wishes().map((x) => [x.id, x.filled, x.hidden]));
-    ok(w.filter(([id]) => id !== 'misaek').every(([, f]) => f) && w.find(([id]) => id === 'misaek')[2], name, '취미궁에서 네 소원이 차고 미색은 가려져 있어야 함: ' + JSON.stringify(w));
-    // 깨어남 → 꿈 일지 → 해석 → 결과
-    await playUntil(page, (c) => c.ch === 'R', opt, memo);
-    await page.waitForSelector('.journal-page');
-    const res = await page.evaluate(() => {
-      const s = G.save.state;
-      return {
-        awake: s.awake, revealed: !!(s.journal && s.journal.revealed && s.journal.revealed.misaek),
-        rows: G.app.ledgerRows().length, teacher: G.app.ledgerRows().filter((r) => r.help === 'teacher').length,
-        interp: s.interp, page: document.querySelector('.journal-page').innerText,
-        hasLedger: !!document.querySelector('.ledger table'), notes: document.querySelectorAll('.notes').length,
-        pearls: Object.keys(s.pearls).length,
-      };
-    });
-    ok(res.awake, name, '깨어남이 기록되지 않음');
-    ok(res.revealed, name, '꿈 일지에서 미색이 드러나지 않음');
-    ok(res.rows === 22, name, '장부의 채점 활동이 22개가 아님: ' + res.rows);
-    ok(res.teacher === 0, name, '선생님용 도움이 기록됨');
-    ok(res.hasLedger && res.notes >= 3, name, '결과 화면에 장부·노트가 없음');
-    ok(res.interp && res.interp.final && res.interp.first, name, '해석이 저장되지 않음');
-    ok(/꿈 일지 마지막 장/.test(res.page) && /나의 해석/.test(res.page), name, '꿈 일지 마지막 장이 그려지지 않음');
-    if (opt.revise) {
-      ok(res.interp.revised && res.interp.changed && res.interp.changed.option === 'i-nondual' && res.interp.changed.evidence === 'E9', name, '해석을 고친 흔적이 남지 않음');
-      ok(/고쳤어요/.test(res.page), name, '결과 화면에 고친 흔적이 보이지 않음');
-      ok(memo.firstEv === 7 && memo.reviseEv === 10, name, '근거 구절: 대사의 말 전 7개, 고칠 때 10개여야 함(지금 ' + memo.firstEv + ' / ' + memo.reviseEv + ')');
-    }
-    ok(res.pearls === (opt.pearls || 0), name, '찾은 구슬 수가 다름: ' + res.pearls);
-    ok(!memo.sealFail, name, '어느 걸음에서 原文 낙관이 보였음');
-    // ── README 17절 항목이 화면에 나오는가
-    const o = memo.obs || {};
-    const SCN = await page.evaluate(() => G.data.scenes.map((s) => ({ id: s.id, heading: [].concat(s.heading || []).length })));
-    for (const s of SCN.filter((x) => x.heading)) ok(((o.heading || {})[s.id] || []).length === s.heading, name, s.id + ': 회목 카드가 ' + s.heading + '장 보여야 함(지금 ' + JSON.stringify((o.heading || {})[s.id]) + ')');
-    const walks = o.walks || [];
-    const walkAt = (sq) => walks.find((x) => x.at === sq) || {};
-    ok(walks.length && walks[0].from === 'sq-suju' && walks[0].at === 'sq-huayin', name, '2장 첫머리에 말이 출발 칸(수주현)에서 화음현으로 걸어가지 않음: ' + JSON.stringify(walks[0]));
-    ok(walkAt('sq-huayin').outfit === '' && walkAt('sq-hallim').outfit === 'gwan' && walkAt('sq-sasin').outfit === 'gwan' && walkAt('sq-wonsu').outfit === 'jang' && walkAt('sq-seungsang').outfit === 'sang' && walkAt('sq-chwimi').outfit === 'sang', name, '말의 옷이 칸 도착 때 바뀌지 않음: ' + walks.map((x) => x.at + '=' + x.outfit).join(' '));
-    ok(page.reqs.some((u) => /horse_walk_gwan\.webp/.test(u)), name, '관복 말 그림(horse_walk_gwan.webp)을 찾지 않음');
-    ok(/장원급제·한림학사/.test(walkAt('sq-hallim').gyoji || '') && /공명/.test(walkAt('sq-hallim').gyoji || ''), name, '벼슬 칸 도착 때 교지 카드(벼슬 이름과 채워지는 소원)가 없음: ' + walkAt('sq-hallim').gyoji);
-    ok(/장수/.test(walkAt('sq-wonsu').gyoji || '') && /재상/.test(walkAt('sq-seungsang').gyoji || ''), name, '교지 카드에 출장입상의 반 칸(장수·재상)이 보이지 않음');
-    ok(walks.filter((x) => x.gyoji != null).every((x) => !/미색|\?/.test(x.gyoji)), name, '교지 카드에 미색이 나옴');
-    ok(walkAt('sq-huayin').gyoji === null && walkAt('sq-chwimi').gyoji === null, name, '장소 칸에 교지 카드가 나옴');
-    ok(/15회/.test(walkAt('sq-chwimi').hoe || ''), name, '취미궁 칸 도착 때 15회 회목 카드가 없음: ' + walkAt('sq-chwimi').hoe);
-    const afterWonsu = walks.find((x) => x.scene === 's10-wonsu') || {}, afterSs = walks.find((x) => x.scene === 's13-seungsang') || {};
-    ok(afterWonsu.chul && afterWonsu.chul.half === true && afterWonsu.chul.filled === false && afterWonsu.halfDom, name, '대원수를 마친 뒤 출장입상이 반만 차야 함: ' + JSON.stringify(afterWonsu.chul));
-    ok(afterSs.chul && afterSs.chul.half === false && afterSs.chul.filled === true, name, '대승상을 마친 뒤 출장입상이 가득 차야 함: ' + JSON.stringify(afterSs.chul));
-    ok(/sc_josin_wake/.test((o.imgs || {})['c0-josin'] || '') && /sc_rebirth/.test((o.imgs || {})['c1-rebirth'] || ''), name, '활동 뒤 장면 그림이 imgAfter로 바뀌지 않음: ' + JSON.stringify(o.imgs));
-    for (const [sid, p] of Object.entries(o.pearls || {})) {
-      const canonScene = sid === 's04-geomungo' || sid === 's08-tungso';
-      ok(canonScene ? p.note === 1 && p.fic === 0 && /구슬/.test(p.text) : p.fic === 1 && p.note === 0, name, sid + ': 구슬 근거 표시(원작이면 알아 두기, 아니면 게임 설정 카드)가 다름 ' + JSON.stringify({ fic: p.fic, note: p.note }));
-    }
-    ok(Object.keys(o.pearls || {}).length === 8, name, '구슬 걸음이 여덟 장면에 없음');
-    ok(['gyeongpae', 'nanyang'].every((b) => ((o.bonds || {})['s13-seungsang'] || []).includes(b)) && ((o.bonds || {})['s14-honrye'] || []).length >= 2, name, '한 장면에서 여러 인연을 다시 만나지 못함: ' + JSON.stringify(o.bonds));
-    ok(o.journal && o.journal.none && o.journal.picked === 'none', name, "꿈 일지 '해석' 짝에 '어느 칸도 아님'이 없거나 기록되지 않음: " + JSON.stringify(o.journal));
-    ok(o.journal && o.journal.extra === (mode === '다시 읽기'), name, "꿈 일지의 '학문' 칩은 다시 읽기에서만: " + JSON.stringify(o.journal));
-    ok(o.reveal && o.reveal.gloss >= 3 && o.reveal.interp === 1 && /고운 빛/.test(o.reveal.text), name, '인연 잇기 뒤 근거(풀이)와 해석 카드(bondLink.reveal)가 보이지 않음: ' + JSON.stringify(o.reveal));
-    ok(/꺼/.test(o.zen || '') && !/식지 않/.test(o.zen || ''), name, '빈 선방의 글이 원작(향로의 불이 꺼짐)과 다름: ' + o.zen);
-    const sets = await page.evaluate(() => G.save.state.bondNotes);
-    ok(sets && sets['s13-seungsang'] && sets['s14-honrye'], name, '다시 만난 사연이 기록되지 않음');
-    ok(await page.locator('[data-teacher]:visible').count() === 0, name, '선생님용 단추가 보임');
-    const img = await page.evaluate(() => { try { const c = G.app.renderPage(); return c.width > 0 && c.height > 0; } catch (e) { return false; } });
-    ok(img, name, '마지막 장을 그림으로 그리지 못함');
-    // ── 결과 글의 조사: 두 꼴을 함께 찍지 않는다(예: "…)을(를) 골랐다가")
-    const resultText = await page.locator('.play').innerText();
-    const both = resultText.match(/[을이은와]\([를가는과]\)|\([을이은와]\)[를가는과]/);
-    ok(!both, name, '결과 화면에 조사 두 꼴이 함께 찍힘: ' + (both ? resultText.slice(Math.max(0, both.index - 20), both.index + 8) : ''));
-    if (opt.shots) {
-      await W(page, 400);
-      await integerCheck(page, opt.shots + ' R/result'); await overflowCheck(page, opt.shots + ' R/result'); await contrastCheck(page, opt.shots + ' R/result');
-      await page.screenshot({ path: path.join(SHOTS, `play_${opt.shots}_R_result.png`) });
-      await page.locator('.jp-trace').scrollIntoViewIfNeeded(); await W(page, 200);
-      await page.screenshot({ path: path.join(SHOTS, `play_${opt.shots}_R_trace.png`) });
-    }
-    // ── 일부러 틀린 활동: 장부에 첫 시도 틀림·도움 사용, 오답 노트에 남는다
-    if (opt.wrong) {
-      const acts = memo.wrongActs || [];
-      ok(acts.length === opt.wrong.length, name, '일부러 틀려 본 장이 모자람: ' + JSON.stringify(acts) + ' (장 ' + opt.wrong.join(',') + ')');
-      const L = await page.evaluate(() => JSON.parse(JSON.stringify({ ledger: G.save.state.ledger, wrong: G.save.state.wrong, rows: G.app.ledgerRows() })));
-      for (const id of acts) {
-        ok(L.ledger[id] && L.ledger[id].first === false && L.ledger[id].help === 'student', name, id + ': 일부러 틀린 활동의 장부가 첫 시도 틀림·도움 사용이 아님: ' + JSON.stringify(L.ledger[id]));
-        ok(L.wrong.some((x) => x.act === id), name, id + ': 오답 노트에 남지 않음');
-        ok((L.rows.find((r) => r.id === id) || {}).helpLabel === '도움 사용', name, id + ': 장부 표시가 도움 사용이 아님');
+      const cold = await boardReadiness(page);
+      assert.equal(cold.unready.length, 1); assert.deepEqual(cold.exposed, []);
+      await selected.evaluate((imgs) => { imgs[0].style.display = 'block'; });
+      const visible = await boardReadiness(page);
+      assert.equal(visible.exposed.length, 1, '실제 미준비 노출은 검출해야 함');
+      assert.equal(visible.exposed[0].naturalWidth, 0);
+      await selected.evaluate((imgs) => { imgs[0].style.removeProperty('display'); });
+      release(); await page.waitForSelector('.board-art.has-img .board-img');
+      const legacyWouldPass = await selected.evaluate((imgs) => imgs.every((img) => getComputedStyle(img).display === 'none'));
+      assert.equal(legacyWouldPass, false, '선택 뒤 로딩이 끝나면 기존 방식은 정상 표시를 오판함');
+      await selected.dispose();
+      await checks(page, '지연 로딩 완료');
+      const loaded = await boardReadiness(page);
+      await page.unroute('**/assets/board/board.webp');
+      for (let i = 0; i < 3; i++) {
+        await page.evaluate(() => document.getElementById('app').replaceChildren(G.board.view({ wishes: false })));
+        const before = await boardReadiness(page);
+        assert.deepEqual(before.exposed, [], '캐시 재사용 중에도 미준비 노출 없음');
+        await checks(page, '캐시 재사용 ' + i);
       }
-      ok(await page.locator('.wrong-notes li').count() >= acts.length, name, '결과의 오답 노트에 틀린 활동이 보이지 않음');
-      const others = Object.entries(L.ledger).filter(([k]) => !acts.includes(k));
-      ok(others.every(([, v]) => v.first === true && !v.help), name, '틀리지 않은 활동의 장부가 바뀜: ' + others.filter(([, v]) => !(v.first === true && !v.help)).map(([k]) => k).join(','));
+      fs.writeFileSync(path.join(SHOTS, 'board-ready-regression.json'), JSON.stringify({ cold, visible, legacyWouldPass, loaded, warmRuns: 3 }, null, 2));
+      await healthy(page);
+    } finally { release?.(); await page.context().close(); }
+  });
+  await run('출처·실제 소리 켜고 끄기', async () => {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 860 }]) {
+      const page = await newPage('sound', viewport);
+      try {
+        await page.goto(BASE); await ready(page); await credit(page, '.title-screen .credit:has-text("국립국악원")');
+        assert.deepEqual(await page.evaluate(() => G.data.problems), []);
+        await page.getByRole('button', { name: '설정', exact: true }).click(); await credit(page, '.credit-full'); await page.keyboard.press('Escape');
+        await start(page);
+        for (let i = 0; i < 30 && (await current(page)).kind !== 'wish'; i++) { const skip = page.locator('[data-act="skip"]'); if (await skip.count()) await skip.click(); else await next(page); }
+        assert.equal((await current(page)).kind, 'wish');
+        await page.waitForFunction(() => !!G.audio.now());
+        await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="music"]').click(); await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !G.audio.now());
+        const before = await page.evaluate(() => window.audioNodes);
+        await page.locator('[data-word="w-water"]').click();
+        assert.ok(await page.evaluate(() => window.audioNodes) > before, '켜진 효과음 실제 노드 생성');
+        await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="sound"]').click(); await page.keyboard.press('Escape');
+        const muted = await page.evaluate(() => window.audioNodes); await page.locator('[data-word="w-book"]').click();
+        assert.equal(await page.evaluate(() => window.audioNodes), muted, '꺼진 효과음 노드 없음');
+        await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="music"]').click(); await page.keyboard.press('Escape');
+        await page.waitForFunction(() => !!G.audio.now()); assert.equal((await state(page)).sound, false);
+        const josa = await page.evaluate(() => [['사람', '을/를'], ['나무', '을/를'], ['거문고', '은/는'], ['서울', '으로/로']].map(([s, pair]) => G.util.josa(s, pair)));
+        assert.deepEqual(josa, ['을', '를', '는', '로']); await healthy(page);
+      } finally { await page.context().close(); }
     }
-    if (opt.reload) ok(memo.reloaded, name, '장면 중간 새로 고침을 하지 못함(' + memo.reloadAt + ')');
-    if (opt.lock) ok(memo.lockDone, name, '깨어난 뒤 잠금 점검을 하지 못함');
-    // ── 결과 이미지 저장: 진짜 PNG가 내려받아진다
-    if (opt.png) {
-      await page.locator('.journal-page input[name="student-name"]').fill('홍길동');
-      await W(page);
-      const dlP = page.waitForEvent('download', { timeout: 10000 });
-      await page.locator('[data-act="save-image"]').click();
-      const dl = await dlP.catch(() => null);
-      if (ok(!!dl, name, '그림 저장을 눌렀는데 내려받기가 없음')) {
-        const fname = dl.suggestedFilename();
-        ok(/\.png$/.test(fname) && fname.includes('홍길동'), name, '저장 파일 이름이 이상함: ' + fname);
-        const p = await dl.path();
-        const buf = p ? fs.readFileSync(p) : Buffer.alloc(0);
-        const sig = buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-        const iw = buf.length > 24 ? buf.readUInt32BE(16) : 0, ih = buf.length > 24 ? buf.readUInt32BE(20) : 0;
-        ok(sig && buf.subarray(12, 16).toString('latin1') === 'IHDR' && iw >= 600 && ih >= 600 && buf.length > 10000, name, `PNG 그림이 아님(크기 ${buf.length} B, ${iw}×${ih})`);
-        ok(buf.subarray(buf.length - 8, buf.length - 4).toString('latin1') === 'IEND', name, 'PNG가 끝까지 저장되지 않음');
-      }
-    }
-    // ── 알림이 읽는 글과 진행 단추를 가리지 않는다
-    const tl = page.toasts || [];
-    ok(tl.length > 0, name, '완주하는 동안 알림을 한 번도 보지 못함(점검이 헛돎)');
-    const covered = tl.filter((x) => x.hits.length);
-    ok(covered.length === 0, name, '알림이 읽는 글·단추를 가림: ' + covered.slice(0, 3).map((x) => `「${x.text}」(${x.scene}, ${x.when}) → ${x.hits.join('·')} [${x.rect}]`).join(' | '));
-    log(`  알림 ${new Set(tl.map((x) => x.text)).size}종 ${tl.filter((x) => x.when === '뜬 직후').length}번 · 가린 것 ${covered.length}`);
-    log(`  ${mode}: 걸음 ${memo.steps}개 · 구슬 ${res.pearls} · 장부 ${res.rows}행 · ${((Date.now() - t0) / 1000).toFixed(1)}초`);
-    await finish(page);
   });
-}
-// 학생처럼 끝까지(명세 16절): 선생님용 단추 없이 휴대폰·태블릿·데스크톱, 처음 읽기·다시 읽기. 판마다 일부러 틀리기(0·2·4장),
-// 장면 중간 새로 고침, 깨어난 뒤 뒤로 가기·새로 고침·목차·주소, 결과 그림(PNG) 저장, 알림 위치, 장마다 화면 찍기(tests/shots/play_*)
-const STUDENT = { wrong: ['0', '2', '4'], reload: true, lock: true, png: true };
-await fullRun('완주(휴대폰·처음 읽기)', '처음 읽기', Object.assign({ pearls: 3, revise: true, shots: 'phone' }, STUDENT));
-await fullRun('완주(태블릿·다시 읽기)', '다시 읽기', Object.assign({ pearls: 8, revise: true, shots: 'tablet', page: { viewport: { width: 820, height: 1180 } } }, STUDENT));
-await fullRun('완주(데스크톱·처음 읽기)', '처음 읽기', Object.assign({ pearls: 0, revise: false, shots: 'desktop', page: { viewport: { width: 1280, height: 860 }, mobile: false } }, STUDENT));
-
-// 집 칸 종류(기획서 §10): 물건의 slot이 in이면 방 안 칸만, yard면 뜰 칸만, any면 어디나. 단계가 올라도 종류가 맞는 칸으로 옮긴다
-await run('집 칸 종류', async () => {
-  const page = await newPage('house-kind');
-  await page.goto(BASE);
-  await ready(page);
-  await vbtn(page, '시작하기').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, '처음 읽기').first().click();
-  await page.waitForSelector('.play');
-  await page.evaluate(() => {
-    const st = G.save.state;
-    const L = G.app.list();
-    for (const s of L) { if (s.id === 's07-gyeonghong') break; st.done[s.id] = true; }
-    st.items = { 'it-yangryu': { scene: 's01-huayin' }, 'it-cheonrima': { scene: 's07-gyeonghong' }, 'it-mulbyeong': { scene: 's12-neungpa' } };
-    st.house = {}; st.pos = 's07-gyeonghong'; st.reach = 2; st.houseStage = 1;
-    G.save.write();
-    G.app.open('s07-gyeonghong');
+  await run('파일로 열기 실제 시작·저장·소리', async () => {
+    const page = await newPage('file', { width: 390, height: 844 });
+    try {
+      await page.goto(pathToFileURL(path.join(ROOT, 'index.html')).href); await ready(page); await start(page);
+      await next(page); await page.locator('[data-act="skip"]').click();
+      await page.waitForFunction(() => G.app.current()?.scene === 'c1-bridge');
+      await page.waitForFunction(() => G.audio.via() === 'element' && !!G.audio.now());
+      await resume(page); assert.equal((await current(page)).scene, 'c1-bridge'); await healthy(page);
+    } finally { await page.context().close(); }
   });
-  await W(page, 300);
-  await page.evaluate(() => { G.ui.closeSheets(); G.dream.open('house'); });
-  await page.waitForSelector('.bag .house-view');
-  const H = () => page.evaluate(() => Object.assign({}, G.save.state.house));
-  await page.locator('.bag .bitem[data-item="it-cheonrima"]').click();
-  ok(await page.locator('.bag .hslot[data-kind="in"].nofit').count() === 10 && await page.locator('.bag .hslot[data-kind="yard"].nofit').count() === 0, 'house-kind', '뜰 물건(천리마)을 고르면 방 안 칸이 막혀 보여야 함');
-  await page.locator('.bag .hslot[data-slot="bd-1"]').click(); await W(page, 80);
-  ok(!(await H())['it-cheonrima'], 'house-kind', '뜰 물건(천리마)이 방 안 칸에 놓임');
-  await page.locator('.bag .bitem[data-item="it-cheonrima"]').click();
-  await page.locator('.bag .hslot[data-slot="bd-11"]').click(); await W(page, 80);
-  ok((await H())['it-cheonrima'] === 'bd-11', 'house-kind', '뜰 물건이 뜰 칸에 놓이지 않음');
-  await page.locator('.bag .bitem[data-item="it-yangryu"]').click();
-  await page.locator('.bag .hslot[data-slot="bd-12"]').click(); await W(page, 80);
-  ok(!(await H())['it-yangryu'], 'house-kind', '방 안 물건(양류사 시전)이 뜰 칸에 놓임');
-  await page.locator('.bag .bitem[data-item="it-yangryu"]').click();
-  await page.locator('.bag .hslot[data-slot="bd-1"]').click(); await W(page, 80);
-  ok((await H())['it-yangryu'] === 'bd-1', 'house-kind', '방 안 물건이 방 안 칸에 놓이지 않음');
-  // 자리 바꾸기도 종류를 지킨다: 방 안 물건을 뜰 물건이 있는 칸으로 옮길 수 없다
-  await page.locator('.bag .hslot[data-slot="bd-1"]').click();
-  await page.locator('.bag .hslot[data-slot="bd-11"]').click(); await W(page, 80);
-  const h1 = await H();
-  ok(h1['it-yangryu'] === 'bd-1' && h1['it-cheonrima'] === 'bd-11', 'house-kind', '종류가 다른 칸끼리 자리를 바꿈: ' + JSON.stringify(h1));
-  await page.locator('.bag .bitem[data-item="it-mulbyeong"]').click();
-  await page.locator('.bag .hslot[data-slot="bd-12"]').click(); await W(page, 80);
-  ok((await H())['it-mulbyeong'] === 'bd-12', 'house-kind', '어디나(any) 물건이 뜰 칸에 놓이지 않음');
-  // 단계가 오를 때: 객사의 뜰(inn-6)에 있던 천리마는 별당의 같은 순번(bd-6, 방 안)이 아니라 뜰 칸으로 간다
-  const moved = await page.evaluate(() => {
-    const st = G.save.state;
-    st.house = { 'it-cheonrima': 'inn-6', 'it-yangryu': 'inn-1' };
-    G.house.settle();
-    return Object.assign({}, st.house);
-  });
-  ok(/^bd-1[12]$/.test(moved['it-cheonrima']) && moved['it-yangryu'] === 'bd-1', 'house-kind', '단계가 오를 때 종류가 맞는 칸으로 옮기지 않음: ' + JSON.stringify(moved));
-  await finish(page);
-});
-
-// 선생님용 목차의 교사용 안내: 모둠 디브리핑 안내(extra)와 장부 보는 법(ledger)
-await run('교사용 안내', async () => {
-  const page = await newPage('teacher-guide', { viewport: { width: 1280, height: 860 }, mobile: false });
-  await page.goto(BASE + '?teacher=1');
-  await ready(page);
-  await vbtn(page, '시작하기').first().click();
-  await page.waitForSelector('.sheet');
-  await vbtn(page, '처음 읽기').first().click();
-  await page.waitForSelector('.play');
-  await page.locator('[data-tool="toc"]').first().click();
-  await page.waitForSelector('.toc .teacher-guide');
-  const g = await page.evaluate(() => ({ text: document.querySelector('.toc .teacher-guide').innerText, N: G.data.notes.teacher }));
-  ok(g.text.includes(g.N.extra.slice(0, 20)), 'teacher', '교사용 안내에 모둠 디브리핑 안내(notes.teacher.extra)가 없음');
-  ok(g.text.includes(g.N.ledger.slice(0, 20)), 'teacher', '교사용 안내에 장부 보는 법(notes.teacher.ledger)이 없음');
-  await finish(page);
-});
-
-await browser.close();
-server.close();
-log(issues.length ? `✗ 내용 점검 실패 ${issues.length}건` : '✓ 내용 점검 통과');
-process.exit(issues.length ? 1 : 0);
+  await run('학생 완주 휴대폰 모두 적중', () => fullRun('phone', { width: 390, height: 844 }, 'hit', 2));
+  await run('학생 완주 태블릿 모두 빗나감', () => fullRun('tablet', { width: 820, height: 1180 }, 'miss', 2));
+  await run('학생 완주 데스크톱 혼합', () => fullRun('desktop', { width: 1280, height: 860 }, 'mix', 1));
+} catch (e) { fatal = !!e.critical; if (!issues.length) issues.push(e.message); }
+finally { await browser.close(); await new Promise((r) => server.close(r)); }
+console.log('내용 점검 ' + passed + '/' + EXPECTED_CHECKS + ' 통과');
+if (issues.length) console.error(issues.join('\n'));
+process.exit(fatal ? 2 : (issues.length || passed !== EXPECTED_CHECKS) ? 1 : 0);

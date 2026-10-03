@@ -30,13 +30,14 @@
     const i = sIdx(id);
     if (i < 0) return false;
     if (S().awake || S().done[id]) return true;
-    const p = sIdx(S().pos);
+    const current = G.app.current();
+    const p = sIdx(current && !current.revisit ? current.scene : S().pos);
     return p >= 0 && i <= p;
   };
   D.plainName = (s) => T.plain(s || '');
   D.items = function () {
     const out = {};
-    for (const s of L()) if (s.item && s.item.id) out[s.item.id] = Object.assign({ scene: s.id }, s.item);
+    for (const s of L()) for (const item of [...(s.items || []), ...(s.bonus?.items || [])]) out[item.id] = { scene: s.id, ...item };
     return out;
   };
   // 소원을 채운 것의 이름(말판 칸·물건·장면)
@@ -108,11 +109,11 @@
         if ((w.parts || []).length) {
           li.appendChild(h('span.wbar.parts', { 'aria-hidden': 'true' }, w.parts.map((p) => h('span.cell.part' + (p.filled ? '.on' : ''), { dataset: { part: p.id } }, p.name))));
         } else if (def.size) {
-          const on = w.filled ? Math.max(1, Math.min(def.size, w.sources.length)) : 0;
+          const on = Math.ceil(w.fill * def.size);
           li.appendChild(h('span.wbar', { 'aria-hidden': 'true' }, Array.from({ length: def.size }, (_, i) => h('span.cell' + (i < on ? '.on' : '')))));
         }
       }
-      if (opt.detail && w.sources.length) li.appendChild(h('div.src', w.sources.map(D.sourceName).join(' · ')));
+      if (opt.detail && w.sources?.length) li.appendChild(h('div.src', w.sources.map(D.sourceName).join(' · ')));
       if (opt.detail && w.hidden) li.appendChild(h('div.src', '꿈 내내 비어 있어요'));
       ul.appendChild(li);
     }
@@ -356,7 +357,7 @@
 
   // 장면을 마치고 다음 장면으로 갈 때: 두 장면 모두 말판 칸이 있으면 말이 걸어간다
   G.app.hook('between', async function (from, to, ctx) {
-    if (!from.square || !to.square || from.square === to.square) return;
+    if (ctx.readonly || !from.square || !to.square || from.square === to.square) return;
     if (!squares().some((q) => q.id === to.square)) return;
     await walkScreen(ctx, from.square, to.square);
   });

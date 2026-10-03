@@ -1,0 +1,326 @@
+{
+  "approval": "approved-for-integration",
+  "method": "tools/gen.ps1 -> Codex CLI built-in image_gen",
+  "entries": [
+    {
+      "name": "study",
+      "kind": "sheet",
+      "cell": [
+        96,
+        96
+      ],
+      "frames": 4,
+      "rows": 1,
+      "ref": "refs/yang_pack.png",
+      "mode": "char",
+      "size": "1536x1024",
+      "prompt": "prompts/study.txt",
+      "source": "originals/study.png",
+      "candidate": "candidates96/study.webp",
+      "key": "magenta",
+      "product": "assets/sprites/study.webp",
+      "approved_sha256": "71e5efad3690488e58b2bb73fc7e4cb250e0c974fe5940b8cf15d945248cd421",
+      "source_sha256": "ce24fa074bb1c26b3495c00b79ed38efbf17d5f45cbec68439412e44798bf7f2",
+      "archived_prompt": "tools/prompts/sim_source_study.txt",
+      "prompt_sha256": "1b1c298fa8438487f3e7ee843283b03b204d03e58fbfe33a0cea6f8e00bec89e"
+    },
+    {
+      "name": "geomungo",
+      "kind": "sheet",
+      "cell": [
+        96,
+        96
+      ],
+      "frames": 4,
+      "rows": 1,
+      "ref": "refs/yang_pack.png",
+      "mode": "char",
+      "size": "1536x1024",
+      "prompt": "prompts/geomungo.txt",
+      "source": "originals/geomungo.png",
+      "candidate": "candidates96/geomungo.webp",
+      "key": "magenta",
+      "product": "assets/sprites/geomungo.webp",
+      "approved_sha256": "651b80ea382055c8e8447a6e2bf9f0e614b0bda962646933e447335a54dae60e",
+      "source_sha256": "031339aaa57c068fec3967da67a94a884094b80a35549285688bd7ef686fe450",
+      "archived_prompt": "tools/prompts/sim_source_geomungo.txt",
+      "prompt_sha256": "093e44dd1f3830e00642e3c1e7dc3cf61e20bee693729df56d2f669a9fcb7849"
+    },
+    {
+      "name": "sword",
+      "kind": "sheet",
+      "cell": [
+        96,
+        96
+      ],
+      "frames": 4,
+      "rows": 1,
+      "ref": "refs/yang_pack.png",
+      "mode": "char",
+      "size": "1536x1024",
+      "prompt": "prompts/sword_v2.txt",
+      "source": "originals/sword_v2.png",
+      "candidate": "candidates96/sword.webp",
+      "key": "magenta",
+      "revision": "compact-guard-v2",
+      "edgeDarken": 1.0,
+      "product": "assets/sprites/sword.webp",
+      "approved_sha256": "c2329c2b450bc3214427db7d257af88d943729b18b836466b655ed35d7f44f6c",
+      "source_sha256": "dbc199ac4107e366798aa3ea7982670fc83fecab8995e371c02f19cd96efb957",
+      "archived_prompt": "tools/prompts/sim_source_sword_v2.txt",
+      "prompt_sha256": "c00f4dff8ab28c3fccdbfbf0106be94a1f93706310cbee2e1ad5c2b422b17480"
+    },
+    {
+      "name": "strategy",
+      "kind": "sheet",
+      "cell": [
+        96,
+        96
+      ],
+      "frames": 4,
+      "rows": 1,
+      "ref": "refs/yang_pack.png",
+      "mode": "char",
+      "size": "1536x1024",
+      "prompt": "prompts/strategy.txt",
+      "source": "originals/strategy.png",
+      "candidate": "candidates96/strategy.webp",
+      "key": "magenta",
+      "product": "assets/sprites/strategy.webp",
+      "approved_sha256": "a0c60a159c84e1838139e773169e7a939193da256c7cd276a30e7b2c43722859",
+      "source_sha256": "1072ffa713a862e8e486662dc719be62c427fad6b9b79710d3cb0c75573757f0",
+      "archived_prompt": "tools/prompts/sim_source_strategy.txt",
+      "prompt_sha256": "a14d63a8bc143bf69598330e01129ed04e9beb8b0c50ade8455a87f50448fc4d"
+    },
+    {
+      "name": "hoseung",
+      "kind": "sheet",
+      "cell": [
+        96,
+        96
+      ],
+      "frames": 4,
+      "rows": 1,
+      "ref": "refs/hoseung_pack.png",
+      "mode": "char",
+      "size": "1536x1024",
+      "prompt": "prompts/hoseung.txt",
+      "source": "originals/hoseung.png",
+      "candidate": "candidates96/hoseung.webp",
+      "key": "magenta",
+      "pauseFrame": 2,
+      "strikeFrame": 3,
+      "product": "assets/sprites/hoseung.webp",
+      "approved_sha256": "00c7a18585152633c50edef0fef0c66f707b1992a52d135af7fa500d8edcc28a",
+      "source_sha256": "dc5dbcddc5203b6b8a5d406e2bdb0dc514ff2ebcd4c18814efd050a6bd9c7097",
+      "archived_prompt": "tools/prompts/sim_source_hoseung.txt",
+      "prompt_sha256": "1c36fef08e33306d9d443b1e031e7101026aa0880167a978b421b1d7dbcb671e"
+    },
+    {
+      "name": "munjang",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_munjang.png",
+      "key": "magenta",
+      "atlasCell": [
+        0,
+        0
+      ],
+      "copyFrom": "candidates/icon_munjang.png",
+      "product": "assets/ui/icon_munjang.png",
+      "approved_sha256": "3d51ebdab7f89acd5b0c46759a4dddf03d192e840e87cab897f54637f1cb551d",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "eumak",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_eumak.png",
+      "key": "magenta",
+      "atlasCell": [
+        1,
+        0
+      ],
+      "copyFrom": "candidates/icon_eumak.png",
+      "product": "assets/ui/icon_eumak.png",
+      "approved_sha256": "a139cb2d795e1acb14e7143d4cf71b5f5f315da444a768fb7568d4e694468006",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "muye",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_muye.png",
+      "key": "magenta",
+      "atlasCell": [
+        2,
+        0
+      ],
+      "copyFrom": "candidates/icon_muye.png",
+      "product": "assets/ui/icon_muye.png",
+      "approved_sha256": "a94c6b49db9fc822431ecd9056c847e9e03d2f2d6fcc26e0bf479409ead27dca",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "jiryak",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_jiryak.png",
+      "key": "magenta",
+      "atlasCell": [
+        3,
+        0
+      ],
+      "copyFrom": "candidates/icon_jiryak.png",
+      "product": "assets/ui/icon_jiryak.png",
+      "approved_sha256": "b946d36b45ac1539caf5ba9cf27906f1f259c69063dbcb94af653f0a9e44199f",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "gong",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_gong.png",
+      "key": "magenta",
+      "atlasCell": [
+        0,
+        1
+      ],
+      "copyFrom": "candidates/icon_gong.png",
+      "product": "assets/ui/icon_gong.png",
+      "approved_sha256": "65d49d62575680c9e37d65cd45f98d4875fdad49fc44d703441d8c37582e28e4",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "fame",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_fame.png",
+      "key": "magenta",
+      "atlasCell": [
+        1,
+        1
+      ],
+      "copyFrom": "candidates/icon_fame.png",
+      "product": "assets/ui/icon_fame.png",
+      "approved_sha256": "867ac9f13d8356e4f7f0a92666bfd2bfa8c3146bd0e163bbc6ace2d82dd085d9",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    },
+    {
+      "name": "wealth",
+      "kind": "icon",
+      "cell": [
+        32,
+        32
+      ],
+      "frames": 1,
+      "rows": 1,
+      "ref": "refs/style.png",
+      "mode": "style",
+      "size": "1536x1024",
+      "prompt": "prompts/icons.txt",
+      "source": "originals/icons.png",
+      "candidate": "candidates96/icon_wealth.png",
+      "key": "magenta",
+      "atlasCell": [
+        2,
+        1
+      ],
+      "copyFrom": "candidates/icon_wealth.png",
+      "product": "assets/ui/icon_wealth.png",
+      "approved_sha256": "ae273045aafc06468cc15f2fb2eda6ac83f07540645f06196211d4cd98f7424e",
+      "source_sha256": "4d577f486081cde6de9fd58bf875fa855d3f67396e33227d2aff934b99f6960f",
+      "archived_prompt": "tools/prompts/sim_source_icons.txt",
+      "prompt_sha256": "fc1b0b2fa06fdfc2ed118f7351097ea5660e2e5aa76a008eeec7e43417e6848f"
+    }
+  ],
+  "processing": "processing96.json",
+  "validation": "validation96.json",
+  "review": "review96",
+  "reviewScales": [
+    1,
+    2
+  ],
+  "policy": "5 native 96x96 sheets / 4 frames; 7 unchanged 32x32 icons / 1 frame; same generated originals",
+  "provenance": "Original prompts describe the historical generation request; the approved native 96px processing does not alter those source prompts.",
+  "commands": [
+    "python tools/process_sim_assets.py --manifest tools/manifest_sim96.json",
+    "python tools/check_assets.py",
+    "node tests/check-sim.mjs",
+    "node tests/check-dream.mjs",
+    "node tests/check-data.mjs",
+    "node tests/check-rights.mjs"
+  ]
+}

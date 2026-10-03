@@ -1,27 +1,18 @@
 'use strict';
-// 화면 흐름(명세 3절): 타이틀 → 0 서장 → 1 연화봉 → 2 꿈 → 3 깨어남 → 4 꿈 일지 → 5 육관대사 → R 결과.
-// 진행은 이 순서뿐이다. 목차·설정은 위에 겹쳐 뜬다.
-//
-// ───────── 확장 지점(말판·집·구슬·일지·깨어남·결과 화면을 맡는 뒤 작업이 쓰는 곳) ─────────
-//  G.app.screens[kind] = async (ctx, scene) => {}
-//      장면 종류(scene.kind)별 화면. 돌려준 Promise가 끝나면 그 장면을 마친 것으로 보고 다음 장면으로 간다.
-//      기본: 'scene'(읽기 → 활동 → 마음 → 물건 → 인연 → 구슬). 'waking'·'journal'·'interp'·'result'는 화면 모듈이 채운다.
-//  G.app.steps[name] = async (ctx, scene) => {}
-//      'scene' 화면 안의 걸음. 기본 순서는 G.app.flow(장면에 flow가 있으면 그것). 'item'은 house.js가 채우고, 'pearl'·'bond'는 바꿔 끼우라고 둔 자리다.
-//  G.app.hook('between', async (from, to, ctx) => {})
-//      장면을 마치고 다음 장면으로 가기 전(예: 2장 말판에서 말이 다음 칸으로 걷기). 다시 읽기에서는 부르지 않는다.
-//  G.app.hook('chapter', async (ctx) => {})
-//      장 첫머리 카드를 넘긴 바로 뒤, 그 장 첫 장면을 펼치기 전(예: 2장 말판의 출발 칸에서 첫 칸으로 걷기). 다시 읽기에서는 부르지 않는다.
-//  G.app.on(event, fn) — 'scene'(ctx) · 'step'(ctx, name) · 'done'(scene, ctx) · 'chapter'(chId) · 'wake' · 'reset'
-//  G.app.toolbar.push({ id, label, icon, when(ctx), click(ctx) }) — 위 막대에 단추 더하기(인연첩·집·소원 목록 등)
-//  G.app.wake() — 3장에서 지팡이 소리가 나는 바로 그 순간에 부른다. 깨어남을 기록한다(새로 시작하기 전까지 되돌릴 수 없음)
-//  ctx(화면에 넘기는 것): { scene, ch, revisit, readonly, main, page, alive(), step(name), section(cls), tray(el), next(label) }
-//      readonly(=revisit)이면 장부·마음·물건·구슬 등 기록을 바꾸지 않는다.
-//
-// ───────── 지켜야 할 규칙
-//  - 깨어난 뒤에는 0~3장(깨어난 선방 장면 앞까지)을 선생님용이 아니면 열 수 없다: 뒤로 가기·새로 고침·목차·주소 모두.
-//  - 이어 하기: 깨어나기 전 3장에서 끄면 3장 처음, 깨어난 뒤 그 앞에서 끄면 깨어난 선방, 그 밖에는 그 장면 처음부터.
-//  - 깨어나기 전에는 마친 장면을 다시 읽을 수 있지만 기록은 처음 그대로다.
+// 장 흐름과 열기 문. 화면은 screens[kind](ctx, scene)로 등록한다.
+// ctx.startStep: event의 preview/prep1/prep2/scene 시작 위치. ctx.step(name)은 표시와 진행을 저장한다.
+// ctx.finishEvent(): 두 준비 뒤 grade/reward/done과 다음 pos를 한 번에 저장한다.
+// T3는 결과 연출 전에 finishEvent를 호출한다. step('grade')도 같은 완료 처리를 보장한다.
+// ctx.readonly/revisit이면 기록을 쓰지 않는다. 재생 뒤에는 원래 진행으로 돌아간다.
+// ctx.autoAdvance는 현재 경로의 자동 준비 기록이다. readonly로 재생하되 끝나면 다음 pos만 저장한다.
+// 과거 자동 준비 사건의 직접 다시 보기는 autoAdvance=false이며 원래 pos로 돌아간다.
+// ctx.signal은 이탈 시 abort되며 ctx.next()는 취소 때 false, 클릭 때 true로 끝난다.
+// 비동기 대기 뒤 ctx.alive()를 확인한다. ctx.section/ctx.tray는 본문/진행 단추 자리다.
+// hook('scene',ctx): 매 화면의 공통 띠, hook('chapter',ctx): 장 안내 뒤,
+// hook('between',from,to,ctx): 완료를 먼저 저장한 뒤 장면 사이 연출. 다시 열기에서는 chapter/between 생략.
+// on('scene'|'step'|'done'|'chapter'|'wake'|'reset'|'settings',fn), toolbar도 유지한다.
+// settings는 applySettings의 동기 알림(인자 없음)이며 본문·진행은 다시 만들지 않는다.
+// 깨어남은 c3-staff에서 난간 치기 순간 wake()로만 기록한다.
 (function () {
   const { h, $, $$ } = G.util;
   const ui = G.ui, T = G.text;
@@ -32,7 +23,7 @@
   const CHAPTERS = [
     { id: '0', label: '서장', name: '「조신 설화」' },
     { id: '1', label: '1장', name: '연화봉' },
-    { id: '2', label: '2장', name: '꿈 — 승경도' },
+    { id: '2', label: '2장', name: '꿈 — 출세 시뮬레이션' },
     { id: '3', label: '3장', name: '깨어남' },
     { id: '4', label: '4장', name: '꿈 일지' },
     { id: '5', label: '5장', name: '육관대사' },
@@ -48,27 +39,19 @@
   const listeners = {};
   app.on = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); };
   const emit = (ev, ...a) => { for (const fn of listeners[ev] || []) { try { fn(...a); } catch (e) { console.error(e); } } };
-  const hooks = { between: [], chapter: [] };
+  const hooks = { between: [], chapter: [], scene: [] };
   app.hook = (name, fn) => { (hooks[name] = hooks[name] || []).push(fn); };
   app.toolbar = [];
   app.screens = {};
   app.steps = {};
-  app.flow = ['read', 'activity', 'mind', 'item', 'bond', 'pearl'];
+  app.flow = ['scene'];
 
   // ───────── 장면 목록(데이터 + 비어 있는 장의 기본 화면)
   let LIST = null;
   app.list = function () {
     if (LIST) return LIST;
     const src = (G.data.scenes || []).filter((s) => s && s.id && chIdx(s.ch) >= 0).map((s) => Object.assign({}, s, { ch: String(s.ch) }));
-    const has = (ch) => src.some((s) => s.ch === ch);
-    if (src.length) {
-      if (!has('3')) src.push({ id: 'ch3-staff', ch: '3', kind: 'waking' }, { id: 'ch3-room', ch: '3', awakened: true, title: '연화봉 선방' });
-      if (!has('4')) src.push({ id: 'ch4-journal', ch: '4', kind: 'journal', title: KIND_NAME.journal });
-      if (!has('5')) src.push({ id: 'ch5-master', ch: '5', kind: 'interp', title: KIND_NAME.interp });
-      if (!has('R')) src.push({ id: 'result', ch: 'R', kind: 'result', title: KIND_NAME.result });
-    }
-    // 장 순서대로(같은 장 안에서는 데이터에 적힌 원작 순서 그대로)
-    LIST = src.map((s, i) => [s, i]).sort((a, b) => chIdx(a[0].ch) - chIdx(b[0].ch) || a[1] - b[1]).map((x) => x[0]);
+    LIST = src;
     return LIST;
   };
   const byId = (id) => app.list().find((s) => s.id === id) || null;
@@ -91,7 +74,7 @@
     if (!sc) return false;
     if (S().teacher) return true;
     if (dreamLocked(sc)) return false;
-    if (S().done[id]) return true;          // 마친 장면 다시 읽기
+    if (S().done[id] || (sc.kind === 'event' && S().events[id]?.grade && !S().events[id].auto)) return true;          // 마친 장면 다시 읽기
     return id === S().pos || id === (resumeTarget() || {}).id; // 지금 하고 있는(해야 할) 장면
   };
   function lockMsg(id) {
@@ -108,12 +91,12 @@
     if (S().awake) {
       // 깨어난 뒤: 선방 앞(꿈)이면 깨어난 선방으로. 이미 마친 장면이면 아직 안 한 다음 장면으로
       let i = Math.max(idx(t.id), Math.min(awakenedIdx(), L.length - 1));
-      while (S().done[L[i].id] && i < L.length - 1) i++;
+      while ((S().done[L[i].id] || (L[i].kind === 'event' && S().events[L[i].id]?.grade && !S().events[L[i].id].auto)) && i < L.length - 1) i++;
       return L[i];
     }
     // 깨어나기 전: 이미 마친 장면이면(장면 사이 말 걷기 중에 끈 옛 기록 등) 아직 안 한 다음 장면으로
     let i = idx(t.id);
-    while (S().done[L[i].id] && i < L.length - 1) i++;
+    while ((S().done[L[i].id] || (L[i].kind === 'event' && S().events[L[i].id]?.grade && !S().events[L[i].id].auto)) && i < L.length - 1) i++;
     t = L[i];
     if (t.ch === '3') return firstOf('3'); // 깨어나기 전 3장: 3장 처음(취미궁 잔치)부터
     return t;
@@ -130,14 +113,21 @@
     }
     play(t.id);
   };
+  // 다시 보기에서 돌아올 때는 새로 고침의 3장 되감기를 적용하지 않는다.
+  function continueSaved() {
+    const saved = byId(S().pos);
+    if (saved && app.canOpen(saved.id)) play(saved.id);
+    else app.resume();
+  }
 
   app.isAwake = () => !!S().awake;
   // 3장의 지팡이 소리 순간에 부른다. 한 번 기록되면 새로 시작하기 전까지 되돌릴 수 없다
   app.wake = function () {
-    if (S().awake) return false;
+    if (S().awake || !current || current.scene.id !== 'c3-staff' || current.revisit) return false;
     S().awake = true;
     S().awakeAt = Date.now();
     G.save.write();
+    current.refreshTools?.();
     emit('wake');
     return true;
   };
@@ -147,8 +137,14 @@
     const c = document.documentElement.classList;
     c.toggle('big', !!S().big);
     c.toggle('teacher', !!S().teacher);
-    c.toggle('mode-review', S().mode === 'review');
-    c.toggle('mode-first', S().mode !== 'review');
+    const top = document.querySelector('.play .topbar');
+    const fold = top?.querySelector('[data-tool="fold"]');
+    if (!S().teacher) fold?.remove();
+    else if (top && !fold) top.appendChild(ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', () => { if (S().teacher) ui.fold(); }, { dataset: { tool: 'fold' } }));
+    current?.refreshTools?.();
+    // 본문을 다시 열지 않고 설정을 따르는 도구만 즉시 갱신한다.
+    emit('settings');
+    recheck();
   };
 
   // ───────── 지금 화면
@@ -156,12 +152,13 @@
   app.current = function () {
     if (!current) return null;
     const sc = current.scene;
-    return { scene: sc.id, ch: sc.ch, kind: sc.kind || 'scene', step: current.step, revisit: current.revisit, data: sc };
+    return { scene: sc.id, ch: sc.ch, kind: sc.kind || 'scene', step: current.step, revisit: current.revisit, autoAdvance: current.autoAdvance, data: sc };
   };
 
   // ───────── 타이틀
   app.title = function (opt = {}) {
     playToken++;
+    current?.abort.abort();
     current = null;
     ui.unpop();
     ui.closeSheets();
@@ -186,9 +183,9 @@
       h('div.credit', '김만중 「구운몽」 학습 게임 · 풀이 글은 이 게임을 위해 새로 쓴 것이에요'),
       h('div.credit', '만든이 박준일(온양여자고등학교 국어 교사)'),
       h('div.credit', G.audio.credit()),
-      musicToggle()));
+      h('div.title-tools', ui.full.offer() ? ui.full.button() : null, musicToggle())));
   };
-  // 타이틀 오른쪽 위의 배경음 켜기/끄기(설정의 '배경음'과 같은 값)
+  // 타이틀 오른쪽 위, 전체 화면 단추 옆의 배경음 켜기/끄기(설정의 '배경음'과 같은 값)
   function musicToggle() {
     const b = h('button.icon-btn.music-toggle', { type: 'button' });
     const draw = () => { const on = S().music; b.innerHTML = ui.ICON[on ? 'musicOn' : 'musicOff']; b.setAttribute('aria-label', on ? '배경음 끄기' : '배경음 켜기'); b.title = b.getAttribute('aria-label'); b.classList.toggle('off', !on); };
@@ -197,24 +194,17 @@
     return b;
   }
 
-  // ───────── 새로 시작: 확인을 받고 모든 기록을 지운 뒤 읽기 방식을 고른다
+  // ───────── 새로 시작: 확인을 받고 모든 기록을 지운다
   app.newGame = async function (confirmReset) {
     if (confirmReset) {
       const ok = await ui.sheet([h('h3', '처음부터 새로 할까요?'),
-        h('p', '지금까지의 기록(진행, 장부, 고른 마음, 집, 구슬, 깨어남, 해석, 이름)이 모두 지워져요. 설정은 그대로예요.')],
+        h('p', '지금까지의 기록(진행, 장부, 능력, 물건, 구슬, 깨어남, 해석, 이름)이 모두 지워져요. 설정은 그대로예요.')],
       [{ label: '그만두기', value: false }, { label: '새로 시작', value: true, cls: 'seal' }]);
       if (!ok) return;
     }
     G.save.reset();
     emit('reset');
-    const mode = await ui.sheet([
-      h('h3', '어떻게 읽을까요?'),
-      h('p', h('b', '처음 읽기'), ' — 작품을 처음 만나요. 원문 아래 풀이가 보이고, 인물 이름 옆에 얼굴이 나오고, 장마다 지난 이야기가 나와요.'),
-      h('p', h('b', '다시 읽기'), ' — 작품을 읽은 뒤 복습해요. 풀이를 가리고 자동 표시가 없으며, 헷갈리는 선택지가 더 들어가요.'),
-      h('p.small.muted', '설정에서 언제든 바꿀 수 있어요.'),
-    ], [{ label: '다시 읽기', value: 'review' }, { label: '처음 읽기', value: 'first', cls: 'primary' }], { dismiss: false });
     const st = S();
-    st.mode = mode || 'first';
     st.started = true;
     st.startedAt = Date.now();
     G.save.write();
@@ -235,17 +225,24 @@
     const sc = byId(id);
     if (!sc) return;
     const token = ++playToken;
+    current?.abort.abort();
+    const abort = new AbortController();
     ui.unpop();
     ui.closeSheets();
     const st = S();
-    const revisit = !!st.done[id];
+    const rec = st.events[id];
+    const revisit = !!st.done[id] || !!(sc.kind === 'event' && rec?.grade);
+    const autoAdvance = !!(sc.kind === 'event' && rec?.auto && rec.grade && st.pos === id);
+    const continuing = st.started && st.pos === id && !opt.transition;
+    const startStep = sc.kind === 'event' ? rec?.turns.length === 2 ? 'scene' : rec?.turns.length === 1 ? 'prep2' : continuing && st.step === 'prep1' ? 'prep1' : 'preview' : sc.kind;
+    if (st.teacher && sc.kind === 'event' && !revisit) G.save.fillBefore(app.list(), id);
     if (!revisit) {
       st.pos = id;
       st.started = true;
       st.reach = Math.max(st.reach || 0, chIdx(sc.ch));
       G.save.write();
     }
-    current = { scene: sc, revisit, step: null };
+    current = { scene: sc, revisit, autoAdvance, step: null, abort };
     if (!opt.fromPop) {
       const hs = { scene: id };
       if (opt.replace || (history.state && history.state.scene === id)) history.replaceState(hs, ''); else history.pushState(hs, '');
@@ -264,44 +261,76 @@
         tools,
         ui.iconBtn('toc', '목차', () => app.toc(), { dataset: { tool: 'toc' } }),
         ui.iconBtn('gear', '설정', () => app.settings(), { dataset: { tool: 'settings' } }),
-        ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', () => ui.fold(), { dataset: { tool: 'fold' } })),
-      revisit ? h('div.revisit-bar', h('span', '다시 읽는 중 · 활동을 다시 풀어도 기록은 처음 그대로예요'),
-        h('button.btn.small', { type: 'button', on: { click: () => app.resume() } }, '하던 곳으로')) : null,
+        st.teacher ? ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', () => { if (S().teacher) ui.fold(); }, { dataset: { tool: 'fold' } }) : null),
+      revisit && !autoAdvance ? h('div.revisit-bar', h('span', '다시 읽는 중 · 활동을 다시 풀어도 기록은 처음 그대로예요'),
+        h('button.btn.small', { type: 'button', on: { click: continueSaved } }, '하던 곳으로')) : null,
       h('main.main', inner),
       tray);
     root().replaceChildren(page);
     window.scrollTo(0, 0);
 
     const ctx = {
-      scene: sc, ch: sc.ch, kind, revisit, readonly: revisit, main: inner, page,
+      scene: sc, ch: sc.ch, kind, revisit, readonly: revisit, autoAdvance, main: inner, page, startStep, signal: abort.signal,
       alive: () => token === playToken,
-      step(name) { if (!ctx.alive()) return; current.step = name; page.dataset.step = name; emit('step', ctx, name); },
+      step(name) {
+        if (!ctx.alive()) return;
+        if (!ctx.readonly && sc.kind === 'event' && name === 'grade') ctx.finishEvent();
+        current.step = name; page.dataset.step = name;
+        if (!ctx.readonly && S().pos === sc.id) { S().step = name; G.save.write(); }
+        emit('step', ctx, name);
+      },
+      finishEvent() {
+        if (!ctx.alive() || ctx.readonly || sc.kind !== 'event') return S().events[sc.id];
+        const rec = G.sim.finish(S(), sc);
+        if (!rec.auto) {
+          S().done[sc.id] = true;
+          const next = app.list()[idx(sc.id) + 1];
+          if (next) { S().pos = next.id; S().step = 'preview'; S().reach = Math.max(S().reach, chIdx(next.ch)); }
+        }
+        G.save.write();
+        return rec;
+      },
       section(cls) {
         const s = h('section.blk' + (cls ? '.' + cls : ''));
         inner.appendChild(s);
         if (inner.children.length > 1) setTimeout(() => { if (s.isConnected) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
         return s;
       },
-      tray(content) { tray.replaceChildren(); if (content) G.util.append(tray, [content]); tray.classList.toggle('empty', !content); },
+      tray(content) { if (!ctx.alive()) return; tray.replaceChildren(); if (content) G.util.append(tray, [content]); tray.classList.toggle('empty', !content); },
       next(label = '다음 ▶', o = {}) {
         return new Promise((resolve) => {
           const b = h('button.btn.' + (o.cls || 'primary'), { type: 'button', dataset: { act: 'next' } }, label);
-          b.addEventListener('click', () => { if (!ctx.alive()) return; G.audio.page(); ctx.tray(null); resolve(); });
+          const cancelled = () => resolve(false);
+          if (!ctx.alive()) { resolve(false); return; }
+          abort.signal.addEventListener('abort', cancelled, { once: true });
+          b.addEventListener('click', () => { if (!ctx.alive()) return; abort.signal.removeEventListener('abort', cancelled); G.audio.page(); ctx.tray(null); resolve(true); }, { once: true });
           ctx.tray(b);
           setTimeout(() => { if (b.isConnected && !document.querySelector('.sheet-back')) b.focus({ preventScroll: true }); }, 30);
         });
       },
     };
-    for (const t of app.toolbar) {
-      try { if (!t.when || t.when(ctx)) tools.appendChild(ui.iconBtn(t.icon || t.label.slice(0, 1), t.label, () => t.click(ctx), { dataset: { tool: t.id } })); } catch (e) { console.error(e); }
-    }
+    current.refreshTools = () => {
+      if (!ctx.alive()) return;
+      tools.replaceChildren();
+      if (chIdx(sc.ch) >= 2 && (!S().awake || S().teacher)) tools.appendChild(ui.iconBtn('bag', '인연첩', () => {
+        if (ctx.alive()) G.dream?.open('bonds');
+      }, { dataset: { tool: 'bonds' } }));
+      for (const t of app.toolbar.filter((t) => t.id !== 'dream')) {
+        try { if (!t.when || t.when(ctx)) tools.appendChild(ui.iconBtn(t.icon || t.label.slice(0, 1), t.label, () => {
+          if (ctx.alive() && (!t.when || t.when(ctx))) t.click(ctx);
+        }, { dataset: { tool: t.id } })); } catch (e) { console.error(e); }
+      }
+    };
+    current.refreshTools();
     ctx.tray(null);
     emit('scene', ctx);
 
     (async () => {
-      if (!revisit && firstOf(sc.ch) === sc && kind !== 'result') await chapterStep(ctx);
+      if (!revisit && !continuing && firstOf(sc.ch) === sc && kind !== 'result') await chapterStep(ctx);
       if (!ctx.alive()) return;
-      const screen = app.screens[kind] || app.screens.scene;
+      for (const fn of hooks.scene) { await fn(ctx); if (!ctx.alive()) return; }
+      const screen = app.screens[kind];
+      if (!screen) { ctx.step(kind); ctx.main.appendChild(h('p', '이 장면을 준비하고 있어요.')); return; }
       await screen(ctx, sc);
       if (!ctx.alive()) return;
       await complete(ctx);
@@ -309,14 +338,14 @@
   }
   app.play = (id) => app.open(id);
 
-  // 장을 펼칠 때: 장 이름과 (처음 읽기라면) 지난 이야기
+  // 장을 펼칠 때: 장 이름과 지난 이야기
   async function chapterStep(ctx) {
     ctx.step('chapter');
     G.audio.chapter();
     const c = chOf(ctx.ch), info = (G.data.chapters || {})[ctx.ch] || {};
     const card = ctx.section('chapter-card');
     card.append(h('div.ch-no', c.label), h('h2', c.name), info.intro ? h('p.ch-intro', T.inline(info.intro)) : null);
-    if (S().mode !== 'review' && info.recap) card.appendChild(h('div.recap', h('span.tag', '지난 이야기'), h('p', T.inline(info.recap))));
+    if (info.recap) card.appendChild(h('div.recap', h('span.tag', '지난 이야기'), h('p', T.inline(info.recap))));
     if (info.fiction) card.appendChild(T.block(Object.assign({ mark: 'fiction' }, info.fiction)));
     await ctx.next('펼치기 ▶');
     if (!ctx.alive()) return;
@@ -327,20 +356,28 @@
   // 장면을 마쳤을 때
   async function complete(ctx) {
     const sc = ctx.scene;
-    emit('done', sc, ctx);
-    if (ctx.revisit) { app.resume(); return; }
+    if (ctx.revisit && !ctx.autoAdvance) { continueSaved(); return; }
     const st = S();
-    st.done[sc.id] = true;
-    G.save.write();
+    if (!ctx.readonly) {
+      emit('done', sc, ctx);
+      if (!ctx.alive()) return;
+      if (sc.kind === 'link' && !st.done[sc.id]) {
+        for (const [key, gain] of Object.entries(sc.bonus?.abil || {})) if (Object.hasOwn(st.abil, key)) st.abil[key] += gain;
+        for (const item of sc.bonus?.items || []) if (!st.items.includes(item.id)) st.items.push(item.id);
+      }
+      st.done[sc.id] = true;
+      G.save.write();
+    }
     const L = app.list(), next = L[idx(sc.id) + 1];
     if (!next) return;
     // 다음 자리를 장면 사이 화면(말 걷기)보다 먼저 저장한다: 걷는 중에 새로 고침·처음 화면으로 가도 다음 장면 처음부터 이어 간다
     st.pos = next.id;
+    st.step = 'preview';
     st.reach = Math.max(st.reach || 0, chIdx(next.ch));
     G.save.write();
-    for (const fn of hooks.between) { await fn(sc, next, ctx); if (!ctx.alive()) return; }
+    if (!ctx.readonly) for (const fn of hooks.between) { await fn(sc, next, ctx); if (!ctx.alive()) return; }
     if (next.ch !== sc.ch) emit('chapter', next.ch);
-    play(next.id);
+    play(next.id, { transition: true });
   }
 
   // ───────── 회목 카드(기획서 §4-3): 한문본 16회의 장 제목. heading 하나 또는 여러 회에 걸치면 배열
@@ -381,63 +418,14 @@
   };
 
   app.screens.scene = async function (ctx, sc) {
-    sceneHead(ctx, sc);
-    for (const name of sc.flow || app.flow) {
-      const fn = app.steps[name];
-      if (!fn || !ctx.alive()) continue;
-      await fn(ctx, sc);
-    }
+    ctx.step('scene');
+    await G.stage.play(ctx, sc);
+  };
+  app.screens.link = async function (ctx, sc) {
+    ctx.step('link');
+    await G.stage.play(ctx, sc);
   };
 
-  // 읽기
-  app.steps.read = async function (ctx, sc) {
-    if (!sc.read || !sc.read.length) return;
-    ctx.step('read');
-    ctx.section('reading').appendChild(T.blocks(sc.read));
-    await ctx.next();
-  };
-  // 읽기 활동(원작 속 시험)
-  app.steps.activity = async function (ctx, sc) {
-    if (!sc.activity) return;
-    ctx.step('activity');
-    const m = G.activity.mount(ctx.section('act'), sc.activity, { tray: ctx.tray, readonly: ctx.readonly });
-    await m.done;
-    if (!ctx.alive()) return;
-    if (sc.imgAfter) app.sceneImage(ctx, sc.imgAfter);
-    await ctx.next();
-  };
-  // 마음 고르기(채점하지 않음, 꿈 일지에 쓰임)
-  app.steps.mind = async function (ctx, sc) {
-    const M = sc.mind;
-    if (!M || !(M.options || []).length) return;
-    ctx.step('mind');
-    const s = ctx.section('mind');
-    s.appendChild(h('div.act-head', h('span.act-kind', '마음 고르기 · 채점하지 않아요'), h('h3', T.inline(M.prompt || '이때 양소유의 마음은 어땠을까요?'))));
-    const prev = S().mind[sc.id];
-    const reply = h('div.mind-reply', { hidden: true });
-    const btns = M.options.map((o) => h('button.mind-opt', { type: 'button', dataset: { opt: o.id } },
-      h('span.t', T.inline(o.text)), o.evidence ? h('span.ev', T.inline(o.evidence, { noFace: true })) : null));
-    s.append(h('div.mind-opts', btns), reply);
-    const show = (o) => {
-      btns.forEach((b) => { b.disabled = true; b.classList.toggle('chosen', b.dataset.opt === o.id); });
-      if (o.reply) { reply.replaceChildren(T.inline(o.reply)); reply.hidden = false; }
-    };
-    if (ctx.readonly) {
-      const o = M.options.find((x) => x.id === prev);
-      if (o) show(o); else btns.forEach((b) => (b.disabled = true));
-    } else {
-      await new Promise((resolve) => btns.forEach((b, i) => b.addEventListener('click', () => {
-        const o = M.options[i];
-        S().mind[sc.id] = o.id;
-        G.save.write();
-        G.audio.pick();
-        show(o);
-        resolve();
-      })));
-    }
-    if (!ctx.alive()) return;
-    await ctx.next();
-  };
   // 인연첩(처음 만남 / 다시 만나 사연 덧붙이기). 인연은 소원을 채우지 않고 개수로 세지 않는다
   // remeet는 하나({ bond, story }) 또는 여러 사람의 배열. 한 장면에서 여러 카드에 사연이 덧붙는다
   app.remeets = (sc) => [].concat((sc && sc.remeet) || []).filter((r) => r && r.bond);
@@ -451,8 +439,7 @@
     if (first) s.appendChild(app.bondCard(first));
     for (const x of again) s.appendChild(app.bondCard(x.b, x.story || ' '));
     if (!ctx.readonly) {
-      if (first) S().bonds[first.id] = true;
-      if (again.length) S().bondNotes[sc.id] = true;
+      if (first) !S().bonds.includes(first.id) && S().bonds.push(first.id);
       G.save.write();
     }
     await ctx.next(first ? '인연첩에 적기 ▶' : '다음 ▶');
@@ -482,54 +469,66 @@
     return sc ? sc.activity.title || sc.title || id : id;
   }
   app.ledgerRows = function () {
-    const L = S().ledger;
-    const order = app.list().filter((s) => s.activity).map((s) => s.activity.id);
-    const ids = Object.keys(L).sort((a, b) => (order.indexOf(a) + 1 || 1e9) - (order.indexOf(b) + 1 || 1e9));
-    return ids.map((id) => {
-      const e = L[id];
-      return {
-        id, title: actTitle(id), first: e.first, help: e.help, final: e.final,
+    const activity = (id, title) => {
+      const e = S().ledger[id] || { first: null, help: null, final: false };
+      return { id, title: activityTitles[id] || title, ...e,
         firstLabel: e.first === true ? '첫 시도에 맞힘' : e.first === false ? '다시 풀어 맞힘' : '—',
-        helpLabel: e.help === 'teacher' ? '도움 사용(선생님용)' : e.help ? '도움 사용' : '도움 없음',
-      };
+        helpLabel: e.help === 'teacher' ? '도움 사용(선생님용)' : e.help ? '도움 사용' : e.final ? '도움 없음' : '—' };
+    };
+    const grades = G.data.notes?.ui?.grades || { shine: '빛나는 성공', fine: '훌륭한 성공', near: '아쉬운 성공' };
+    const events = app.list().filter((s) => s.kind === 'event').map((sc) => {
+      const e = S().events[sc.id];
+      const recorded = e && e.grade && !e.auto;
+      return { id: sc.id, title: sc.title || sc.id, kind: 'event',
+        hits: recorded ? e.hits : null, grade: recorded ? e.grade : null,
+        gradeLabel: recorded ? grades[e.grade] : '—', clue: (sc.clues || []).join(' · '),
+        firstLabel: recorded ? e.hits + '/2' : '—',
+        help: recorded && e.peek ? 'teacher' : null,
+        helpLabel: !recorded ? '—' : e.peek ? '도움 사용(선생님용)' : '도움 없음' };
     });
+    return [activity('a-wish', '소원 찾기'), ...events, activity('j-match', '꿈 일지 맞대기')];
   };
   app.ledgerTable = function () {
-    const rows = app.ledgerRows();
-    return h('div.ledger', h('h3', '장부'), h('p.small.muted', '첫 시도와 도움 사용만 적어요. 감점은 없어요.'),
-      rows.length ? h('table', h('thead', h('tr', h('th', '활동'), h('th', '첫 시도'), h('th', '도움'))),
-        h('tbody', rows.map((r) => h('tr', { dataset: { act: r.id } }, h('td', r.title), h('td', r.firstLabel), h('td', r.helpLabel))))) : h('p.small', '아직 기록이 없어요.'));
+    return h('div.ledger', h('h3', '장부'), h('p.small.muted', '첫 시도와 준비 적중, 도움 사용을 적어요. 감점은 없어요.'),
+      h('table', h('thead', h('tr', ...['활동', '첫 시도·적중', '등급', '단서', '도움'].map((text) => h('th', text)))),
+        h('tbody', app.ledgerRows().map((r) => h('tr', { dataset: { act: r.id } },
+          h('td', r.title), h('td', r.firstLabel), h('td', r.gradeLabel || '—'), h('td', r.clue || '—'), h('td', r.helpLabel))))));
   };
 
-  // ───────── 소원 목록(꿈 동안 채워지는 상태). 인연은 소원을 채우지 않는다. dreamHidden 소원(미색)은 꿈 내내 '?'
-  //  - 칸이 나뉜 소원(parts, 출장입상의 장수·재상)은 'chuljang.chul'처럼 점 표기로 반 칸씩 채운다.
-  //    한 칸만 차면 반(half), 모든 칸이 차야 가득(filled). 예전 데이터의 part 항목(fills: ['chuljang'], part: 'chul')도 읽는다.
+  // 자원은 전체 사건의 최고 보상 합을 목표로 삼는다. 인연은 입력에 넣지 않는다.
   app.wishes = function () {
-    const st = S(), D = G.data;
-    const filled = {}, parts = {}, whole = {};
-    const add = (ids, from, part0) => {
-      for (const f of [].concat(ids || [])) {
-        const [w, p1] = String(f).split('.');
-        const p = p1 || part0;
-        (filled[w] = filled[w] || []).push(from);
-        if (p) { const m = (parts[w] = parts[w] || {}); (m[p] = m[p] || []).push(from); } else whole[w] = true;
+    const st = S(), scenes = app.list();
+    const events = scenes.filter((sc) => sc.kind === 'event');
+    const reachedSquares = (G.data.board || []).filter((q) => st.done[q.scene]);
+    const musicEvents = events.filter((sc) => sc.core?.includes('eumak'));
+    const musicItems = [...new Map(scenes.flatMap((sc) => [...(sc.items || []), ...(sc.bonus?.items || [])])
+      .filter((it) => it.kind === 'music' || it.fills?.includes('pungryu')).map((it) => [it.id, it])).values()];
+    const musicEarned = musicEvents.reduce((sum, sc) => {
+      const rec = st.events[sc.id];
+      return sum + (rec?.grade ? G.sim.reward(rec.grade).fame / G.sim.config.rewards.shine.fame : 0);
+    }, 0) + musicItems.filter((it) => st.items.includes(it.id)).length;
+    return (G.data.wishes || []).map((w) => {
+      const hidden = !!w.dreamHidden && !st.journal.revealed?.[w.id];
+      const parts = (w.parts || []).map((p) => ({ id: p.id, name: p.name,
+        filled: !hidden && reachedSquares.some((q) => q.fills?.includes(w.id + '.' + p.id)) }));
+      let fill = 0;
+      let sources = [];
+      if (!hidden) {
+        if (w.dreamHidden) fill = 1;
+        else if (parts.length) {
+          fill = parts.filter((p) => p.filled).length / parts.length;
+          sources = reachedSquares.filter((q) => q.fills?.some((f) => f.startsWith(w.id + '.'))).map((q) => q.id);
+        } else if (w.id === 'bugwi' || w.id === 'gongmyeong') {
+          const resource = w.id === 'bugwi' ? 'wealth' : 'fame';
+          fill = st.res[resource] / Math.max(1, events.length * G.sim.config.rewards.shine[resource]);
+        } else if (w.id === 'pungryu') {
+          fill = musicEarned / Math.max(1, musicEvents.length + musicItems.length);
+          sources = [...musicEvents.filter((sc) => st.events[sc.id]?.grade).map((sc) => sc.id), ...musicItems.filter((it) => st.items.includes(it.id)).map((it) => it.id)];
+        }
       }
-    };
-    for (const sc of app.list()) {
-      if (!st.done[sc.id]) continue;
-      add(sc.fills, sc.id, sc.part);
-      if (sc.item && st.items[sc.item.id]) add(sc.item.fills, sc.item.id, sc.item.part);
-      const sq = (D.board || []).find((q) => q.id === sc.square);
-      if (sq) add(sq.fills, sq.id, sq.part);
-    }
-    return (D.wishes || []).map((w) => {
-      const hidden = !!w.dreamHidden && !(st.journal && st.journal.revealed && st.journal.revealed[w.id]);
-      const defs = Array.isArray(w.parts) ? w.parts : [];
-      const ps = defs.map((p) => ({ id: p.id, name: p.name, filled: !hidden && (!!whole[w.id] || !!((parts[w.id] || {})[p.id] || []).length) }));
-      const got = ps.filter((p) => p.filled).length;
-      const full = hidden ? false : defs.length ? got === defs.length : !!filled[w.id];
-      const half = !hidden && defs.length > 0 && got > 0 && got < defs.length;
-      return { id: w.id, name: hidden ? '?' : w.name, hidden, filled: full, half, parts: ps, sources: hidden ? [] : filled[w.id] || [] };
+      fill = G.util.clamp(fill, 0, 1);
+      return { id: w.id, name: hidden ? '?' : w.name, fill, hidden,
+        half: parts.length > 0 && fill > 0 && fill < 1, filled: fill === 1, parts, sources };
     });
   };
   // 소원 채움 표기('chuljang.chul' 등)를 이름으로: 출장입상(장수). 꿈 동안 가려진 소원은 이름을 내지 않는다
@@ -595,19 +594,25 @@
         return h('div.setrow', h('span', label), b);
       };
       const onoff = (k) => () => [st[k] ? '켜짐' : '꺼짐', !!st[k]];
+      // 전체 화면은 저장하지 않는 설정이라 따로 그린다(Esc로 풀어도 단추가 따라 바뀐다)
+      const fullRow = () => {
+        const b = h('button.btn.small.toggle', { type: 'button', dataset: { set: 'full' } });
+        b.addEventListener('click', () => ui.full.toggle());
+        ui.full.watch(b, () => { const on = ui.full.on(); b.textContent = on ? '켜짐' : '꺼짐'; b.classList.toggle('primary', on); b.setAttribute('aria-pressed', String(on)); });
+        return h('div.setrow', h('span', '전체 화면'), b);
+      };
       return h('div.settings', h('h3', '설정'),
         row('music', '배경음', onoff('music'), () => { st.music = !st.music; G.audio.unlock(); G.audio.music(st.music); }),
         row('sound', '효과음', onoff('sound'), () => { st.sound = !st.sound; }),
         row('big', '큰 글자', onoff('big'), () => { st.big = !st.big; }),
-        row('mode', '읽기 방식', () => [st.mode === 'review' ? '다시 읽기' : '처음 읽기', st.mode !== 'review'], () => { st.mode = st.mode === 'review' ? 'first' : 'review'; }),
         row('teacher', '선생님용', onoff('teacher'), () => { st.teacher = !st.teacher; }),
+        ui.full.offer() ? fullRow() : null,
         h('div.setrow', h('span', '기록 지우기'), h('button.btn.small.seal', { type: 'button', dataset: { set: 'clear' }, on: { click: () => close('clear') } }, '기록 지우기')),
-        h('p.small.muted', '읽기 방식을 바꾸면 풀이 가리기는 바로, 얼굴 표시와 헷갈리는 선택지는 다음 장면부터 바뀌어요.'),
         h('p.small.muted', '진행 기록은 이 기기의 브라우저에만 저장돼요. 어디로도 보내지 않아요.'),
         h('div.credit-full', h('b', '음원 출처 '), G.audio.creditFull()));
     }, [{ label: '닫기', value: null, cls: 'primary' }], { cls: 'settings-sheet' });
     if (v === 'clear') {
-      const ok = await ui.sheet([h('h3', '기록을 지울까요?'), h('p', '진행, 장부, 고른 마음, 집, 구슬, 깨어남, 해석, 이름이 모두 지워져요. 설정은 그대로예요.')],
+      const ok = await ui.sheet([h('h3', '기록을 지울까요?'), h('p', '진행, 장부, 능력, 물건, 구슬, 깨어남, 해석, 이름이 모두 지워져요. 설정은 그대로예요.')],
         [{ label: '그대로 두기', value: false, cls: 'primary' }, { label: '지우기', value: true, cls: 'seal' }]);
       if (ok) { G.save.reset(); emit('reset'); app.title(); }
       return;
@@ -647,10 +652,10 @@
   function onPop(e) {
     const st = e.state;
     if (!st || !st.scene) { app.title({ fromPop: true }); return; }
-    if (current && current.scene.id === st.scene) return;
+    if (current && current.scene.id === st.scene && app.canOpen(st.scene)) return;
     if (app.canOpen(st.scene)) { play(st.scene, { fromPop: true }); return; }
     ui.toast(lockMsg(st.scene));
-    if (current) history.pushState({ scene: current.scene.id }, ''); // 지금 화면에 그대로 머문다
+    if (current && app.canOpen(current.scene.id)) history.pushState({ scene: current.scene.id }, ''); // 지금 화면에 그대로 머문다
     else app.resume();
   }
 })();

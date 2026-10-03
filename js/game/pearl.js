@@ -13,11 +13,61 @@
   const D = G.dream;
   const UI = () => ((G.data.notes || {}).ui || {});
 
+  // stage 위 좌표는 원본 그림 기준이다. 중앙 크롭 때도 이미지와 같은 위치를 가리킨다.
+  G.pearl = { attach(ctx, sc, stage) {
+    if (!sc.pearl || !sc.meet || !stage) return () => {};
+    const img = stage.querySelector('.stage-background img');
+    if (!img) return () => {};
+    const P = sc.pearl;
+    const inspect = h('button.btn.small', { type: 'button', dataset: { act: 'inspect-picture' } }, '그림 살피기');
+    const origin = h('div.pearl-origin', h('span.tag', P.trace === 'canon' ? '원작 근거' : '게임 설정'), inspect, h('span.small', '구슬 찾기는 선택이에요'));
+    stage.after(origin);
+    const spot = h('button.stage-pearl', { type: 'button', 'aria-label': '그림 속 반짝이는 곳' }, G.util.pixImg('assets/ui/pearl_trace.webp', { size: 16 }));
+    stage.append(spot);
+    const layout = () => {
+      if (!ctx.alive() || !img.naturalWidth) return;
+      const a = stage.getBoundingClientRect(), b = img.getBoundingClientRect();
+      spot.style.left = b.left - a.left + b.width * P.x / 100 + 'px';
+      spot.style.top = b.top - a.top + b.height * P.y / 100 + 'px';
+    };
+    const found = () => { spot.disabled = true; spot.classList.add('found'); spot.setAttribute('aria-label', '찾은 구슬'); spot.firstElementChild.src = 'assets/ui/pearl.webp'; };
+    if (S().pearls[sc.meet]) found();
+    else if (ctx.readonly) spot.disabled = true;
+    spot.onclick = () => {
+      if (!ctx.alive() || ctx.readonly || S().pearls[sc.meet]) return;
+      S().pearls[sc.meet] = true; G.save.write(); G.audio.pearl(); found();
+      G.ui.toast('구슬을 찾았어요. 점수로 치지 않아요.');
+    };
+    inspect.onclick = () => {
+      if (!ctx.alive()) return;
+      const pic = D.picture('assets/sc/' + sc.img + '.webp', 'inspection-picture');
+      const bead = D.overlay('assets/ui/pearl_trace.webp', 'trace');
+      const target = h('button.pearl-spot.inspect-spot', { type: 'button', 'aria-label': '그림 속 반짝이는 곳', style: { left: P.x + '%', top: P.y + '%', width: Math.max(3, P.r || 6) * 2 + '%' } }, h('span.bead-glint'), bead);
+      pic.box.append(target);
+      const show = () => { target.disabled = true; target.classList.add('found'); target.setAttribute('aria-label', '찾은 구슬'); bead.src = 'assets/ui/pearl.webp'; };
+      if (S().pearls[sc.meet]) show();
+      else if (ctx.readonly) target.disabled = true;
+      target.onclick = () => {
+        if (!ctx.alive() || ctx.readonly || S().pearls[sc.meet]) return;
+        S().pearls[sc.meet] = true; G.save.write(); G.audio.pearl(); show(); found();
+      };
+      G.ui.sheet(h('div.pearl-inspection', h('h3', '그림 살피기'), pic.frame,
+        P.hint ? h('p.small', T.inline(P.hint)) : null,
+        h('div.pearl-evidence', { dataset: { trace: P.trace } }, traceCard(P, { peek: ctx.readonly }))),
+      [{ label: '닫기', value: null, cls: 'primary' }]);
+    };
+    const observer = new ResizeObserver(layout); observer.observe(stage);
+    img.addEventListener('load', layout); layout();
+    const detach = () => { observer.disconnect(); img.removeEventListener('load', layout); spot.remove(); origin.remove(); ctx.signal.removeEventListener('abort', detach); };
+    ctx.signal.addEventListener('abort', detach, { once: true });
+    return detach;
+  } };
+
   // 흔적의 근거 카드: 원작이면 알아 두기, 게임이 숨긴 것이면 게임 설정
-  function traceCard(P) {
-    if (P.trace === 'canon') return P.canon ? T.mark({ mark: 'note', title: (UI().pearlCanon || {}).title || '', body: P.canon }) : null;
-    const f = UI().pearlFiction;
-    return f ? T.mark(Object.assign({ mark: 'fiction' }, f)) : null;
+  function traceCard(P, opt = {}) {
+    if (P.trace === 'canon') return P.canon ? T.mark({ mark: 'note', title: (UI().pearlCanon || {}).title || '원작의 구슬', body: P.canon }, opt) : null;
+    const f = UI().fiction?.pearls || UI().pearlFiction;
+    return f ? T.mark(Object.assign({ mark: 'fiction' }, f), opt) : null;
   }
 
   G.app.steps.pearl = async function (ctx, sc) {
@@ -39,7 +89,7 @@
     pic.box.appendChild(spot);
     const status = h('p.pearl-status', { role: 'status', 'aria-live': 'polite' });
     s.append(pic.frame, status);
-    const card = traceCard(P);
+    const card = traceCard(P, { peek: ctx.readonly });
     if (card) s.appendChild(card);
     const show = () => {
       spot.classList.add('found');

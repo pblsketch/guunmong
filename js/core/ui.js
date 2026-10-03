@@ -112,11 +112,65 @@
     musicOn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
     musicOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    full: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>',
+    fullExit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>',
   };
   ui.ICON = ICON;
   // 아이콘 단추. icon이 ICON에 없으면 글자로 보인다
   ui.iconBtn = function (icon, label, fn, attrs = {}) {
     return h('button.icon-btn', Object.assign({ type: 'button', 'aria-label': label, title: label, html: ICON[icon] || G.util.esc(icon), on: { click: (e) => { G.audio.tap(); fn(e); } } }, attrs));
+  };
+
+  // ───────── 전체 화면: 브라우저의 주소창과 막대를 감춘다
+  //  - 사람이 누를 때만 켤 수 있고(브라우저 규칙), 새로 고침하면 풀린다. 그래서 저장하지 않는다.
+  //  - 지원하지 않는 브라우저(아이폰 사파리, 앱 안의 브라우저)에서는 다른 길을 알림으로 알려 준다.
+  //  - 홈 화면에 설치해 연 게임(standalone)은 이미 주소창이 없다. 그래도 켤 수 있으면(안드로이드) 상태 표시줄까지 감춘다.
+  const docEl = document.documentElement;
+  const full = (ui.full = {});
+  full.can = () => !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen);
+  full.installed = () => matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+  full.on = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  // 단추를 보일지: 켤 수 있거나, 켤 수 없어도 알려 줄 다른 길이 있을 때(설치한 게임에는 없음)
+  full.offer = () => full.can() || !full.installed();
+  full.hint = function () {
+    const ua = navigator.userAgent;
+    const msg = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp/i.test(ua) ? '앱 안의 브라우저에서는 전체 화면이 막혀요. 메뉴에서 다른 브라우저로 열어 주세요.'
+      : /iPhone|iPod/i.test(ua) ? '아이폰에서는 공유 단추 → 홈 화면에 추가로 설치한 뒤 열면 주소창 없이 볼 수 있어요.'
+        : '이 브라우저는 전체 화면을 지원하지 않아요.';
+    ui.toast(msg, 5000);
+  };
+  full.toggle = async function () {
+    if (full.on()) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      try { await exit.call(document); } catch (e) { /* 이미 풀림 */ }
+      document.dispatchEvent(new Event('guun-full'));
+      return;
+    }
+    if (!full.can()) { full.hint(); return; }
+    try {
+      if (docEl.requestFullscreen) await docEl.requestFullscreen({ navigationUI: 'hide' });
+      else docEl.webkitRequestFullscreen();
+    } catch (e) { full.hint(); }
+    document.dispatchEvent(new Event('guun-full'));
+  };
+  // 전체 화면이 켜지고 꺼질 때(Esc·뒤로 가기로 풀 때 포함) draw를 다시 부른다. el이 화면에서 빠지면 그만 듣는다
+  //  브라우저의 fullscreenchange는 다음 그리기 때에야 오므로, toggle이 끝날 때 보내는 'guun-full'도 함께 듣는다
+  full.watch = function (el, draw) {
+    const evs = ['fullscreenchange', 'webkitfullscreenchange', 'guun-full'];
+    const f = () => { if (!el.isConnected) { evs.forEach((ev) => document.removeEventListener(ev, f)); return; } draw(); };
+    evs.forEach((ev) => document.addEventListener(ev, f));
+    draw();
+  };
+  // 아이콘 단추(타이틀용)
+  full.button = function () {
+    const b = ui.iconBtn('full', '전체 화면', () => full.toggle(), { dataset: { tool: 'full' } });
+    b.classList.add('full-toggle');
+    full.watch(b, () => {
+      const on = full.on(), label = on ? '전체 화면 끝내기' : '전체 화면';
+      b.innerHTML = ICON[on ? 'fullExit' : 'full'];
+      b.setAttribute('aria-label', label); b.title = label; b.setAttribute('aria-pressed', String(on));
+    });
+    return b;
   };
 
   // ───────── 화면 접기: 화면을 덮고 소리를 멈춘다(선생님이 "화면 접으세요" 할 때)

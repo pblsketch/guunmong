@@ -653,8 +653,109 @@ def refpacks():
         print(name, out.size)
 
 
+def sim_prompts():
+    """원본 생성 입력만 재현한다. 승인된 96px 가공 규격은 tools/manifest_sim96.json을 쓴다."""
+    import json
+    import shutil
+    from PIL import Image
+
+    base = os.path.join(RAW, "sim-v2")
+    for folder in ("prompts", "refs", "originals", "candidates", "review", "logs"):
+        os.makedirs(os.path.join(base, folder), exist_ok=True)
+    style = Image.open(os.path.join(ROOT, "design/style-samples/style_c_pixel.jpg")).convert("RGB")
+    style.save(os.path.join(base, "refs", "style.png"))
+    for name, spec in (("yang", "ref_seongjin_yang#2"), ("hoseung", "ref_masters#2")):
+        character = ref_image(spec)
+        character.thumbnail((600, 760), Image.Resampling.NEAREST)
+        pack = Image.new("RGB", (1024, 1200), "white")
+        strip = style.resize((640, 360), Image.Resampling.NEAREST)
+        pack.paste(strip, (192, 0))
+        pack.paste(character, ((1024 - character.width) // 2, 410))
+        pack.save(os.path.join(base, "refs", name + "_pack.png"))
+    for name in ("ref_seongjin_yang", "ref_masters"):
+        shutil.copyfile(os.path.join(REFDIR, name + ".png"), os.path.join(base, "refs", name + ".png"))
+
+    base_prompt = (
+        "Production sprite animation atlas, not a scene or illustration. " + STYLE + " " + TANG + " " + NOTEXT + " " + KEY +
+        " Exactly FOUR separate animation frames in ONE horizontal row with equal invisible square cells. "
+        "All subjects and props fit inside the middle 80 percent of their cell. Wide empty magenta gaps separate frames. "
+        "No visible grid, borders, labels, numbers, motion trails, ground or shadows. "
+        "Draw as if each cell were a native 32x32 pixel sprite enlarged without smoothing: chunky economical pixel clusters, "
+        "readable tiny face, 3-head-tall game proportions, thin dark outline, maximum 31 foreground colors. "
+        "Keep identical character size, face, hat, costume and fixed feet/body baseline across all four frames. "
+        "The character stays in place; move only the arms and the named prop. No walking. "
+        "The attached reference has a TOP strip for art style only, and ONE figure BELOW for character identity and costume. "
+        "Do not draw any characters from the top strip. "
+    )
+    hero = (
+        "The ONLY figure is Yang Soyu, the blue-robed young scholar from the lower reference: "
+        "gentle almond eyes, black topknot and soft black head wrap with two tails, light-blue wide-sleeved robe, "
+        "white inner collar, dark blue sash and dark shoes. He faces three-quarter right. No fan. "
+    )
+    actions = {
+        "study": "He holds an open blank cream book at waist level. Frame 1: reads it. Frame 2: right hand lifts one page. Frame 3: page arcs over. Frame 4: hand settles, book still open. No writing or symbols on the book. A quiet reading loop.",
+        "geomungo": "He sits low with a long dark wooden six-string zither horizontal across his knees, a visible broad rectangular soundboard, NOT a guitar or bowed instrument. Frame 1: right hand poised with a short bamboo plectrum. Frame 2: plucks down near the right end. Frame 3: hand returns, left hand presses the strings. Frame 4: poised again. Instrument and seated body do not shift. Clear plucking loop.",
+        "sword": "He performs compact close-body guard and parry practice with ONE straight Chinese jian sword. Keep elbows BENT, hands always close to the waist or chest, NEVER extend the arm or blade horizontally far from the body. The blade is substantial bright ivory-silver with a very dark outline, visibly TWO native pixels thick at 32px cell size, and about half the man's total body height. Do not make it a thin grey wire. Same complete blade length in every frame. The man is upright, feet fixed; head-to-shoes height fills 27 of the 32 native cell pixels. Entire character plus sword fits inside width 26 of the 32 native cell pixels. Preserve natural body proportions: do not shorten legs, squash body, stretch torso or change height. Frame 1: both hands close to the waist, upright blade beside right shoulder, tip near top of hat. Frame 2: compact inward parry, hilt close to right ribs and blade diagonally across upper chest toward upper left; elbows stay bent. Frame 3: low close guard, hilt near waist and blade diagonally down-right, tip at knee height, close to the robe silhouette. Frame 4: return to upright near-shoulder guard. Blade tip, guard and hilt are clearly visible and fully inside every cell. No clipped tips, no hidden or missing weapon, no motion trails, no duplicated swords, no opponent. Four genuinely different hand-and-blade poses but identical face, head position, clothing, feet and body scale. This is a small readable production animation sprite; avoid detailed thin strokes.",
+        "strategy": "He leans slightly over a low dark wooden campaign table with an unfurled blank cream map and three plain small counters. Frame 1: studies the counters. Frame 2: right hand reaches for one. Frame 3: moves it on the map. Frame 4: hand withdraws. Table, feet, head and map stay in exactly the same place. Map has no writing, symbols or modern grids. Tactical planning, not a board-game contest.",
+    }
+    manifest = {"approval": "pending", "method": "tools/gen.ps1 -> Codex CLI built-in image_gen", "entries": []}
+    for name, action in actions.items():
+        stem = name + "_v2" if name == "sword" else name
+        manifest["entries"].append({"name": name, "kind": "sheet", "cell": [32, 32], "frames": 4, "rows": 1,
+                                    "ref": "refs/yang_pack.png", "mode": "char", "size": "1536x1024",
+                                    "prompt": "prompts/" + stem + ".txt", "source": "originals/" + stem + ".png",
+                                    "candidate": "candidates/" + name + ".webp", "key": "magenta"})
+        if name == "sword":
+            manifest["entries"][-1].update(edgeDarken=1.0, revision="compact-guard-v2")
+        with open(os.path.join(base, "prompts", stem + ".txt"), "w", encoding="ascii") as f:
+            f.write(base_prompt + hero + action)
+    name = "hoseung"
+    text = base_prompt + (
+        "The ONLY figure is the old foreign monk in the LOWER reference: shaved head, long white eyebrows drooping "
+        "past cheeks, long white beard, patched brown monk robe, dark prayer beads, metal ringed monk staff. "
+        "Use a calm fixed face in every frame. Same clothing and staff, no red kasaya. He faces three-quarter right. "
+        "Four stages of raising and striking with the staff: frame 1 staff vertical at his right side; "
+        "frame 2 staff tilted upward in both hands; frame 3 staff raised high diagonally over his right shoulder, "
+        "ready to strike; frame 4 staff angled down to the right after the strike. Feet never move. "
+        "Keep the entire ringed head and shaft inside every cell, no railing or scenery. "
+        "These are gesture frames, not walking and not facial animation."
+    )
+    manifest["entries"].append({"name": name, "kind": "sheet", "cell": [32, 32], "frames": 4, "rows": 1,
+                                "ref": "refs/hoseung_pack.png", "mode": "char", "size": "1536x1024",
+                                "prompt": "prompts/hoseung.txt", "source": "originals/hoseung.png",
+                                "candidate": "candidates/hoseung.webp", "key": "magenta", "pauseFrame": 2, "strikeFrame": 3})
+    with open(os.path.join(base, "prompts", name + ".txt"), "w", encoding="ascii") as f:
+        f.write(text)
+    text = (STYLE + " " + TANG + " " + NOTEXT + " " + KEY +
+            " Create a pixel-art game icon atlas: exactly FOUR columns and TWO rows of equal invisible square cells. "
+            "There are SEVEN isolated icons, one per cell, and the bottom-right cell is completely empty magenta. "
+            "No border, card backing, badge frame, numbers, ground shadow, labels or text. "
+            "Each icon is a simple recognizable object drawn as chunky native 32x32 pixel art enlarged without smoothing, "
+            "31 foreground colors, thin dark outline, large silhouette centered in the middle 80 percent of its cell. "
+            "Top row left to right: (1) open ivory book with a black ink brush diagonally across it, blank pages, for literary skill; "
+            "(2) long six-string wooden zither, no bow or neck, for musical skill; "
+            "(3) ONE straight silver Chinese jian sword with dark hilt for martial skill; "
+            "(4) rolled-open blank cream campaign map with three red wooden counters for strategy. "
+            "Bottom row left to right: (5) ancient bronze tiger military tally with a clear tiger silhouette for merit; "
+            "(6) a laurel-like pair of gold branches surrounding a small bright star, no letters, for renown; "
+            "(7) two ancient gold ingots with a round square-holed coin, no inscriptions, for wealth; (8) EMPTY. "
+            "The reference is art style and palette only; do not copy its scene or people.")
+    with open(os.path.join(base, "prompts", "icons.txt"), "w", encoding="ascii") as f:
+        f.write(text)
+    for i, name in enumerate(("munjang", "eumak", "muye", "jiryak", "gong", "fame", "wealth")):
+        manifest["entries"].append({"name": name, "kind": "icon", "cell": [32, 32], "frames": 1, "rows": 1,
+                                    "ref": "refs/style.png", "mode": "style", "size": "1536x1024",
+                                    "prompt": "prompts/icons.txt", "source": "originals/icons.png",
+                                    "candidate": "candidates/icon_" + name + ".png", "key": "magenta", "atlasCell": [i % 4, i // 4]})
+    with open(os.path.join(base, "manifest_generation.json"), "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+    print("sim-v2: 6 historical generation prompts; approved processing uses tools/manifest_sim96.json")
+
+
 if __name__ == "__main__":
-    if "refpacks" in sys.argv[1:]:
+    if "sim-v2" in sys.argv[1:]:
+        sim_prompts()
+    elif "refpacks" in sys.argv[1:]:
         refpacks()
     else:
         write_prompts()

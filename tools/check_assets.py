@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""기획서 §17의 게임용 그림 129장이 정한 경로·크기로 있는지, 32색 이하인지, webp가 무손실(VP8L)인지 점검한다.
+"""게임용 그림 141장의 경로·크기·32색·무손실과 승인된 새 그림의 해시를 점검한다.
 
     python tools/check_assets.py        # 문제가 있으면 종료 코드 1
+    python tools/check_assets.py --sim-candidates --sim-manifest manifest96.json
 """
 import os
 import sys
+import json
+import hashlib
 
 from PIL import Image
 
@@ -45,6 +48,10 @@ EXPECT += [("ui/title.webp", (320, 480), False), ("ui/icon-192.png", (192, 192),
            ("ui/divider_knot.webp", (16, 48), True), ("ui/corner_cloud.webp", (24, 24), True), ("ui/btn_frame.webp", (24, 24), False)]
 
 
+APPROVED = json.loads(open(os.path.join(ROOT, "tools", "manifest_sim96.json"), encoding="utf-8").read())["entries"]
+EXPECT += [(e["product"].removeprefix("assets/"), (e["cell"][0] * e["frames"], e["cell"][1] * e["rows"]), True) for e in APPROVED]
+
+
 def main():
     bad, counts = [], {}
     for rel, size, alpha in EXPECT:
@@ -70,6 +77,18 @@ def main():
         print(f"  {counts[rel]:2d}  {rel}")
     for b in bad:
         print("  !", b)
+    for entry in APPROVED:
+        product = os.path.join(ROOT, entry["product"])
+        if os.path.exists(product) and hashlib.sha256(open(product, "rb").read()).hexdigest() != entry["approved_sha256"]:
+            bad.append("approved hash mismatch " + entry["name"])
+            print("  !", bad[-1])
+    if "--sim-candidates" in sys.argv[1:]:
+        # 승인 전 후보는 선택 검사만 한다. 제품 필수 목록에는 승인 뒤 등록한다.
+        import process_sim_assets as sim
+        manifest_name = sys.argv[sys.argv.index("--sim-manifest") + 1] if "--sim-manifest" in sys.argv else "tools/manifest_sim96.json"
+        spec = sim.manifest(manifest_name)
+        if not sim.verify(spec["entries"], spec.get("validation", "validation.json")):
+            bad.append("simulation candidates failed")
     return 1 if bad else 0
 
 
