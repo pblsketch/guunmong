@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+import { probe } from './fixtures/experience-probe.mjs';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const files = fs.readdirSync(path.join(ROOT, 'js/data')).filter(f => f.endsWith('.js'));
@@ -18,9 +20,24 @@ for (const file of files) {
   }
   vm.runInContext(source, sandbox, { filename: file });
 }
-vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/core/data.js'), 'utf8'), sandbox);
+for (const file of ['world', 'experience', 'data']) vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/core/' + file + '.js'), 'utf8'), sandbox);
+for (const profile of ['world-opening', 'world-event']) {
+  const representative = probe(profile);
+  assert.deepEqual(JSON.parse(JSON.stringify(sandbox.G.checkData(representative, { profile }))), []);
+  console.log('✓ 대표 시험 ' + profile + ' 통과 (실제 본편 검사와 별도)');
+}
 const d = sandbox.window.GUUN;
 for (const problem of sandbox.G.checkData(d)) ok(false, 'T1', problem);
+for (const [name, change] of [
+  ['자료형', stage => { stage.fromStory = false; }],
+  ['빈 조건', stage => { stage.fromStory = ''; }],
+  ['없는 사실', stage => { stage.fromStory = 'e11-seungsang:missing'; }],
+  ['다른 장면의 사실', stage => { stage.from = 'e08-wonsu'; }],
+]) {
+  const bad = structuredClone(d), stage = bad.house.stages.find(stage => stage.id === 'seungsang');
+  assert.ok(stage, '승상부 단계 필수'); change(stage);
+  ok(sandbox.G.checkData(bad).some(problem => problem.startsWith('house-story:')), '생활 공간 조건', name + ' 거부');
+}
 const story = sandbox.G.storyText(d);
 ok(story.count > 0 && story.count <= 4400, '글 총량', String(story.count));
 const scenes = d.scenes;
@@ -57,15 +74,15 @@ for (const s of scenes) {
 for (const track of Object.values(d.bgm.tracks)) ok(fs.existsSync(path.join(ROOT, track.file)), '음원', track.file);
 for (const chapter of Object.values(d.chapters)) ok(Object.hasOwn(d.bgm.tracks, chapter.bgm), '장', 'bgm');
 for (const s of events) {
-  ok(s.lines.length >= 6 && s.lines.length <= 12, s.id, '사건 줄 6~12');
-  ok(!/문장|음악|무예|지략/.test(s.preview), s.id, '예고에 능력 이름 노출');
+  ok(Array.isArray(s.lines) && s.lines.length > 0, s.id, '사건 본문');
+  if (s.preview != null) ok(!/문장|음악|무예|지략/.test(s.preview), s.id, '구판 예고에 능력 이름 노출');
   if (/^e0[56]-/.test(s.id)) for (const text of Object.values(s.gradeText || {})) {
     ok(!/간파|꿰뚫|알아채|눈치채|간파했|속지 않/.test(text), s.id, '속임수를 알아채는 등급');
     ok(/웃|품|너그|받아/.test(text), s.id, '속은 뒤 품과 평판');
   }
 }
-ok(JSON.stringify(events[10]?.core) === JSON.stringify(['muye', 'jiryak']) &&
-  JSON.stringify(events[11]?.core) === JSON.stringify(['munjang']), '원작 검증', '개선은 무예·지략, 재회는 문장');
+if (events[10]?.core || events[11]?.core) ok(JSON.stringify(events[10]?.core) === JSON.stringify(['muye', 'jiryak']) &&
+  JSON.stringify(events[11]?.core) === JSON.stringify(['munjang']), '구판 필드', '개선·재회 core 호환');
 ok(links.length === 3 && dream.length === 15, '꿈', '사건 12·이음 3');
 ok(new Set(dream.map(s => s.square)).size === 14, '말판', '꿈 장면 칸 14');
 ok(events[3]?.square === 'sq-hallim' && events[4]?.square === 'sq-hallim', '말판', '급제·가춘운 같은 칸');
@@ -87,7 +104,7 @@ for (const item of items) {
   ok(item.desc && ['in', 'yard', 'any'].includes(item.slot), item.id, '설명·장식 자리');
 }
 const instruments = scenes.find(s => s.id === 'l-namjeon')?.bonus;
-ok(instruments?.abil?.eumak === 2, '남전산', '음악 덤 2');
+if (instruments?.abil) ok(instruments.abil.eumak === 2, '구판 필드', '남전산 덤 호환');
 ok(['it-geomungo', 'it-tungso'].every(id => instruments?.items?.some(i => i.id === id && i.fills?.includes('pungryu'))), '남전산', '두 악기와 풍류 근거');
 ok(items.find(i => i.id === 'it-girinpo')?.fills?.includes('bugwi'), '도포·옥대', '부귀 근거');
 ok(events[10]?.lines.some(l => (l.text || l).includes('기린각')), '개선', '기린각은 사건');

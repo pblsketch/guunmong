@@ -1,29 +1,66 @@
 'use strict';
-// 장 흐름과 열기 문. 화면은 screens[kind](ctx, scene)로 등록한다.
-// ctx.startStep: event의 preview/prep1/prep2/scene 시작 위치. ctx.step(name)은 표시와 진행을 저장한다.
-// ctx.finishEvent(): 두 준비 뒤 grade/reward/done과 다음 pos를 한 번에 저장한다.
-// T3는 결과 연출 전에 finishEvent를 호출한다. step('grade')도 같은 완료 처리를 보장한다.
-// ctx.readonly/revisit이면 기록을 쓰지 않는다. 재생 뒤에는 원래 진행으로 돌아간다.
-// ctx.autoAdvance는 현재 경로의 자동 준비 기록이다. readonly로 재생하되 끝나면 다음 pos만 저장한다.
-// 과거 자동 준비 사건의 직접 다시 보기는 autoAdvance=false이며 원래 pos로 돌아간다.
-// ctx.signal은 이탈 시 abort되며 ctx.next()는 취소 때 false, 클릭 때 true로 끝난다.
-// 비동기 대기 뒤 ctx.alive()를 확인한다. ctx.section/ctx.tray는 본문/진행 단추 자리다.
-// hook('scene',ctx): 매 화면의 공통 띠, hook('chapter',ctx): 장 안내 뒤,
-// hook('between',from,to,ctx): 완료를 먼저 저장한 뒤 장면 사이 연출. 다시 열기에서는 chapter/between 생략.
-// on('scene'|'step'|'done'|'chapter'|'wake'|'reset'|'settings',fn), toolbar도 유지한다.
-// settings는 applySettings의 동기 알림(인자 없음)이며 본문·진행은 다시 만들지 않는다.
-// 깨어남은 c3-staff에서 난간 치기 순간 wake()로만 기록한다.
+// 저장은 화면 생성 시점 run과 현재 권한을 검사한다.
 (function () {
   const { h, $, $$ } = G.util;
   const ui = G.ui, T = G.text;
   const app = (G.app = { booted: false });
   const S = () => G.save.state;
   const root = () => document.getElementById('app');
+  const run = () => S().rpg?.run;
+  const writer = (r = run()) => G.save.canWrite(r);
+  const options = ctx => ({ run: ctx.run, readonly: ctx.readonly, by: S().teacher ? 'teacher' : 'student' });
+  const isDone = id => G.experience.legacyDone(S(), id) || S().rpg?.scenes?.[id]?.status === 'done';
+  const sheets = new Set();
+  let lastField = null;
+  function rememberField() {
+    const camera = document.querySelector('[data-game-field] .world-camera');
+    if (!camera) return;
+    lastField = camera.cloneNode(true);
+    lastField.classList.add('world-backdrop');
+    lastField.removeAttribute('tabindex');
+    lastField.setAttribute('aria-hidden', 'true');
+    lastField.inert = true;
+    const map = lastField.querySelector('[data-world]');
+    if (map) { map.classList.add('world-backdrop-map'); map.removeAttribute('data-world'); map.removeAttribute('tabindex'); }
+    for (const el of lastField.querySelectorAll('[data-object],[data-world-target],[data-act]')) {
+      el.removeAttribute('data-object'); el.removeAttribute('data-world-target'); el.removeAttribute('data-act');
+    }
+  }
+  function gameShell(page, scene, mode) {
+    const field = h('div.game-field', { dataset: { gameField: '' }, 'aria-hidden': mode === 'world' ? 'false' : 'true' });
+    if (lastField) field.appendChild(lastField.cloneNode(true));
+    if (mode !== 'world' && scene?.img) field.appendChild(h('img.scene-backdrop', { src: 'assets/sc/' + scene.img + '.webp', alt: '' }));
+    page.prepend(field);
+    const shell = h('div.game-shell', { dataset: { gameShell: '', mode } }, page);
+    return { shell, field };
+  }
+  function closeSheets() { for (const close of [...sheets]) close(null); ui.closeSheets(); }
+  function sheet(content, buttons, opt) {
+    let closer;
+    return ui.sheet(close => {
+      closer = close; sheets.add(close);
+      return typeof content === 'function' ? content(close) : h('div', content);
+    }, buttons, opt).finally(() => sheets.delete(closer));
+  }
+  const confirm = (title, body, yes, no) => sheet([h('h3', title), h('p', body)], [{ label: no, value: false }, { label: yes, value: true, cls: 'seal' }]);
+  function cancel() { playToken++; current?.abort.abort(); current = null; ui.unpop(); closeSheets(); }
+  function savingDenied() { ui.toast('이 탭에서는 기록을 바꿀 수 없어요. 저장 탭에서 이어 해 주세요.'); }
+  function accessNotice() {
+    const mode = G.save.access;
+    const r = run();
+    if (mode === 'writer') return null;
+    const msg = mode === 'reader' ? '다른 탭에서 진행 중이에요. 그 탭을 닫은 뒤 이어 할 수 있어요.' : mode === 'acquiring' ? '저장 권한을 확인하고 있어요.' : '저장 권한을 얻지 못했어요. 기존 기록만 읽을 수 있어요.';
+    return h('div.save-access', { role: 'status', dataset: { access: mode } }, h('p', msg), h('button.btn.small', { type: 'button', disabled: mode === 'acquiring', dataset: { act: 'acquire' }, on: { click: async e => {
+      if (!e.currentTarget.isConnected || r !== run()) return;
+      const ok = await G.save.acquireWriter();
+      if (ok) { app.applySettings(); app.resume(); } else app.title({ replace: true });
+    } } }, '이 탭에서 이어 하기'));
+  }
 
   const CHAPTERS = [
     { id: '0', label: '서장', name: '「조신 설화」' },
     { id: '1', label: '1장', name: '연화봉' },
-    { id: '2', label: '2장', name: '꿈 — 출세 시뮬레이션' },
+    { id: '2', label: '2장', name: '꿈속의 삶' },
     { id: '3', label: '3장', name: '깨어남' },
     { id: '4', label: '4장', name: '꿈 일지' },
     { id: '5', label: '5장', name: '육관대사' },
@@ -37,8 +74,11 @@
 
   // ───────── 사건(이벤트)과 확장 자리
   const listeners = {};
-  app.on = (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); };
-  const emit = (ev, ...a) => { for (const fn of listeners[ev] || []) { try { fn(...a); } catch (e) { console.error(e); } } };
+  app.on = (ev, fn) => {
+    const bucket = listeners[ev] = listeners[ev] || []; bucket.push(fn);
+    return () => { const index = bucket.indexOf(fn); if (index >= 0) bucket.splice(index, 1); };
+  };
+  const emit = (ev, ...a) => { for (const fn of [...(listeners[ev] || [])]) { try { fn(...a); } catch (e) { console.error(e); } } };
   const hooks = { between: [], chapter: [], scene: [] };
   app.hook = (name, fn) => { (hooks[name] = hooks[name] || []).push(fn); };
   app.toolbar = [];
@@ -69,14 +109,15 @@
   const dreamLocked = (sc) => S().awake && chIdx(sc.ch) <= 3 && idx(sc.id) < awakenedIdx();
 
   // ───────── 열 수 있는가(목차·주소·뒤로 가기·엔진 API가 모두 이 문을 지난다)
-  app.canOpen = function (id) {
+  function studentCanOpen(id) {
     const sc = byId(id);
     if (!sc) return false;
-    if (S().teacher) return true;
     if (dreamLocked(sc)) return false;
-    if (S().done[id] || (sc.kind === 'event' && S().events[id]?.grade && !S().events[id].auto)) return true;          // 마친 장면 다시 읽기
+    if (!S().awake && G.experience.find(G.data, 'c3-staff') && idx(id) >= awakenedIdx()) return false;
+    if (isDone(id) || S().rpg?.scenes?.[id]?.status === 'auto') return true;
     return id === S().pos || id === (resumeTarget() || {}).id; // 지금 하고 있는(해야 할) 장면
-  };
+  }
+  app.canOpen = id => !!byId(id) && (S().teacher || studentCanOpen(id));
   function lockMsg(id) {
     const sc = byId(id);
     if (sc && dreamLocked(sc)) return '깨어난 뒤에는 꿈으로 돌아갈 수 없어요. 다시 꿈꾸려면 처음부터 새로 시작해요.';
@@ -84,35 +125,9 @@
   }
 
   // ───────── 이어 하기 자리
-  function resumeTarget() {
-    const L = app.list();
-    if (!L.length) return null;
-    let t = byId(S().pos) || L[0];
-    if (S().awake) {
-      // 깨어난 뒤: 선방 앞(꿈)이면 깨어난 선방으로. 이미 마친 장면이면 아직 안 한 다음 장면으로
-      let i = Math.max(idx(t.id), Math.min(awakenedIdx(), L.length - 1));
-      while ((S().done[L[i].id] || (L[i].kind === 'event' && S().events[L[i].id]?.grade && !S().events[L[i].id].auto)) && i < L.length - 1) i++;
-      return L[i];
-    }
-    // 깨어나기 전: 이미 마친 장면이면(장면 사이 말 걷기 중에 끈 옛 기록 등) 아직 안 한 다음 장면으로
-    let i = idx(t.id);
-    while ((S().done[L[i].id] || (L[i].kind === 'event' && S().events[L[i].id]?.grade && !S().events[L[i].id].auto)) && i < L.length - 1) i++;
-    t = L[i];
-    if (t.ch === '3') return firstOf('3'); // 깨어나기 전 3장: 3장 처음(취미궁 잔치)부터
-    return t;
-  }
+  function resumeTarget() { return byId(G.experience.resume(S(), G.data)) || app.list()[0] || null; }
   app.resumeTarget = resumeTarget;
-  app.resume = function () {
-    const t = resumeTarget();
-    if (!t) { app.title(); return; }
-    // 깨어나기 전 3장을 처음부터 다시 할 때는 3장 장면들을 아직 안 한 것으로 돌린다(장부의 첫 기록은 그대로)
-    if (!S().awake && t.ch === '3') {
-      for (const s of app.list()) if (s.ch === '3') delete S().done[s.id];
-      S().pos = t.id;
-      G.save.write();
-    }
-    play(t.id);
-  };
+  app.resume = function () { const t = resumeTarget(); if (!t) { app.title(); return false; } return app.open(t.id, { resume: true, reenact: !S().awake && t.ch === '3' && !t.awakened }); };
   // 다시 보기에서 돌아올 때는 새로 고침의 3장 되감기를 적용하지 않는다.
   function continueSaved() {
     const saved = byId(S().pos);
@@ -122,14 +137,13 @@
 
   app.isAwake = () => !!S().awake;
   // 3장의 지팡이 소리 순간에 부른다. 한 번 기록되면 새로 시작하기 전까지 되돌릴 수 없다
-  app.wake = function () {
-    if (S().awake || !current || current.scene.id !== 'c3-staff' || current.revisit) return false;
-    S().awake = true;
-    S().awakeAt = Date.now();
-    G.save.write();
-    current.refreshTools?.();
-    emit('wake');
-    return true;
+  app.wake = function (ctx = current?.ctx) {
+    if (ctx !== current?.ctx || !ctx?.alive() || ctx.scene.id !== 'c3-staff' || ctx.readonly || !app.canOpen(ctx.scene.id) || S().awake) return false;
+    const action = G.experience.find(G.data, ctx.scene.id)?.beats.find(b => b.trigger.kind === 'staff');
+    if (!action) return false;
+    const outcome = G.save.commitWake(ctx.scene.id, action.id, options(ctx));
+    if (!outcome.ok) return false;
+    ctx.committed = true; current.refreshTools?.(); emit('wake'); return true;
   };
 
   // ───────── 설정 반영
@@ -140,7 +154,10 @@
     const top = document.querySelector('.play .topbar');
     const fold = top?.querySelector('[data-tool="fold"]');
     if (!S().teacher) fold?.remove();
-    else if (top && !fold) top.appendChild(ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', () => { if (S().teacher) ui.fold(); }, { dataset: { tool: 'fold' } }));
+    else if (top && !fold) {
+      const owner = current?.ctx;
+      top.appendChild(ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', e => { if (owner?.screenAlive() && e.currentTarget.isConnected && S().teacher) ui.fold(); }, { dataset: { tool: 'fold' } }));
+    }
     current?.refreshTools?.();
     // 본문을 다시 열지 않고 설정을 따르는 도구만 즉시 갱신한다.
     emit('settings');
@@ -161,89 +178,88 @@
     current?.abort.abort();
     current = null;
     ui.unpop();
-    ui.closeSheets();
+    closeSheets();
     if (opt.replace) history.replaceState({ screen: 'title' }, '');
     else if (!opt.fromPop && !(history.state && history.state.screen === 'title')) history.pushState({ screen: 'title' }, '');
     G.audio.play((G.data.bgm || {}).title || 'calm');
     const st = S();
     const started = st.started && G.data.ok;
     const menu = h('div.menu');
-    const go = (fn) => () => { G.audio.unlock(); fn(); };
+    const titleToken = playToken, titleRun = run();
+    const go = (fn) => () => { if (titleToken !== playToken || titleRun !== run()) return; G.audio.unlock(); fn(); };
     if (started) menu.appendChild(h('button.btn.primary', { type: 'button', on: { click: go(() => app.resume()) } }, '이어 하기'));
-    menu.appendChild(h('button.btn' + (started ? '' : '.primary'), { type: 'button', disabled: !G.data.ok, on: { click: go(() => app.newGame(started)) } }, started ? '처음부터 새로' : '시작하기'));
+    menu.appendChild(h('button.btn' + (started ? '' : '.primary'), { type: 'button', disabled: !G.data.ok || !writer(), on: { click: go(() => app.newGame(started)) } }, started ? '처음부터 새로' : '시작하기'));
     if (started) menu.appendChild(h('button.btn', { type: 'button', on: { click: go(() => app.toc()) } }, '목차'));
     menu.appendChild(h('button.btn', { type: 'button', on: { click: go(() => app.settings()) } }, '설정'));
     const r = root();
-    r.replaceChildren(h('div.title-screen',
+    const title = h('div.title-screen.game-menu-window',
       h('div.art', G.util.pixImg('assets/ui/title.webp', { cls: 'title-art', maxh: 0.6 })),
       h('div.logo', h('h1', '구운몽'), h('div.sub', '한바탕 꿈')),
-      h('p.tagline', '승경도 말판 위에서 양소유의 한평생을 살아 보는 이야기'),
+      h('p.tagline', '성진과 양소유의 공간을 걷고 이야기를 따라가요.'), accessNotice(),
       G.data.ok ? null : h('p.data-missing', '내용 데이터(js/data/)를 아직 불러오지 못했어요. 임시 데이터로 둘러보려면 주소 끝에 ?fixture=1 을 붙이세요.'),
       menu,
       h('div.credit', '김만중 「구운몽」 학습 게임 · 풀이 글은 이 게임을 위해 새로 쓴 것이에요'),
       h('div.credit', '만든이 박준일(온양여자고등학교 국어 교사)'),
       h('div.credit', G.audio.credit()),
-      h('div.title-tools', ui.full.offer() ? ui.full.button() : null, musicToggle())));
+      h('div.title-tools', ui.full.offer() ? ui.full.button() : null, musicToggle()));
+    r.replaceChildren(gameShell(title, null, 'menu').shell);
   };
   // 타이틀 오른쪽 위, 전체 화면 단추 옆의 배경음 켜기/끄기(설정의 '배경음'과 같은 값)
   function musicToggle() {
+    const r = run();
     const b = h('button.icon-btn.music-toggle', { type: 'button' });
+    b.disabled = !writer(r);
     const draw = () => { const on = S().music; b.innerHTML = ui.ICON[on ? 'musicOn' : 'musicOff']; b.setAttribute('aria-label', on ? '배경음 끄기' : '배경음 켜기'); b.title = b.getAttribute('aria-label'); b.classList.toggle('off', !on); };
-    b.addEventListener('click', () => { S().music = !S().music; G.save.write(); G.audio.unlock(); G.audio.music(S().music); draw(); });
+    b.addEventListener('click', () => { if (!b.isConnected || !G.save.transact(r, n => { n.music = !n.music; })) { savingDenied(); return; } G.audio.unlock(); G.audio.music(S().music); draw(); });
     draw();
     return b;
   }
 
   // ───────── 새로 시작: 확인을 받고 모든 기록을 지운다
   app.newGame = async function (confirmReset) {
-    if (confirmReset) {
-      const ok = await ui.sheet([h('h3', '처음부터 새로 할까요?'),
-        h('p', '지금까지의 기록(진행, 장부, 능력, 물건, 구슬, 깨어남, 해석, 이름)이 모두 지워져요. 설정은 그대로예요.')],
-      [{ label: '그만두기', value: false }, { label: '새로 시작', value: true, cls: 'seal' }]);
-      if (!ok) return;
-    }
-    G.save.reset();
-    emit('reset');
-    const st = S();
-    st.started = true;
-    st.startedAt = Date.now();
-    G.save.write();
-    app.applySettings();
-    const first = app.list()[0];
-    if (first) play(first.id);
+    const r = run();
+    if (!writer(r)) { savingDenied(); return false; }
+    if (confirmReset && !await confirm('처음부터 새로 할까요?', '지금까지의 기록이 모두 지워져요. 설정은 그대로예요.', '새로 시작', '그만두기')) return false;
+    if (!G.save.reset(r, { confirmed: true, cancel })) { savingDenied(); app.title(); return false; }
+    emit('reset'); app.applySettings();
+    const first = app.list()[0]; return first ? app.open(first.id) : false;
   };
 
   // ───────── 열기(목차·주소·엔진 API). 열 수 없으면 false
   app.open = function (id, opt = {}) {
+    if (!G.data.ok) return false;
     if (!app.canOpen(id)) { if (!opt.quiet) ui.toast(lockMsg(id)); return false; }
-    play(id, opt);
-    return true;
+    return play(id, opt) !== false;
   };
 
   // ───────── 장면 하나 펼치기
   function play(id, opt = {}) {
     const sc = byId(id);
-    if (!sc) return;
+    if (!sc || !app.canOpen(id)) return false;
+    rememberField();
     const token = ++playToken;
     current?.abort.abort();
     const abort = new AbortController();
     ui.unpop();
-    ui.closeSheets();
+    closeSheets();
     const st = S();
-    const rec = st.events[id];
-    const revisit = !!st.done[id] || !!(sc.kind === 'event' && rec?.grade);
-    const autoAdvance = !!(sc.kind === 'event' && rec?.auto && rec.grade && st.pos === id);
+    const experience = G.experience.find(G.data, id);
+    const rec = st.rpg?.scenes?.[id];
+    const manualStaff = id === 'c3-staff' && !st.awake && rec?.status === 'auto';
+    const preview = st.teacher && id !== 'c3-staff' && !studentCanOpen(id);
+    const autoAdvance = !manualStaff && rec?.status === 'auto' && st.pos === id;
+    const revisit = !manualStaff && (preview || isDone(id) || rec?.status === 'auto');
     const continuing = st.started && st.pos === id && !opt.transition;
-    const startStep = sc.kind === 'event' ? rec?.turns.length === 2 ? 'scene' : rec?.turns.length === 1 ? 'prep2' : continuing && st.step === 'prep1' ? 'prep1' : 'preview' : sc.kind;
-    if (st.teacher && sc.kind === 'event' && !revisit) G.save.fillBefore(app.list(), id);
-    if (!revisit) {
-      st.pos = id;
-      st.started = true;
-      st.reach = Math.max(st.reach || 0, chIdx(sc.ch));
-      G.save.write();
-    }
+    const startStep = experience ? 'world' : sc.kind;
+    const r = run();
+    let entryReady = true;
+    if (st.teacher && (!revisit || preview && !isDone(id) && rec?.status !== 'auto') && writer(r)) entryReady = G.save.fillBefore(app.list(), id, { run: r, readonly: false, by: 'teacher' }) !== false;
+    if (entryReady && !revisit && writer(r)) entryReady = G.save.transact(r, n => {
+      n.pos = id; n.started = true; n.startedAt ||= Date.now(); n.reach = Math.max(n.reach, chIdx(sc.ch));
+      if (n.rpg.cursor?.scene !== id) n.rpg.cursor = experience ? G.experience.cursor(G.data, id, n.rpg.scenes[id]?.beat ?? experience.beats[0].id) : null;
+    });
     current = { scene: sc, revisit, autoAdvance, step: null, abort };
-    if (!opt.fromPop) {
+    if (entryReady && !opt.fromPop) {
       const hs = { scene: id };
       if (opt.replace || (history.state && history.state.scene === id)) history.replaceState(hs, ''); else history.pushState(hs, '');
     }
@@ -254,68 +270,103 @@
     const tray = h('div.tray#tray', { role: 'group', 'aria-label': '진행' });
     const inner = h('div.main-inner');
     const tools = h('div.tools');
+    const menu = fn => e => { if (ctx.screenAlive() && e.currentTarget.isConnected && page.contains(e.currentTarget)) fn(); };
+    const mode = kind === 'waking' ? 'cinematic' : experience ? 'world' : 'window';
     const page = h('div.play.ch-' + (sc.ch === 'R' ? 'r' : sc.ch) + (revisit ? '.revisit' : '') + (sc.reality ? '.reality' : ''), { dataset: { scene: id, ch: sc.ch, kind } },
       h('header.topbar',
-        ui.iconBtn('home', '처음 화면', () => app.title(), { dataset: { tool: 'home' } }),
+        ui.iconBtn('home', '처음 화면', menu(() => app.title()), { dataset: { tool: 'home' } }),
         h('div.where', h('small', ch.label + ' · ' + ch.name), h('strong', sc.title || KIND_NAME[kind] || ch.name)),
         tools,
-        ui.iconBtn('toc', '목차', () => app.toc(), { dataset: { tool: 'toc' } }),
-        ui.iconBtn('gear', '설정', () => app.settings(), { dataset: { tool: 'settings' } }),
-        st.teacher ? ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', () => { if (S().teacher) ui.fold(); }, { dataset: { tool: 'fold' } }) : null),
+        ui.iconBtn('toc', '목차', menu(() => app.toc()), { dataset: { tool: 'toc' } }),
+        ui.iconBtn('gear', '설정', menu(() => app.settings()), { dataset: { tool: 'settings' } }),
+        st.teacher ? ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', menu(() => { if (S().teacher) ui.fold(); }), { dataset: { tool: 'fold' } }) : null),
       revisit && !autoAdvance ? h('div.revisit-bar', h('span', '다시 읽는 중 · 활동을 다시 풀어도 기록은 처음 그대로예요'),
-        h('button.btn.small', { type: 'button', on: { click: continueSaved } }, '하던 곳으로')) : null,
-      h('main.main', inner),
+        h('button.btn.small', { type: 'button', on: { click: () => { if (ctx.alive()) continueSaved(); } } }, '하던 곳으로')) : null,
+      accessNotice(), h('main.main', inner),
       tray);
-    root().replaceChildren(page);
+    const mounted = gameShell(page, sc, mode);
+    root().replaceChildren(mounted.shell);
     window.scrollTo(0, 0);
 
     const ctx = {
-      scene: sc, ch: sc.ch, kind, revisit, readonly: revisit, autoAdvance, main: inner, page, startStep, signal: abort.signal,
-      alive: () => token === playToken,
+      scene: sc, ch: sc.ch, kind, revisit, readonly: revisit, autoAdvance, reenact: !!opt.reenact && !st.awake && sc.ch === '3' && !sc.awakened, run: r, experience, committed: false, failed: false, main: inner, page, field: mounted.field, shell: mounted.shell, startStep, signal: abort.signal,
+      screenAlive: () => token === playToken && r === run() && current?.ctx === ctx && page.isConnected,
+      alive: () => ctx.screenAlive() && !abort.signal.aborted && !ctx.failed,
+      canAct: () => ctx.alive() && !ctx.committed && app.canOpen(sc.id) && writer(r),
+      canBrowse: () => ctx.alive() && ctx.readonly && app.canOpen(sc.id),
+      canProceed: () => ctx.canAct() || ctx.canBrowse() || ctx.committed && ctx.alive() && writer(r),
       step(name) {
-        if (!ctx.alive()) return;
-        if (!ctx.readonly && sc.kind === 'event' && name === 'grade') ctx.finishEvent();
+        if (!ctx.alive()) return false;
+        if (!ctx.readonly && S().pos === sc.id && ctx.canAct() && !G.save.transact(r, n => { n.step = name; })) return ctx.fail();
         current.step = name; page.dataset.step = name;
-        if (!ctx.readonly && S().pos === sc.id) { S().step = name; G.save.write(); }
         emit('step', ctx, name);
+        return true;
       },
-      finishEvent() {
-        if (!ctx.alive() || ctx.readonly || sc.kind !== 'event') return S().events[sc.id];
-        const rec = G.sim.finish(S(), sc);
-        if (!rec.auto) {
-          S().done[sc.id] = true;
-          const next = app.list()[idx(sc.id) + 1];
-          if (next) { S().pos = next.id; S().step = 'preview'; S().reach = Math.max(S().reach, chIdx(next.ch)); }
-        }
-        G.save.write();
-        return rec;
+      fail() {
+        if (!ctx.alive()) return false;
+        ctx.failed = true; abort.abort(); inner.inert = false;
+        mounted.shell.dataset.mode = 'window'; mounted.field.inert = true;
+        mounted.field.setAttribute('aria-hidden', 'true');
+        page.dataset.step = 'error'; current.step = 'error';
+        inner.replaceChildren(h('section.blk', { role: 'alert', dataset: { saveError: G.save.error || 'screen' } },
+          h('h2', G.save.error === 'storage' ? '기록을 저장하지 못했어요.' : '장면을 열지 못했어요.'),
+          h('p', '진행 기록은 그대로예요. 다시 시도해 주세요.')));
+        const retry = h('button.btn.primary', { type: 'button', dataset: { act: 'retry' }, on: { click: e => {
+          if (!ctx.screenAlive() || !e.currentTarget.isConnected) return;
+          app.open(id, { ...opt, replace: true });
+        } } }, '다시 시도');
+        tray.replaceChildren(retry); tray.classList.remove('empty'); retry.focus({ preventScroll: true });
+        return false;
+      },
+      finishEvent() { return null; },
+      finishExperience() {
+        if (!ctx.alive()) return { ok: false, reason: 'stale', record: null };
+        if (ctx.committed) return { ok: true, reason: null, record: S().rpg.scenes[sc.id] };
+        if (!ctx.canAct() || ctx.readonly && !ctx.autoAdvance) return { ok: false, reason: 'readonly', record: null };
+        const result = G.save.finishExperience(sc.id, { ...options(ctx), readonly: false });
+        if (result.ok) ctx.committed = true;
+        return result;
       },
       section(cls) {
         const s = h('section.blk' + (cls ? '.' + cls : ''));
+        if (!ctx.alive()) return s;
         inner.appendChild(s);
-        if (inner.children.length > 1) setTimeout(() => { if (s.isConnected) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
+        if (inner.children.length > 1) setTimeout(() => { if (ctx.alive() && s.isConnected) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
         return s;
       },
       tray(content) { if (!ctx.alive()) return; tray.replaceChildren(); if (content) G.util.append(tray, [content]); tray.classList.toggle('empty', !content); },
       next(label = '다음 ▶', o = {}) {
         return new Promise((resolve) => {
-          const b = h('button.btn.' + (o.cls || 'primary'), { type: 'button', dataset: { act: 'next' } }, label);
-          const cancelled = () => resolve(false);
-          if (!ctx.alive()) { resolve(false); return; }
+          const b = h('button.btn.' + (o.cls || 'primary'), { type: 'button', disabled: !ctx.canProceed(), dataset: { act: 'next' } }, label);
+          let settled = false;
+          const finish = value => {
+            if (settled) return;
+            settled = true; abort.signal.removeEventListener('abort', cancelled); b.removeEventListener('click', clicked); resolve(value);
+          };
+          const cancelled = () => finish(false);
+          const clicked = () => {
+            if (!ctx.canProceed() || document.querySelector('.sheet-back, .fold-ov')) return;
+            G.audio.page(); ctx.tray(null); finish(true);
+          };
+          if (!ctx.alive() || abort.signal.aborted) { resolve(false); return; }
           abort.signal.addEventListener('abort', cancelled, { once: true });
-          b.addEventListener('click', () => { if (!ctx.alive()) return; abort.signal.removeEventListener('abort', cancelled); G.audio.page(); ctx.tray(null); resolve(true); }, { once: true });
+          b.addEventListener('click', clicked);
           ctx.tray(b);
-          setTimeout(() => { if (b.isConnected && !document.querySelector('.sheet-back')) b.focus({ preventScroll: true }); }, 30);
+          setTimeout(() => { if (ctx.alive() && b.isConnected && !document.querySelector('.sheet-back')) b.focus({ preventScroll: true }); }, 30);
         });
       },
     };
+    current.ctx = ctx;
+    page.dataset.access = G.save.access;
+    page.dataset.readonly = String(ctx.readonly);
+    if (!writer(r) && !(experience && kind !== 'waking' && ctx.readonly)) inner.inert = true;
     current.refreshTools = () => {
       if (!ctx.alive()) return;
       tools.replaceChildren();
-      if (chIdx(sc.ch) >= 2 && (!S().awake || S().teacher)) tools.appendChild(ui.iconBtn('bag', '인연첩', () => {
-        if (ctx.alive()) G.dream?.open('bonds');
+      if (!experience && chIdx(sc.ch) >= 2 && (!S().awake || S().teacher)) tools.appendChild(ui.iconBtn('bag', '인연첩', () => {
+        if (ctx.alive() && app.canOpen(sc.id) && (!S().awake || S().teacher)) G.dream?.open('bonds', ctx);
       }, { dataset: { tool: 'bonds' } }));
-      for (const t of app.toolbar.filter((t) => t.id !== 'dream')) {
+      for (const t of app.toolbar.filter((t) => t.id !== 'dream' && !experience)) {
         try { if (!t.when || t.when(ctx)) tools.appendChild(ui.iconBtn(t.icon || t.label.slice(0, 1), t.label, () => {
           if (ctx.alive() && (!t.when || t.when(ctx))) t.click(ctx);
         }, { dataset: { tool: t.id } })); } catch (e) { console.error(e); }
@@ -323,18 +374,21 @@
     };
     current.refreshTools();
     ctx.tray(null);
+    if (!entryReady) return ctx.fail();
     emit('scene', ctx);
 
     (async () => {
-      if (!revisit && !continuing && firstOf(sc.ch) === sc && kind !== 'result') await chapterStep(ctx);
+      if (!experience && !revisit && !continuing && firstOf(sc.ch) === sc && kind !== 'result') await chapterStep(ctx);
       if (!ctx.alive()) return;
-      for (const fn of hooks.scene) { await fn(ctx); if (!ctx.alive()) return; }
-      const screen = app.screens[kind];
+      for (const fn of experience ? [] : hooks.scene) { await fn(ctx); if (!ctx.alive()) return; }
+      const screen = experience && kind !== 'waking' ? app.screens.world : app.screens[kind];
       if (!screen) { ctx.step(kind); ctx.main.appendChild(h('p', '이 장면을 준비하고 있어요.')); return; }
-      await screen(ctx, sc);
+      const completed = await screen(ctx, sc);
       if (!ctx.alive()) return;
+      if (completed === false) { ctx.fail(); return; }
       await complete(ctx);
-    })().catch((e) => console.error(e));
+    })().catch((e) => { console.error(e); ctx.fail(); });
+    return true;
   }
   app.play = (id) => app.open(id);
 
@@ -346,7 +400,7 @@
     const card = ctx.section('chapter-card');
     card.append(h('div.ch-no', c.label), h('h2', c.name), info.intro ? h('p.ch-intro', T.inline(info.intro)) : null);
     if (info.recap) card.appendChild(h('div.recap', h('span.tag', '지난 이야기'), h('p', T.inline(info.recap))));
-    if (info.fiction) card.appendChild(T.block(Object.assign({ mark: 'fiction' }, info.fiction)));
+    if (info.fiction) card.appendChild(T.block(Object.assign({ mark: 'fiction' }, info.fiction), { run: ctx.run, readonly: ctx.readonly }));
     await ctx.next('펼치기 ▶');
     if (!ctx.alive()) return;
     ctx.main.replaceChildren();
@@ -355,29 +409,32 @@
 
   // 장면을 마쳤을 때
   async function complete(ctx) {
+    if (!ctx.alive()) return;
     const sc = ctx.scene;
-    if (ctx.revisit && !ctx.autoAdvance) { continueSaved(); return; }
-    const st = S();
-    if (!ctx.readonly) {
-      emit('done', sc, ctx);
-      if (!ctx.alive()) return;
-      if (sc.kind === 'link' && !st.done[sc.id]) {
-        for (const [key, gain] of Object.entries(sc.bonus?.abil || {})) if (Object.hasOwn(st.abil, key)) st.abil[key] += gain;
-        for (const item of sc.bonus?.items || []) if (!st.items.includes(item.id)) st.items.push(item.id);
-      }
-      st.done[sc.id] = true;
-      G.save.write();
+    if (sc.id === 'c3-staff' && (!ctx.committed || !S().awake) && (!ctx.readonly || ctx.reenact || ctx.autoAdvance)) { ctx.fail(); return; }
+    if (ctx.revisit && !ctx.autoAdvance && !ctx.reenact) { continueSaved(); return; }
+    if (!ctx.canProceed()) return;
+    const next = app.list()[idx(sc.id) + 1];
+    if (ctx.reenact && ctx.readonly) {
+      if (!G.save.transact(ctx.run, n => {
+        n.pos = next?.id || sc.id; n.step = 'scene';
+        const record = next && n.rpg.scenes[next.id];
+        n.rpg.cursor = next ? G.experience.cursor(G.data, next.id, record ? record.beat : G.experience.find(G.data, next.id)?.beats[0]?.id) : null;
+      })) { ctx.fail(); return; }
+    } else if (ctx.experience) {
+      if (!ctx.committed && !ctx.finishExperience().ok) { ctx.fail(); return; }
+    } else {
+      if (!G.save.transact(ctx.run, n => {
+        n.done[sc.id] = true; n.pos = next?.id || sc.id; n.step = 'scene';
+        n.rpg.cursor = next ? G.experience.cursor(G.data, next.id, G.experience.find(G.data, next.id)?.beats[0]?.id) : null;
+        if (next) n.reach = Math.max(n.reach, chIdx(next.ch));
+      }, { readonly: ctx.readonly })) { ctx.fail(); return; }
     }
-    const L = app.list(), next = L[idx(sc.id) + 1];
-    if (!next) return;
-    // 다음 자리를 장면 사이 화면(말 걷기)보다 먼저 저장한다: 걷는 중에 새로 고침·처음 화면으로 가도 다음 장면 처음부터 이어 간다
-    st.pos = next.id;
-    st.step = 'preview';
-    st.reach = Math.max(st.reach || 0, chIdx(next.ch));
-    G.save.write();
-    if (!ctx.readonly) for (const fn of hooks.between) { await fn(sc, next, ctx); if (!ctx.alive()) return; }
+    emit('done', sc, ctx);
+    if (!next || !ctx.alive()) return;
+    if (!ctx.experience && !G.experience.find(G.data, next.id) && !ctx.readonly) for (const fn of hooks.between) { await fn(sc, next, ctx); if (!ctx.alive()) return; }
     if (next.ch !== sc.ch) emit('chapter', next.ch);
-    play(next.id, { transition: true });
+    app.open(next.id, { transition: true, reenact: ctx.reenact });
   }
 
   // ───────── 회목 카드(기획서 §4-3): 한문본 16회의 장 제목. heading 하나 또는 여러 회에 걸치면 배열
@@ -439,8 +496,7 @@
     if (first) s.appendChild(app.bondCard(first));
     for (const x of again) s.appendChild(app.bondCard(x.b, x.story || ' '));
     if (!ctx.readonly) {
-      if (first) !S().bonds.includes(first.id) && S().bonds.push(first.id);
-      G.save.write();
+      G.save.transact(ctx.run, n => { if (first && !n.bonds.includes(first.id)) n.bonds.push(first.id); }, { readonly: ctx.readonly });
     }
     await ctx.next(first ? '인연첩에 적기 ▶' : '다음 ▶');
   };
@@ -475,62 +531,25 @@
         firstLabel: e.first === true ? '첫 시도에 맞힘' : e.first === false ? '다시 풀어 맞힘' : '—',
         helpLabel: e.help === 'teacher' ? '도움 사용(선생님용)' : e.help ? '도움 사용' : e.final ? '도움 없음' : '—' };
     };
-    const grades = G.data.notes?.ui?.grades || { shine: '빛나는 성공', fine: '훌륭한 성공', near: '아쉬운 성공' };
-    const events = app.list().filter((s) => s.kind === 'event').map((sc) => {
-      const e = S().events[sc.id];
-      const recorded = e && e.grade && !e.auto;
-      return { id: sc.id, title: sc.title || sc.id, kind: 'event',
-        hits: recorded ? e.hits : null, grade: recorded ? e.grade : null,
-        gradeLabel: recorded ? grades[e.grade] : '—', clue: (sc.clues || []).join(' · '),
-        firstLabel: recorded ? e.hits + '/2' : '—',
-        help: recorded && e.peek ? 'teacher' : null,
-        helpLabel: !recorded ? '—' : e.peek ? '도움 사용(선생님용)' : '도움 없음' };
+    const events = app.list().filter(sc => sc.kind === 'event').map(sc => {
+      const rec = S().rpg?.scenes?.[sc.id];
+      const e = G.experience.find(G.data, sc.id);
+      const actionIds = new Set((rec?.actions || []).map(action => action.id));
+      const performed = !!e && e.beats.every(beat => actionIds.has(beat.id));
+      const legacy = isDone(sc.id) && !performed;
+      const status = rec?.status === 'auto' ? '자동 안내' : performed ? '완료' : legacy ? '이전 기록' : rec ? '진행' : '미시작';
+      const lines = (rec?.actions || []).flatMap(a => [...(e?.beats || []), ...(e?.optional || [])].find(b => b.id === a.id)?.lines || []);
+      const clue = [...new Set(lines)].map(i => sc.lines[i]).map(l => typeof l === 'string' ? l : l.text || l.gloss || '').join(' · ');
+      return { id: sc.id, title: sc.title, kind: 'event', status, firstLabel: status, gradeLabel: '—', clue, help: rec?.hint || null, helpLabel: rec?.hint === 'teacher' ? '도움 사용(선생님용)' : rec?.hint ? '도움 사용' : '—' };
     });
     return [activity('a-wish', '소원 찾기'), ...events, activity('j-match', '꿈 일지 맞대기')];
   };
   app.ledgerTable = function () {
-    return h('div.ledger', h('h3', '장부'), h('p.small.muted', '첫 시도와 준비 적중, 도움 사용을 적어요. 감점은 없어요.'),
-      h('table', h('thead', h('tr', ...['활동', '첫 시도·적중', '등급', '단서', '도움'].map((text) => h('th', text)))),
-        h('tbody', app.ledgerRows().map((r) => h('tr', { dataset: { act: r.id } },
-          h('td', r.title), h('td', r.firstLabel), h('td', r.gradeLabel || '—'), h('td', r.clue || '—'), h('td', r.helpLabel))))));
+    return h('div.ledger', h('h3', '장부'), h('p.small.muted', '학습의 첫 시도와 사건에서 살펴본 근거, 도움을 적어요.'),
+      h('table', h('thead', h('tr', ...['활동', '상태·첫 시도', '살펴본 근거', '도움'].map(text => h('th', text)))),
+        h('tbody', app.ledgerRows().map(r => h('tr', { dataset: { act: r.id } }, h('td', r.title), h('td', r.firstLabel), h('td', r.clue || '—'), h('td', r.helpLabel))))));
   };
-
-  // 자원은 전체 사건의 최고 보상 합을 목표로 삼는다. 인연은 입력에 넣지 않는다.
-  app.wishes = function () {
-    const st = S(), scenes = app.list();
-    const events = scenes.filter((sc) => sc.kind === 'event');
-    const reachedSquares = (G.data.board || []).filter((q) => st.done[q.scene]);
-    const musicEvents = events.filter((sc) => sc.core?.includes('eumak'));
-    const musicItems = [...new Map(scenes.flatMap((sc) => [...(sc.items || []), ...(sc.bonus?.items || [])])
-      .filter((it) => it.kind === 'music' || it.fills?.includes('pungryu')).map((it) => [it.id, it])).values()];
-    const musicEarned = musicEvents.reduce((sum, sc) => {
-      const rec = st.events[sc.id];
-      return sum + (rec?.grade ? G.sim.reward(rec.grade).fame / G.sim.config.rewards.shine.fame : 0);
-    }, 0) + musicItems.filter((it) => st.items.includes(it.id)).length;
-    return (G.data.wishes || []).map((w) => {
-      const hidden = !!w.dreamHidden && !st.journal.revealed?.[w.id];
-      const parts = (w.parts || []).map((p) => ({ id: p.id, name: p.name,
-        filled: !hidden && reachedSquares.some((q) => q.fills?.includes(w.id + '.' + p.id)) }));
-      let fill = 0;
-      let sources = [];
-      if (!hidden) {
-        if (w.dreamHidden) fill = 1;
-        else if (parts.length) {
-          fill = parts.filter((p) => p.filled).length / parts.length;
-          sources = reachedSquares.filter((q) => q.fills?.some((f) => f.startsWith(w.id + '.'))).map((q) => q.id);
-        } else if (w.id === 'bugwi' || w.id === 'gongmyeong') {
-          const resource = w.id === 'bugwi' ? 'wealth' : 'fame';
-          fill = st.res[resource] / Math.max(1, events.length * G.sim.config.rewards.shine[resource]);
-        } else if (w.id === 'pungryu') {
-          fill = musicEarned / Math.max(1, musicEvents.length + musicItems.length);
-          sources = [...musicEvents.filter((sc) => st.events[sc.id]?.grade).map((sc) => sc.id), ...musicItems.filter((it) => st.items.includes(it.id)).map((it) => it.id)];
-        }
-      }
-      fill = G.util.clamp(fill, 0, 1);
-      return { id: w.id, name: hidden ? '?' : w.name, fill, hidden,
-        half: parts.length > 0 && fill > 0 && fill < 1, filled: fill === 1, parts, sources };
-    });
-  };
+  app.wishes = () => G.experience.wishes(S(), G.data);
   // 소원 채움 표기('chuljang.chul' 등)를 이름으로: 출장입상(장수). 꿈 동안 가려진 소원은 이름을 내지 않는다
   app.fillName = function (f) {
     const [w, p] = String(f).split('.');
@@ -543,7 +562,8 @@
   // ───────── 목차
   app.toc = async function () {
     const st = S();
-    await ui.sheet((close) => {
+    const r = run();
+    await sheet((close) => {
       const box = h('div.toc', h('h3', '목차'));
       for (const c of CHAPTERS) {
         const scenes = app.list().filter((s) => s.ch === c.id);
@@ -559,7 +579,7 @@
         scenes.forEach((s, i) => {
           const b = h('button.toc-scene' + (st.done[s.id] ? '.done' : '') + (s.id === st.pos ? '.here' : ''), { type: 'button', dataset: { scene: s.id }, disabled: !can[i] },
             s.title || KIND_NAME[s.kind] || c.name, st.done[s.id] ? h('span.badge', '마침') : null);
-          b.addEventListener('click', () => { close(null); app.open(s.id); });
+          b.addEventListener('click', () => { if (r !== run() || !b.isConnected) return; close(null); app.open(s.id); });
           ul.appendChild(b);
         });
         row.appendChild(ul);
@@ -585,38 +605,25 @@
 
   // ───────── 설정
   app.settings = async function () {
-    const st = S();
-    const v = await ui.sheet((close) => {
-      const row = (key, label, text, fn) => {
-        const b = h('button.btn.small.toggle', { type: 'button', dataset: { set: key }, 'aria-pressed': 'false' });
-        const draw = () => { const t = text(); b.textContent = t[0]; b.classList.toggle('primary', t[1]); b.setAttribute('aria-pressed', String(t[1])); };
-        b.addEventListener('click', () => { fn(); G.save.write(); app.applySettings(); draw(); });
-        draw();
-        return h('div.setrow', h('span', label), b);
+    const r = run();
+    const v = await sheet(close => {
+      const row = (key, label) => {
+        const b = h('button.btn.small.toggle', { type: 'button', disabled: !writer(r), dataset: { set: key } });
+        const draw = () => { const on = S()[key]; b.textContent = on ? '켜짐' : '꺼짐'; b.setAttribute('aria-pressed', String(on)); b.classList.toggle('primary', on); };
+        b.addEventListener('click', () => {
+          if (!b.isConnected) return;
+          if (!G.save.transact(r, n => { n[key] = !n[key]; })) { savingDenied(); return; }
+          G.audio.unlock(); G.audio.music(S().music); app.applySettings(); draw();
+        }); draw(); return h('div.setrow', h('span', label), b);
       };
-      const onoff = (k) => () => [st[k] ? '켜짐' : '꺼짐', !!st[k]];
-      // 전체 화면은 저장하지 않는 설정이라 따로 그린다(Esc로 풀어도 단추가 따라 바뀐다)
-      const fullRow = () => {
-        const b = h('button.btn.small.toggle', { type: 'button', dataset: { set: 'full' } });
-        b.addEventListener('click', () => ui.full.toggle());
-        ui.full.watch(b, () => { const on = ui.full.on(); b.textContent = on ? '켜짐' : '꺼짐'; b.classList.toggle('primary', on); b.setAttribute('aria-pressed', String(on)); });
-        return h('div.setrow', h('span', '전체 화면'), b);
-      };
-      return h('div.settings', h('h3', '설정'),
-        row('music', '배경음', onoff('music'), () => { st.music = !st.music; G.audio.unlock(); G.audio.music(st.music); }),
-        row('sound', '효과음', onoff('sound'), () => { st.sound = !st.sound; }),
-        row('big', '큰 글자', onoff('big'), () => { st.big = !st.big; }),
-        row('teacher', '선생님용', onoff('teacher'), () => { st.teacher = !st.teacher; }),
-        ui.full.offer() ? fullRow() : null,
-        h('div.setrow', h('span', '기록 지우기'), h('button.btn.small.seal', { type: 'button', dataset: { set: 'clear' }, on: { click: () => close('clear') } }, '기록 지우기')),
-        h('p.small.muted', '진행 기록은 이 기기의 브라우저에만 저장돼요. 어디로도 보내지 않아요.'),
-        h('div.credit-full', h('b', '음원 출처 '), G.audio.creditFull()));
+      const full = h('button.btn.small', { type: 'button', dataset: { set: 'full' }, on: { click: () => ui.full.toggle() } }, '전체 화면');
+      ui.full.watch(full, () => full.setAttribute('aria-pressed', String(ui.full.on())));
+      return h('div.settings', h('h3', '설정'), row('music', '배경음'), row('sound', '효과음'), row('big', '큰 글자'), row('teacher', '선생님용'), full,
+        h('div.setrow', h('span', '기록 지우기'), h('button.btn.small.seal', { type: 'button', disabled: !writer(r), dataset: { set: 'clear' }, on: { click: () => { if (writer(r)) close('clear'); } } }, '기록 지우기')),
+        h('p.small.muted', '진행 기록은 이 기기의 브라우저에만 저장돼요.'), h('div.credit-full', h('b', '음원 출처 '), G.audio.creditFull()));
     }, [{ label: '닫기', value: null, cls: 'primary' }], { cls: 'settings-sheet' });
-    if (v === 'clear') {
-      const ok = await ui.sheet([h('h3', '기록을 지울까요?'), h('p', '진행, 장부, 능력, 물건, 구슬, 깨어남, 해석, 이름이 모두 지워져요. 설정은 그대로예요.')],
-        [{ label: '그대로 두기', value: false, cls: 'primary' }, { label: '지우기', value: true, cls: 'seal' }]);
-      if (ok) { G.save.reset(); emit('reset'); app.title(); }
-      return;
+    if (v === 'clear' && await confirm('기록을 지울까요?', '진행과 기록이 모두 지워져요. 설정은 그대로예요.', '지우기', '그대로 두기')) {
+      if (G.save.reset(r, { confirmed: true, cancel })) { emit('reset'); app.title(); } else savingDenied();
     }
     recheck();
   };
@@ -631,7 +638,7 @@
   //   ?teacher=1 선생님용 켜기 / ?teacher=0 끄기       ?fixture=1 임시 데이터(점검용)
   app.boot = function () {
     const q = new URLSearchParams(location.search);
-    if (q.has('teacher')) { S().teacher = q.get('teacher') === '1'; G.save.write(); }
+    if (q.has('teacher')) G.save.transact(run(), n => { n.teacher = q.get('teacher') === '1'; });
     app.applySettings();
     // 바로가기 인자는 한 번 쓰고 주소에서 지운다(새로 고침해도 다시 쓰이지 않게). 임시 데이터 표시는 남긴다
     const keep = new URLSearchParams();
@@ -647,7 +654,12 @@
     else app.title({ replace: true });
     window.addEventListener('popstate', onPop);
     // 뒤로 가기로 예전 화면이 캐시에서 되살아나면(bfcache) 저장된 상태로 다시 판단한다
-    window.addEventListener('pageshow', (e) => { if (e.persisted) { G.save.load(); app.applySettings(); if (current) recheck(); } });
+    G.save.onChange(reason => {
+      if (!app.booted) return;
+      if (reason === 'storage' || reason === 'access' || reason === 'reset') { cancel(); app.applySettings(); app.title({ replace: true }); }
+    });
+    window.addEventListener('pagehide', cancel);
+    window.addEventListener('pageshow', e => { if (e.persisted) { cancel(); app.applySettings(); app.title({ replace: true }); } });
     app.booted = true;
   };
   function onPop(e) {

@@ -10,13 +10,14 @@
   const { h, pixImg, pixNear } = G.util;
   const effects = ['petals', 'mist', 'ripples', 'candle', 'fire'];
   G.stage = {};
-  G.stage.mount = function (ctx, scene = {}) {
+  G.stage.mount = function (ctx, scene = {}, opt = {}) {
     let disposed = false;
     const animations = new Set();
     const pending = new Set();
     const el = h('section.stage', { 'aria-label': scene.title || '이야기 무대' });
     const background = h('div.stage-background');
-    const picture = scene.img ? pixImg('assets/sc/' + scene.img + '.webp', { alt: scene.title || '', fit: false }) : null;
+    const pictureSrc = opt.pictureSrc || (scene.img ? 'assets/sc/' + scene.img + '.webp' : null);
+    const picture = !opt.textOnly && pictureSrc ? pixImg(pictureSrc, { alt: scene.title || '', fit: false }) : null;
     if (picture) background.appendChild(picture);
     const fx = h('div.stage-effects', { 'aria-hidden': 'true' });
     const actors = h('div.stage-actors', { 'aria-hidden': 'true' });
@@ -26,6 +27,10 @@
     const speech = h('div.stage-speech', speaker, dialogue);
     el.append(background, fx, actors, face);
     const story = h('div.stage-story', el, speech);
+    if (opt.textOnly) {
+      story.classList.add('world-dialogue'); story.dataset.dialogue = '';
+      el.replaceChildren(face); el.classList.add('dialogue-portrait');
+    }
     ctx.main.appendChild(story);
     const active = () => !disposed && ctx.alive();
     // 좁은 화면에서는 원래 크기에 가까운 정수배를 유지하고 좌우 가장자리만 자른다.
@@ -33,9 +38,16 @@
     function layout() {
       if (!active()) return;
       if (picture?.naturalWidth) {
-        const scale = pixNear(picture.naturalWidth, picture.naturalWidth);
+        const dpr = devicePixelRatio || 1;
+        const scale = opt.field ? Math.ceil(Math.max(ctx.main.clientWidth / picture.naturalWidth, ctx.main.clientHeight / picture.naturalHeight) * dpr) / dpr : pixNear(picture.naturalWidth, picture.naturalWidth);
         picture.style.width = picture.naturalWidth * scale + 'px';
         picture.style.height = picture.naturalHeight * scale + 'px';
+        if (opt.field && opt.focus) {
+          const pixel = value => Math.round(value * dpr) / dpr;
+          picture.style.left = pixel(Math.max(ctx.main.clientWidth - picture.naturalWidth * scale, Math.min(0, ctx.main.clientWidth * .65 - opt.focus.x * picture.naturalWidth * scale))) + 'px';
+          picture.style.top = pixel(Math.max(ctx.main.clientHeight - picture.naturalHeight * scale, Math.min(0, ctx.main.clientHeight * .5 - opt.focus.y * picture.naturalHeight * scale))) + 'px';
+          picture.style.transform = 'none';
+        }
         el.style.maxWidth = picture.naturalWidth * scale + 4 + 'px';
         background.style.height = picture.naturalHeight * scale + 'px';
       }
@@ -52,12 +64,13 @@
       motion.finished.then(() => animations.delete(motion), () => animations.delete(motion));
       return motion;
     }
+    const portraitSize = opt.textOnly ? 48 : 96;
     function portrait(id, mood, opt = {}) {
       face.replaceChildren();
       if (!active() || !id) return;
       const person = (G.data.people || {})[id];
       if (!person || person.noFace) return;
-      const img = pixImg(G.text.face(id, mood), { cls: 'face', size: 96 });
+      const img = pixImg(G.text.face(id, mood), { cls: 'face', size: portraitSize });
       face.appendChild(img);
       animate(face, opt.shake ? [{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }] : [{ opacity: 0, transform: 'translateX(30px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 300 });
     }
@@ -73,9 +86,10 @@
     function show(line) {
       if (!active()) return;
       const b = typeof line === 'string' ? { text: line } : line || {};
-      speaker.textContent = b.say ? G.text.nameOf(b.say) : '';
-      portrait(b.say, b.mood, { shake: b.shake });
-      dialogue.replaceChildren(b.mark ? G.text.block(b, { peek: ctx.readonly }) : G.text.inline(b.text || b.gloss || '', { noFace: true }));
+      const targetSpeaking = !b.say || !opt.targetPerson || b.say === opt.targetPerson;
+      speaker.textContent = opt.label && targetSpeaking ? opt.label : b.say ? G.text.nameOf(b.say) : '';
+      portrait(opt.hideFace && targetSpeaking ? null : b.say, b.mood, { shake: b.shake });
+      dialogue.replaceChildren(b.mark ? G.text.block(b, { run: ctx.run, readonly: ctx.readonly }) : G.text.inline(b.text || b.gloss || '', { noFace: true }));
       if (b.effect) effect(b.effect);
     }
     async function walk(opt = {}) {
@@ -116,19 +130,20 @@
     return { el, dialogue, show, portrait, effect, walk, active, dispose };
   };
   G.stage.play = async function (ctx, scene, opt = {}) {
-    const stage = G.stage.mount(ctx, scene);
+    const stage = G.stage.mount(ctx, scene, opt);
     const list = opt.lines || [...[].concat(scene.narration || []), ...(scene.lines || [])];
     try {
       for (const line of list.length ? list : ['']) {
         if (!stage.active()) return false;
         stage.show(line);
-        const next = () => { if (stage.active()) ctx.page.querySelector('#tray [data-act="next"]')?.click(); };
+        const next = () => { if (stage.active()) (opt.textOnly ? ctx.main : ctx.page).querySelector(opt.textOnly ? '[data-act="next"]' : '#tray [data-act="next"]')?.click(); };
         const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
         stage.dialogue.addEventListener('click', next);
         stage.dialogue.addEventListener('keydown', key);
-        await ctx.next();
+        const done = await ctx.next();
         stage.dialogue.removeEventListener('click', next);
         stage.dialogue.removeEventListener('keydown', key);
+        if (!done || !stage.active()) return false;
       }
       return stage.active();
     } finally { stage.dispose(); }

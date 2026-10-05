@@ -1,0 +1,103 @@
+html:has(.game-shell), body:has(.game-shell), body:has(.game-shell) #app { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+.game-shell { position: relative; isolation: isolate; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; background: #26352e; }
+.game-field { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(circle at 50% 36%, #6e8060, #26352e 78%); }
+.game-shell[data-mode="world"] .game-field { pointer-events: auto; }
+.game-shell:not([data-mode="world"]) .game-field { pointer-events: none; }
+.game-field > .scene-backdrop { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; filter: brightness(.62) saturate(.8); }
+.game-field > .world-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .7; filter: brightness(.7); pointer-events: none; }
+.game-shell > .play { position: absolute; inset: 0; z-index: 2; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; background: transparent; pointer-events: none; }
+.game-shell .topbar { position: relative; top: auto; z-index: 40; padding: max(4px, env(safe-area-inset-top)) 6px 4px; border: 0; background: linear-gradient(180deg, rgba(24, 26, 23, .9), rgba(24, 26, 23, .55), transparent); color: #fff8e7; pointer-events: auto; }
+.game-shell .topbar .where small { color: #eadfc7; }
+.game-shell .topbar .icon-btn { width: 40px; height: 40px; }
+.game-shell .save-access, .game-shell .revisit-bar { position: absolute; z-index: 45; top: 54px; left: 50%; width: min(94%, 620px); transform: translateX(-50%); pointer-events: auto; }
+
+.game-shell[data-mode="window"] .main { position: relative; z-index: 3; align-self: stretch; min-height: 0; width: min(92vw, 760px); margin: 8px auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .97); box-shadow: 0 12px 36px rgba(0,0,0,.45); pointer-events: auto; }
+.game-shell[data-mode="window"] .main-inner { max-width: 720px; padding: 14px 16px 8px; }
+.game-shell[data-mode="window"] > .play > .tray { position: relative; z-index: 3; width: min(92vw, 760px); max-width: none; background: rgba(239, 227, 198, .97); pointer-events: auto; }
+.game-shell[data-mode="window"] > .play > .tray.empty { display: none; }
+.game-shell[data-mode="menu"] .game-menu-window { align-self: center; width: min(94vw, 720px); min-height: 0; max-height: calc(100dvh - 24px); margin: 12px auto; padding: 18px 16px; overflow: auto; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .97); box-shadow: 0 12px 36px rgba(0,0,0,.45); }
+body:has(.game-shell) .sheet-back { align-items: center; padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
+body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh - 16px); overflow: auto; overscroll-behavior: contain; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .98); }
+
+.world-screen { position: absolute; inset: 0; overflow: hidden; color: #fff8e7; }
+.world-camera { position: absolute; inset: 0; height: auto; min-height: 0; overflow: hidden; border: 0; background: #25382b; touch-action: none; }
+.world-camera [data-world], .world-camera .world-backdrop-map { position: absolute; image-rendering: pixelated; outline: none; transform-origin: top left; }
+.world-art { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; image-rendering: pixelated; pointer-events: none; }
+.world-sprite, .world-object { position: absolute; image-rendering: pixelated; background-repeat: no-repeat; }
+.world-object { margin: 0; padding: 0; border: 0; background-color: transparent; color: #201810; cursor: pointer; }
+.world-object > .world-sprite { top: 0; left: 0; }
+.world-object:focus-visible, .world-object.required { outline: 3px solid #fff3a5; outline-offset: 2px; }
+.world-marker { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-width: 32px; min-height: 32px; padding: 2px; background: #f9ecd0; border: 2px solid #665442; font: 10px/1.1 sans-serif; }
+.world-heading, .world-goal { position: absolute; z-index: 12; left: 50%; transform: translateX(-50%); width: min(76vw, 620px); margin: 0; padding: 5px 10px; border-radius: 5px; background: rgba(28, 27, 23, .82); color: #fff8e7; text-align: center; text-shadow: 1px 1px #000; pointer-events: none; }
+.world-heading { top: max(52px, env(safe-area-inset-top)); width: auto; max-width: 70vw; font-family: var(--pixel); font-size: clamp(15px, 2.5vw, 20px); white-space: nowrap; }
+.world-goal { top: max(88px, calc(env(safe-area-inset-top) + 36px)); font-size: clamp(12px, 2vw, 15px); }
+.world-pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px; margin: 8px 0; }
+.world-direction { width: 44px; min-height: 44px; border: 2px solid #665442; border-radius: 6px; color: #342b23; background: rgba(249,236,208,.94); font: bold 20px sans-serif; touch-action: none; pointer-events: auto; }
+.world-direction[data-direction="up"] { grid-column: 2; }
+.world-direction[data-direction="left"] { grid-column: 1; grid-row: 2; }
+.world-direction[data-direction="down"] { grid-column: 2; grid-row: 2; }
+.world-direction[data-direction="right"] { grid-column: 3; grid-row: 2; }
+.world-actions { position: absolute; z-index: 16; left: 50%; bottom: max(9px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(48vw, 520px); pointer-events: none; }
+.world-actions button, .world-targets button { min-height: 44px; max-width: 100%; white-space: normal; pointer-events: auto; }
+.world-tools { position: absolute; z-index: 17; right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-width: calc(100% - 16px); border: 2px solid #665442; border-radius: 6px; background: rgba(249,236,208,.96); color: #342b23; pointer-events: auto; }
+.world-tools summary { cursor: pointer; min-height: 44px; padding: 10px; }
+.world-tools-panel { width: min(330px, calc(100vw - 20px)); max-height: 60dvh; padding: 0 10px 10px; overflow: auto; overscroll-behavior: contain; }
+.world-targets, .world-controls { margin: 0; }
+.world-controls { font-size: 12px; line-height: 1.45; }
+.world-target-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: min(38dvh, 280px); padding: 6px 0 8px; overflow: auto; }
+.world-speech { position: absolute; z-index: 25; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 16px), 760px); pointer-events: auto; }
+.world-speech:empty { display: none; }
+.world-dialogue { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; width: 100%; max-height: min(48dvh, 390px); margin: 0; padding: 10px; overflow: auto; overscroll-behavior: contain; border: 4px solid #665442; border-radius: 8px; background: rgba(249,236,208,.98); color: #2b2320; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
+.world-dialogue .dialogue-portrait { position: static; align-self: start; width: auto; height: auto; min-height: 0; overflow: visible; border: 0; background: transparent; }
+.world-dialogue .stage-portrait { position: static; width: auto; height: auto; min-height: 0; }
+.world-dialogue .dialogue-portrait:has(.stage-portrait:empty) { display: none; }
+.world-dialogue .stage-speech { width: 100%; margin: 0; padding: 4px; border: 0; background: transparent; }
+.world-dialogue:has(.stage-portrait:empty) .stage-speech { grid-column: 1 / -1; }
+.world-dialogue .stage-dialogue { min-height: 0; max-height: none; overflow: visible; overflow-wrap: anywhere; }
+.world-dialogue .tray { position: static; grid-column: 1 / -1; width: 100%; margin: 4px 0 0; padding: 0; background: transparent; }
+.world-dialogue .tray .btn { min-width: min(240px, 100%); max-width: 100%; }
+.world-screen:has(.world-speech:not(:empty)) > :is(.world-actions,.world-tools), .world-screen[data-finished="true"] > :is(.world-actions,.world-tools) { display: none; }
+.game-shell[data-mode="world"] .play > .main { min-height: 0; padding: 0; pointer-events: none; }
+.game-shell[data-mode="world"] .play > .tray { position: absolute; z-index: 26; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 16px), 560px); max-width: none; border: 3px solid #665442; border-radius: 8px; background: rgba(249,236,208,.97); pointer-events: auto; }
+.game-shell[data-mode="world"] .play > .tray.empty { display: none; }
+.game-shell[data-mode="cinematic"] .main { display: none; }
+.game-shell[data-mode="cinematic"] .play > .tray { position: absolute; z-index: 26; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 16px), 560px); max-width: none; border: 3px solid #665442; border-radius: 8px; background: rgba(249,236,208,.97); pointer-events: auto; }
+.game-shell[data-mode="cinematic"] .play > .tray.empty { display: none; }
+.field-cutscene { position: absolute; inset: 0; margin: 0; }
+.field-cutscene > .stage { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; max-width: none !important; margin: 0; border: 0; background: #26352e; }
+.field-cutscene .stage-background { position: absolute; inset: 0; height: 100% !important; overflow: hidden; }
+.field-cutscene .stage-background img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: none; }
+.field-cutscene .stage-speech { position: absolute; z-index: 24; left: 50%; bottom: max(150px, calc(env(safe-area-inset-bottom) + 142px)); transform: translateX(-50%); width: min(calc(100% - 16px), 760px); max-height: 42dvh; overflow: auto; overscroll-behavior: contain; margin: 0; padding: 12px; border: 4px solid #665442; border-radius: 8px; background: rgba(249,236,208,.98); color: #2b2320; pointer-events: auto; }
+.field-cutscene .stage-dialogue { min-height: 0; max-height: none; overflow: visible; }
+.wake-input { width: 100%; }
+.wake-save-error { margin: 6px 0 0; color: #7c231b; }
+.wake-transition, .wake-dream, .wake-room { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.wake-dream { animation: wake-dissolve 1.8s ease-in forwards; }
+.wake-room { background: #26272b; animation: wake-return 1.8s ease-out forwards; }
+.wake-room img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: none; image-rendering: pixelated; }
+@keyframes wake-dissolve { to { opacity: 0; filter: blur(12px); } }
+@keyframes wake-return { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .wake-dream, .wake-room { animation-duration: .3s; } }
+.save-access { background: #f9ecd0; color: #342b23; border: 2px solid #665442; padding: 10px; margin: 0; }
+.world-end { position: absolute; z-index: 20; left: 50%; bottom: 12px; transform: translateX(-50%); padding: 10px; background: rgba(249,236,208,.96); color: #342b23; }
+.big .world-controls { font-size: 15px; }
+.big .world-dialogue { grid-template-columns: 1fr; max-height: 58dvh; }
+.big .world-dialogue .stage-portrait { display: inline-block; }
+@media (max-width: 560px) {
+  .game-shell .topbar .where small { display: none; }
+  .game-shell .topbar .tools { gap: 2px; }
+  .world-heading { top: max(48px, env(safe-area-inset-top)); }
+  .world-goal { top: max(78px, calc(env(safe-area-inset-top) + 30px)); width: calc(100% - 16px); }
+  .world-actions { bottom: max(66px, calc(env(safe-area-inset-bottom) + 58px)); width: calc(100% - 16px); }
+  .world-dialogue { max-height: 52dvh; }
+  .game-shell[data-mode="window"] .main { width: calc(100vw - 12px); margin: 4px auto; border-width: 7px; }
+  .game-shell[data-mode="window"] > .play > .tray { width: calc(100vw - 12px); }
+}
+@media (max-width: 360px) {
+  .game-shell .topbar .where strong { font-size: .82em; }
+  .game-shell .topbar .icon-btn { width: 36px; height: 36px; }
+  .world-dialogue { grid-template-columns: 1fr; max-height: 60dvh; }
+  .world-dialogue .stage-portrait { justify-self: start; }
+  .world-direction { width: 40px; min-height: 40px; }
+  .world-pad { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(2, 40px); }
+}

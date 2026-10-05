@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "status": "approved",
+  "approved_date": "2026-10-04",
+  "approval": "???? ?????????? ?? ?? 3?? ??? ????? ??",
+  "generator": "builtin image_gen",
+  "entries": [
+    {
+      "key": "npc-fairy-green",
+      "kind": "npc",
+      "approved_sha256": "0efe7807b4f39011b0f371cc010972b776a54e89420fc0b3f12b70975f608cd1",
+      "candidate": "assets/raw/rpg-npc-v1/candidates/npc-fairy-green-v3.webp",
+      "sprite": {
+        "src": "assets/world/npc-fairy-green.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-yuk",
+      "kind": "npc",
+      "approved_sha256": "03c09dc347d629ed5660235aa12c9521f27436759a5f2bc4498704bb7be8728b",
+      "candidate": "assets/raw/rpg-npc-v1/candidates/npc-yuk-v3.webp",
+      "sprite": {
+        "src": "assets/world/npc-yuk.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-nurse",
+      "kind": "npc",
+      "approved_sha256": "7a94cd19957436898306cd45a8d58fb81fa6014d732b4bb8af183e287c22837d",
+      "candidate": "assets/raw/rpg-npc-v1/candidates/npc-nurse-v3.webp",
+      "sprite": {
+        "src": "assets/world/npc-nurse.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    }
+  ],
+  "source": {
+    "path": "assets/raw/rpg-npc-v1/source/npc-atlas-v1.png",
+    "sha256": "84620bc53048f0c11d643988a2ba61301b14a0774a87207afdda8ac1e675dc54"
+  },
+  "prompt": {
+    "path": "assets/raw/rpg-npc-v1/source/prompt.txt",
+    "sha256": "40f265c7e0ebefac62839a315d692b799d266bd15f92a51ceb53007042076bb2"
+  },
+  "review": {
+    "path": "assets/raw/rpg-npc-v1/review/npc-review-v3.png",
+    "sha256": "88a1ab5ace8c5e99510cada873dec41782acbae8c722a0f1fe69f6873a761355"
+  },
+  "references": [
+    {
+      "path": "assets/pt/fairy_chae.webp",
+      "sha256": "367044df9916608f8fbc29da9fd3944b0b8294f18ae3a841709bc698a6d9ad01"
+    },
+    {
+      "path": "assets/pt/yuk.webp",
+      "sha256": "2283a99daba842de4d856b085892d16ed9a9d0106810882fa7831853b1eba1aa"
+    },
+    {
+      "path": "assets/world/walk-seongjin.webp",
+      "sha256": "45d7f5821ae12a925d86965c1eee80338dfecb5db5526924a10900288f40b1b0"
+    }
+  ]
+}

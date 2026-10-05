@@ -1,0 +1,520 @@
+{
+  "version": 1,
+  "status": "approved",
+  "approved_date": "2026-10-04",
+  "approval": "???? ???? ?? ?? ?? 8?? ?? ??. ?? ??? ?? ??? ??.",
+  "review": {
+    "path": "assets/raw/topdown-v3/review/contact-sheet-v1.png",
+    "sha256": "bc6400a3dcfc1ab3530ae84b2ee85e0af05434620991e1d687ea2cb0367da9ff"
+  },
+  "entries": [
+    {
+      "key": "map-bridge",
+      "kind": "map",
+      "candidate": "assets/raw/topdown-v3/candidates/map-bridge-v1.webp",
+      "approved_sha256": "f830c2aa9a6d301de97dae5939c38117a2db5b43dea1ce67afa45a6cd9d60c38",
+      "original": "assets/raw/topdown-v3/originals/map-bridge-v1.png",
+      "original_sha256": "ff9c3b9fe0bc18e6cb75da46c160a922d9658fc40e06695408687072a83a92fb",
+      "prompt": "tools/prompts/topdown_v3_map-bridge.txt",
+      "prompt_sha256": "a6b3e91935ac7100336cf7bc5e127b6fb761801ccda5e46988fd2f4f390f9d83",
+      "reference": "assets/sc/sc_bridge.webp",
+      "size": [
+        384,
+        320
+      ],
+      "sprite": {
+        "src": "assets/world/map-bridge.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      },
+      "reference_sha256": "073f6be5120c5f396b2b269ce3c1a58f90e342947905e8ab5e48e750c61f0af7"
+    },
+    {
+      "key": "map-cell",
+      "kind": "map",
+      "candidate": "assets/raw/topdown-v3/candidates/map-cell-v2.webp",
+      "approved_sha256": "62b1ed1c82f0fe1d1fbad9381b359a36f613b8d892589d51a7af2d048dcf7e1a",
+      "original": "assets/raw/topdown-v3/originals/map-cell-v2.png",
+      "original_sha256": "dcf1f790ad59ccaa868f95c59d5a453e81a9efe30e1e348163e035c36f134057",
+      "prompt": "tools/prompts/topdown_v3_map-cell-v2.txt",
+      "prompt_sha256": "07f633476b56b6a7e6d37465086669e1d04b05a576083acf8795e654c01de560",
+      "reference": "assets/sc/sc_cell.webp",
+      "size": [
+        384,
+        320
+      ],
+      "sprite": {
+        "src": "assets/world/map-cell.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      },
+      "reference_sha256": "16221005cad897fac6d2887694b081b9e405422d57b110c79584f907e1a4902b"
+    },
+    {
+      "key": "map-huayin",
+      "kind": "map",
+      "candidate": "assets/raw/topdown-v3/candidates/map-huayin-v2.webp",
+      "approved_sha256": "ec65e95064499d074da2c5608162c1db39b7796f082fe26304c741ea71052361",
+      "original": "assets/raw/topdown-v3/originals/map-huayin-v2.png",
+      "original_sha256": "2ca124f40cb9cf3f16a49208a0a071f489b08a20f1cfadb2f0296b83d6bf7758",
+      "prompt": "tools/prompts/topdown_v3_map-huayin-v2.txt",
+      "prompt_sha256": "c247641ae042c154fea49417a9bd7facc2489237b0875f3c2bb38243f1511137",
+      "reference": "assets/sc/sc_huayin.webp",
+      "size": [
+        384,
+        320
+      ],
+      "sprite": {
+        "src": "assets/world/map-huayin.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      },
+      "reference_sha256": "fddaee0f8750a1c01c5037f6bf74cb03046a6e6d5acef66537e21149e1704b8f"
+    },
+    {
+      "key": "map-chwimi",
+      "kind": "map",
+      "candidate": "assets/raw/topdown-v3/candidates/map-chwimi-v1.webp",
+      "approved_sha256": "3629bb29b199460855faecd7fc1b3e27cb1af167c8eae920336de50725bff585",
+      "original": "assets/raw/topdown-v3/originals/map-chwimi-v1.png",
+      "original_sha256": "b3e250b4c8ff1f8b1aa2b5756f056c720ac6b34dbde511347b78e39058e2712a",
+      "prompt": "tools/prompts/topdown_v3_map-chwimi.txt",
+      "prompt_sha256": "8eead74da4f9f1dcd79be0889c09fbf6211bf47ca20ace631e51dfe8d3d3644e",
+      "reference": "assets/sc/sc_c3_feast.webp",
+      "size": [
+        384,
+        320
+      ],
+      "sprite": {
+        "src": "assets/world/map-chwimi.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      },
+      "reference_sha256": "2c75399b36a9ecec4928705996c2a275d7efe79cf007cd751d04c483ba0f9258"
+    },
+    {
+      "key": "walk-seongjin",
+      "kind": "walk",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-seongjin-v1.webp",
+      "approved_sha256": "45d7f5821ae12a925d86965c1eee80338dfecb5db5526924a10900288f40b1b0",
+      "original": "assets/raw/topdown-v3/originals/walk-seongjin-v1.png",
+      "original_sha256": "cdb5406401e0b971472d142dd2276020d0b569e4cc7ed074d06e0a6445c683e6",
+      "prompt": "tools/prompts/topdown_v3_walk-seongjin.txt",
+      "prompt_sha256": "4d4515eb9815ff4bd9a017a5c9df77f9518ed1d82dce79c93f01e359541ba06e",
+      "reference": "assets/pt/seongjin.webp",
+      "size": [
+        160,
+        128
+      ],
+      "sprite": {
+        "src": "assets/world/walk-seongjin.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 5,
+        "rows": 4,
+        "cell": {
+          "width": 32,
+          "height": 32
+        },
+        "anchor": {
+          "x": 16,
+          "y": 30
+        },
+        "directions": {
+          "down": {
+            "row": 0,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "left": {
+            "row": 1,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "right": {
+            "row": 2,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "up": {
+            "row": 3,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      },
+      "reference_sha256": "499f6fb5f9ba2e1a5ad803e9fef187b3710435607b94a0348edae003d62ed4fa"
+    },
+    {
+      "key": "walk-yang-scholar",
+      "kind": "walk",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-yang-scholar-v1.webp",
+      "approved_sha256": "55de425a229192b3f3c6135d88d4bbebc6ce87a226ccbbc25fdab031f6c305a5",
+      "original": "assets/raw/topdown-v3/originals/walk-yang-scholar-v1.png",
+      "original_sha256": "5c8488c397f6a25581a742c1b142bc43660b1f97c694b9b724fff200672d9b0b",
+      "prompt": "tools/prompts/topdown_v3_walk-yang-scholar.txt",
+      "prompt_sha256": "d48d10f8acbf5b738e8a53bc11155cfbca6becba8194760f0932f64f68198a18",
+      "reference": "assets/board/horse_walk.webp",
+      "size": [
+        160,
+        128
+      ],
+      "sprite": {
+        "src": "assets/world/walk-yang-scholar.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 5,
+        "rows": 4,
+        "cell": {
+          "width": 32,
+          "height": 32
+        },
+        "anchor": {
+          "x": 16,
+          "y": 30
+        },
+        "directions": {
+          "down": {
+            "row": 0,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "left": {
+            "row": 1,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "right": {
+            "row": 2,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "up": {
+            "row": 3,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      },
+      "reference_sha256": "269e82fe33d2f3cb9849fbcd277bd6f41b30f59ed65bf3a5a845e33a998eecc9"
+    },
+    {
+      "key": "walk-yang-chancellor",
+      "kind": "walk",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-yang-chancellor-v2.webp",
+      "approved_sha256": "6532698591f19dc2aecc8e6b379ec04c600b687506ec0673bd37662473f996fb",
+      "original": "assets/raw/topdown-v3/originals/walk-yang-chancellor-v1.png",
+      "original_sha256": "dcf120a120994d30b86ce377d7edf653e61b0bd1ace10ec4fe0837d69ea04e4b",
+      "prompt": "tools/prompts/topdown_v3_walk-yang-chancellor.txt",
+      "prompt_sha256": "908623b3c93338247e6521159d95145e0e6605008ee76cc7b46295bac3f350f9",
+      "reference": "assets/board/horse_walk_sang.webp",
+      "size": [
+        160,
+        128
+      ],
+      "sprite": {
+        "src": "assets/world/walk-yang-chancellor.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 5,
+        "rows": 4,
+        "cell": {
+          "width": 32,
+          "height": 32
+        },
+        "anchor": {
+          "x": 16,
+          "y": 30
+        },
+        "directions": {
+          "down": {
+            "row": 0,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "left": {
+            "row": 1,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "right": {
+            "row": 2,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "up": {
+            "row": 3,
+            "stand": 0,
+            "walk": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      },
+      "reference_sha256": "2c86a5f96a8895344546b8749b3aa4d7de007370caee5e04468b852c8ca5b278"
+    },
+    {
+      "key": "kit-room",
+      "kind": "props",
+      "candidate": "assets/raw/topdown-v3/candidates/kit-room-v2.webp",
+      "approved_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "original": "assets/raw/topdown-v3/originals/kit-room-v1.png",
+      "original_sha256": "f8b6b69b144c00b45eb641e5f0375209da1af959d65f3e2ccd2e23981cbfed65",
+      "prompt": "tools/prompts/topdown_v3_kit-room.txt",
+      "prompt_sha256": "f856996ab7b700ac4f142a5866648133059f815fc718e8ba4b708d52fbbdc76a",
+      "reference": "assets/sc/sc_cell.webp",
+      "size": [
+        128,
+        64
+      ],
+      "sprite": {
+        "src": "assets/world/kit-room.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 4,
+        "rows": 2,
+        "frameKeys": [
+          "floor-grey",
+          "floor-wood",
+          "wall-grey",
+          "wall-red",
+          "cushion",
+          "table",
+          "stool",
+          "chest"
+        ]
+      },
+      "reference_sha256": "16221005cad897fac6d2887694b081b9e405422d57b110c79584f907e1a4902b"
+    }
+  ],
+  "derived": [
+    {
+      "key": "prop-floor-grey",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "pixel_sha256": "d7730d00cc1efde3a607fb9bea012665f3dfcd0246d1407f7cb393365bc9858a",
+      "sprite": {
+        "src": "assets/world/prop-floor-grey.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "3a98190e5933169d627ac991bf18978b8628c8b7bf2e1221e0e4b5071375d14a"
+    },
+    {
+      "key": "prop-floor-wood",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        32,
+        0,
+        64,
+        32
+      ],
+      "pixel_sha256": "8c485dd6598d2cbb95f8cbb94288911d5e8ef14419cbbc05c8649d3fbb07afdb",
+      "sprite": {
+        "src": "assets/world/prop-floor-wood.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "c980a7e91f7871c0dcab88e22746330c3885e2b227274882fd01203699b6e7bb"
+    },
+    {
+      "key": "prop-wall-grey",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        64,
+        0,
+        96,
+        32
+      ],
+      "pixel_sha256": "de664b64eb8f6eae12ddbd7e53b59e96a29297d2a80c74dc20129a4ae2067bf1",
+      "sprite": {
+        "src": "assets/world/prop-wall-grey.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "29d6569e54c416d52c73ba962261678498348f554705dd73afa54f96257f94ae"
+    },
+    {
+      "key": "prop-wall-red",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        96,
+        0,
+        128,
+        32
+      ],
+      "pixel_sha256": "e4f2c4c1f318ab863e8429dac3fa0ed10c658a5db860e0376fa2f555765e6209",
+      "sprite": {
+        "src": "assets/world/prop-wall-red.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "5990da16e6869947ede1fac1e471d4b2054c7d789ccd590a777be0cc2c21a135"
+    },
+    {
+      "key": "prop-cushion",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        0,
+        32,
+        32,
+        64
+      ],
+      "pixel_sha256": "ee44afc0bf79855147cb6303c44079578919428493e22bb5c98b64359401041d",
+      "sprite": {
+        "src": "assets/world/prop-cushion.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "66372e707d54672c890953713678fd6a1fd2d14882371b558fd08a4327ade66e"
+    },
+    {
+      "key": "prop-table",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        32,
+        32,
+        64,
+        64
+      ],
+      "pixel_sha256": "579ac13768cd9f6e7fa8fba87e0613fc97e0efecc311924838d9054df919418e",
+      "sprite": {
+        "src": "assets/world/prop-table.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "588812a592a40659ca0915edf439af1fe3e4d2f253667eb9449294b2f77cf13b"
+    },
+    {
+      "key": "prop-stool",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        64,
+        32,
+        96,
+        64
+      ],
+      "pixel_sha256": "d10bb51f9d02351dfd78aeb8cf0361c6d4f5f5db02beacf62c8de81e1b052cba",
+      "sprite": {
+        "src": "assets/world/prop-stool.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "05c63f2ee58a060ccf9c35a306514fd2fb543818066e02c34f6dca50b507b555"
+    },
+    {
+      "key": "prop-chest",
+      "source": "kit-room",
+      "source_sha256": "5a8944a9ceaaf97e92d154b867dfe2dc13e7b3507263b1499665cdfd76246ed9",
+      "crop": [
+        96,
+        32,
+        128,
+        64
+      ],
+      "pixel_sha256": "1bf198d367d3704f5da3832801da05bf3684c6a48ed26b56223c841b00134dbd",
+      "sprite": {
+        "src": "assets/world/prop-chest.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      },
+      "approved_sha256": "20a11f0c2fbf6ae75076812658a7ad66b3cd4624d6d2f3e5eb7c927e24239251"
+    }
+  ],
+  "user_response": "? ?? ???? ?? (??)",
+  "generation": "tools/gen.ps1 -> Codex built-in image_gen; no regeneration during approval integration"
+}

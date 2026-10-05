@@ -1,0 +1,5 @@
+16-bit pixel art matching the attached reference palette and chunky square pixels, dark outlines, restrained traditional colors, no antialiasing or blur.
+A sprite sheet, EXACTLY 4 rows and 5 columns, equal invisible cells with generous empty gaps. Row 1 DOWN facing viewer, row 2 LEFT, row 3 RIGHT, row 4 UP back view. Every row: column 1 standing still, columns 2-5 four DIFFERENT consecutive walking poses. Feet alternate visibly. Draw all twenty complete full-body figures at identical scale. No duplicated stand frame as walk cycle. Final cells 32x32, body height about 28 pixels, foot anchor 16,30; large pixel blocks readable at actual 32px. No weapons, trails or shadow. Solid flat pure #FF00FF magenta background everywhere.
+Young Yang Soyu, light blue scholar robe, black soft head wrap, same face and hairstyle as reference. No horse.
+TANG: Tang dynasty China, 7th to 9th century. Tang robes, round collars, futou caps; no Korean hanbok, Japanese kimono, Ming or Qing clothing.
+NOTEXT: Absolutely no text, letters, Chinese characters, numbers, labels, UI, watermark, signatures, grid lines or swatches.

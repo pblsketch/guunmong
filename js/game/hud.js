@@ -1,42 +1,19 @@
 'use strict';
 (function () {
-  const { h } = G.util;
   const H = (G.hud = {});
   let current = null;
-  function pin(ctx) {
-    if (ctx.alive()) ctx.page.style.setProperty('--topbar-height', ctx.page.querySelector('.topbar').getBoundingClientRect().height + 'px');
-  }
   function draw(ctx) {
-    pin(ctx);
-    let box = ctx.page.querySelector('.sim-hud');
-    const st = G.save.state;
-    if (!['2', '3'].includes(ctx.ch) || (st.awake && !st.teacher)) { box?.remove(); return; }
-    if (!box) {
-      box = h('aside.sim-hud', { 'aria-label': '꿈에서 쌓은 것' });
-      ctx.page.querySelector('.topbar').after(box);
-    }
-    const abilityNames = G.prep.labels('abilities');
-    const wishes = G.app.wishes().map((w) => {
-      const wrap = h('div.hud-wish', { dataset: { wish: w.id }, title: w.name });
-      if (w.hidden) { wrap.textContent = '?'; return wrap; }
-      wrap.append(h('span', w.name), w.parts?.length ? h('span.hud-halves', w.parts.map((p) => h('i' + (p.filled ? '.filled' : ''), { title: p.name }, p.name))) : h('meter', { min: 0, max: 1, value: w.fill, 'aria-label': w.name }));
-      return wrap;
-    });
-    box.replaceChildren(h('div.hud-top', h('strong', '꿈 점수 ', h('span', { dataset: { score: '' } }, st.res.gong + st.res.fame + st.res.wealth)),
-      h('div', h('button.btn.small', { type: 'button', dataset: { hud: 'board' }, on: { click: () => G.dream.open('board') } }, '말판'),
-        h('button.btn.small', { type: 'button', dataset: { hud: 'house' }, on: { click: () => G.dream.open('house') } }, '집'))),
-      h('div.hud-wishes', wishes),
-      h('div.hud-abilities', Object.entries(abilityNames).map(([id, label]) => h('span', { dataset: { ability: id }, style: { whiteSpace: 'nowrap' } }, G.prep.icon(id), label + ' ', h('b', st.abil[id])))));
+    if (!ctx?.alive()) return;
+    ctx.page.querySelector('.sim-hud')?.remove();
+    const tools = ctx.page.querySelector('.topbar .tools');
+    if (!tools || !ctx.experience) return;
+    tools.querySelector('[data-tool="keep"]')?.remove();
+    if (G.dream.alive()) tools.appendChild(G.ui.iconBtn('bag', '꿈 보따리', () => {
+      if (ctx.alive() && G.dream.alive()) G.dream.open(undefined, ctx);
+    }, { dataset: { tool: 'keep' } }));
   }
-  H.refresh = () => { if (current?.alive()) draw(current); };
-  G.app.hook('scene', (ctx) => {
-    current = ctx;
-    const observer = new ResizeObserver(() => pin(ctx));
-    observer.observe(ctx.page.querySelector('.topbar'));
-    ctx.signal.addEventListener('abort', () => observer.disconnect(), { once: true });
-    draw(ctx);
-  });
-  G.app.on('step', H.refresh);
+  H.refresh = () => draw(current);
+  G.app.on('scene', ctx => { current = ctx; draw(ctx); });
   G.app.on('wake', H.refresh);
   G.app.on('settings', H.refresh);
 })();

@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>구운몽: 한바탕 꿈</title>
-  <meta name="description" content="김만중 「구운몽」을 승경도 말판 위에서 양소유의 한평생을 살아 보며 읽는 고등학생용 학습 게임">
+  <meta name="description" content="김만중 「구운몽」의 공간을 걷고 인물과 대화하며 성진과 양소유의 한평생을 따라가는 고등학생용 학습 게임">
   <meta name="author" content="박준일(온양여자고등학교 국어 교사)">
   <meta name="theme-color" content="#efe3c6">
   <link rel="icon" href="assets/ui/icon-192.png">
   <link rel="apple-touch-icon" href="assets/ui/icon-512.png">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/sim.css">
+  <link rel="stylesheet" href="css/rpg.css">
   <link rel="stylesheet" href="css/scenes.css">
 </head>
 <body>
@@ -19,17 +20,19 @@
 
   <!-- 엔진. 내용 데이터(js/data/*.js)는 js/core/data.js가 읽는다(?fixture=1 이면 tests/fixtures/의 임시 데이터) -->
   <script src="js/core/util.js"></script>
+  <script src="js/core/world.js"></script>
+  <script src="js/core/experience.js"></script>
   <script src="js/core/save.js"></script>
   <script src="js/core/data.js"></script>
   <script src="js/core/audio.js"></script>
   <script src="js/core/text.js"></script>
   <script src="js/core/ui.js"></script>
   <script src="js/core/activity.js"></script>
-  <script src="js/core/sim.js"></script>
   <script src="js/game/app.js"></script>
   <script src="js/game/stage.js"></script>
-  <!-- 꿈 화면(말판·집·구슬·꿈 보따리·깨어남·꿈 일지·해석·결과): app.js의 확장 지점에 끼운다. app.js 다음, main.js 앞 -->
-  <script src="js/game/board.js"></script>
+  <script src="js/game/world.js"></script>
+  <!-- 꿈 공통 도구를 먼저 읽고 집·구슬·보따리와 꿈 밖 화면을 연결한다. -->
+  <script src="js/game/dream.js"></script>
   <script src="js/game/house.js"></script>
   <script src="js/game/pearl.js"></script>
   <script src="js/game/bag.js"></script>
@@ -37,7 +40,6 @@
   <script src="js/game/journal.js"></script>
   <script src="js/game/interp.js"></script>
   <script src="js/game/result.js"></script>
-  <script src="js/game/prep.js"></script>
   <script src="js/game/event.js"></script>
   <script src="js/game/hud.js"></script>
   <script src="js/game/cutscene.js"></script>

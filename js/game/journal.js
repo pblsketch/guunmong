@@ -5,8 +5,7 @@
   const name = (id) => G.data.wishes.find((w) => w.id === id)?.name || id;
   G.app.screens.journal = async function (ctx, sc) {
     const st = G.save.state, data = G.data.journal;
-    const journal = st.journal;
-    if (!ctx.readonly) journal.match ||= { picks: {} };
+    const journal = st.journal || {};
     ctx.main.append(h('h2', sc.title || '꿈 일지'), G.dream.wishList());
     const matchBox = h('section.journal-match');
     const linkBox = h('section.bond-link', h('h3', data.bondLink.prompt));
@@ -32,14 +31,18 @@
       choices: G.data.wishes.filter((w) => !w.dreamHidden).map((w) => w.name), memo: data.memo };
     G.app.activityTitles['j-match'] = act.title;
     ctx.step('activity');
-    const activity = G.activity.mount(matchBox, act, { tray: ctx.tray, readonly: ctx.readonly, state: journal.match, completed: !!st.ledger['j-match']?.final, signal: ctx.signal });
-    await activity.done;
+    const persistMatch = (match) => G.save.transact(ctx.run, (draft) => { draft.journal.match = match; }, { readonly: ctx.readonly });
+    const activity = G.activity.mount(matchBox, act, { tray: ctx.tray, readonly: ctx.readonly, state: journal.match || { picks: {} },
+      completed: !!st.ledger['j-match']?.final, signal: ctx.signal, run: ctx.run, canAct: ctx.canAct, persist: persistMatch });
+    const activityResult = await activity.done;
+    if (activityResult?.cancelled) return;
     if (!ctx.alive()) return;
     ctx.step('journal-bond'); ctx.tray(null);
     const answer = data.bondLink.answer;
     const reveal = () => {
-      buttons.forEach((b) => { b.disabled = true; b.removeAttribute('data-must'); b.textContent = name(b.dataset.wish); b.classList.toggle('chosen', b.dataset.wish === journal.bondLink); });
-      out.replaceChildren(T.blocks(data.bondLink.reveal || [], { peek: ctx.readonly }));
+      const saved = G.save.state.journal || {};
+      buttons.forEach((b) => { b.disabled = true; b.removeAttribute('data-must'); b.textContent = name(b.dataset.wish); b.classList.toggle('chosen', b.dataset.wish === saved.bondLink); });
+      out.replaceChildren(T.blocks(data.bondLink.reveal || [], { run: ctx.run, readonly: ctx.readonly }));
       G.dream.refreshWishes();
       grid.querySelectorAll('.found').forEach((card) => card.classList.add('flipped'));
     };
@@ -49,9 +52,12 @@
         const cancel = () => resolve(false); ctx.signal.addEventListener('abort', cancel, { once: true });
         buttons.forEach((b) => { b.disabled = false; b.onclick = () => {
           if (!ctx.alive() || b.disabled) return;
-          journal.bondLink = b.dataset.wish;
-          journal.revealed = { ...journal.revealed, [answer]: true };
-          G.save.write(); reveal(); G.audio.pearl();
+          const ok = G.save.transact(ctx.run, (draft) => {
+            draft.journal.bondLink = b.dataset.wish;
+            draft.journal.revealed = { ...(draft.journal.revealed || {}), [answer]: true };
+          }, { readonly: ctx.readonly });
+          if (!ok) { G.ui.toast('인연 잇기를 저장하지 못했어요. 다시 골라 주세요.'); return; }
+          reveal(); G.audio.pearl();
           ctx.signal.removeEventListener('abort', cancel); resolve(true);
         }; });
       });

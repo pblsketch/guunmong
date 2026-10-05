@@ -12,6 +12,12 @@
   const S = () => G.save.state;
   const D = G.dream;
   const UI = () => ((G.data.notes || {}).ui || {});
+  function collect(ctx, sc) {
+    const experience = G.experience.find(G.data, sc.id);
+    const action = experience?.optional.find(beat => beat.effects.some(effect => effect.kind === 'pearl' && effect.id === sc.meet));
+    if (!action || ctx.readonly || !ctx.alive()) return false;
+    return !!G.save.applyExperience(sc.id, action.id, { run: ctx.run, readonly: false, by: S().teacher ? 'teacher' : 'student' })?.ok;
+  }
 
   // stage 위 좌표는 원본 그림 기준이다. 중앙 크롭 때도 이미지와 같은 위치를 가리킨다.
   G.pearl = { attach(ctx, sc, stage) {
@@ -35,7 +41,8 @@
     else if (ctx.readonly) spot.disabled = true;
     spot.onclick = () => {
       if (!ctx.alive() || ctx.readonly || S().pearls[sc.meet]) return;
-      S().pearls[sc.meet] = true; G.save.write(); G.audio.pearl(); found();
+      if (!collect(ctx, sc)) return;
+      G.audio.pearl(); found();
       G.ui.toast('구슬을 찾았어요. 점수로 치지 않아요.');
     };
     inspect.onclick = () => {
@@ -49,11 +56,12 @@
       else if (ctx.readonly) target.disabled = true;
       target.onclick = () => {
         if (!ctx.alive() || ctx.readonly || S().pearls[sc.meet]) return;
-        S().pearls[sc.meet] = true; G.save.write(); G.audio.pearl(); show(); found();
+        if (!collect(ctx, sc)) return;
+        G.audio.pearl(); show(); found();
       };
       G.ui.sheet(h('div.pearl-inspection', h('h3', '그림 살피기'), pic.frame,
         P.hint ? h('p.small', T.inline(P.hint)) : null,
-        h('div.pearl-evidence', { dataset: { trace: P.trace } }, traceCard(P, { peek: ctx.readonly }))),
+        h('div.pearl-evidence', { dataset: { trace: P.trace } }, traceCard(P, { run: ctx.run, readonly: ctx.readonly, peek: true }))),
       [{ label: '닫기', value: null, cls: 'primary' }]);
     };
     const observer = new ResizeObserver(layout); observer.observe(stage);
@@ -67,8 +75,20 @@
   function traceCard(P, opt = {}) {
     if (P.trace === 'canon') return P.canon ? T.mark({ mark: 'note', title: (UI().pearlCanon || {}).title || '원작의 구슬', body: P.canon }, opt) : null;
     const f = UI().fiction?.pearls || UI().pearlFiction;
-    return f ? T.mark(Object.assign({ mark: 'fiction' }, f), opt) : null;
+    return f ? T.mark(Object.assign({ mark: 'fiction' }, f), { ...opt, showReal: true }) : null;
   }
+
+  G.pearl.explain = async function (ctx, sc) {
+    if (!sc.pearl || !ctx.alive()) return false;
+    const stage = G.stage.mount(ctx, sc, { textOnly: true });
+    try {
+      stage.dialogue.setAttribute('role', 'region');
+      stage.dialogue.setAttribute('aria-label', sc.pearl.trace === 'canon' ? '원작 근거' : '게임 설정');
+      stage.dialogue.replaceChildren(h('div.pearl-evidence', { dataset: { trace: sc.pearl.trace } },
+        traceCard(sc.pearl, { run: ctx.run, readonly: ctx.readonly, peek: ctx.peek })));
+      return await ctx.next() && ctx.alive();
+    } finally { stage.dispose(); }
+  };
 
   G.app.steps.pearl = async function (ctx, sc) {
     const P = sc.pearl;
@@ -89,7 +109,7 @@
     pic.box.appendChild(spot);
     const status = h('p.pearl-status', { role: 'status', 'aria-live': 'polite' });
     s.append(pic.frame, status);
-    const card = traceCard(P, { peek: ctx.readonly });
+    const card = traceCard(P, { run: ctx.run, readonly: ctx.readonly, peek: true });
     if (card) s.appendChild(card);
     const show = () => {
       spot.classList.add('found');
@@ -102,7 +122,7 @@
     spot.addEventListener('click', () => {
       if (spot.classList.contains('found')) return;
       G.audio.pearl();
-      if (!ctx.readonly) { S().pearls[sc.meet] = true; G.save.write(); }
+      if (!ctx.readonly && !collect(ctx, sc)) return;
       show();
     });
     await ctx.next('다음 ▶');

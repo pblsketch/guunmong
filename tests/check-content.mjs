@@ -6,6 +6,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { target, seekTarget, dialogue } from './fixtures/rpg-harness.mjs';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const SHOTS = path.join(ROOT, 'tests/shots'); fs.mkdirSync(SHOTS, { recursive: true });
 const EXPECTED_CHECKS = 6;
@@ -29,7 +30,7 @@ await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const ORIGIN = 'http://127.0.0.1:' + server.address().port, BASE = ORIGIN + '/index.html';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 async function newPage(name, viewport, dpr = 1) {
-  const page = await (await browser.newContext({ viewport, deviceScaleFactor: dpr, acceptDownloads: true })).newPage();
+  const page = await (await browser.newContext({ viewport, deviceScaleFactor: dpr, acceptDownloads: true, hasTouch: name === 'phone' })).newPage();
   page.setDefaultTimeout(10000); page.tag = name; page.errs = []; page.reqs = [];
   page.on('pageerror', (e) => page.errs.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') page.errs.push(m.text()); });
@@ -172,7 +173,8 @@ async function checks(page, where) {
     const speech = story.querySelector('.stage-speech');
     return { separated: speech.getBoundingClientRect().top >= picture.bottom + 6, clipped: speech.scrollHeight > speech.clientHeight + 1 };
   });
-  if (reading) { assert.ok(reading.separated, where + ': 그림과 글 겹침'); assert.equal(reading.clipped, false, where + ': 긴 글 잘림'); }
+  const kind = await page.evaluate(() => G.app.current()?.kind || null);
+  if (reading && kind !== 'waking') { assert.ok(reading.separated, where + ': 그림과 글 겹침'); assert.equal(reading.clipped, false, where + ': 긴 글 잘림'); }
   const board = await boardReadiness(page);
   if (board.count) {
     assert.deepEqual(board.exposed, [], where + ': 배율 계산 전 원본 그림은 임시 틀에 늘려 그리지 않음');
@@ -221,6 +223,12 @@ async function wrongWish(page) {
   for (const id of answers) await page.locator('[data-word="' + id + '"]').click();
   assert.deepEqual((await state(page)).ledger['a-wish'], { first: false, help: 'student', final: true });
 }
+async function correctWish(page) {
+  const answers = await page.evaluate(() => G.app.current().data.answers);
+  assert.equal(answers.length, 5);
+  for (const id of answers) await page.locator('[data-word="' + id + '"]').click();
+  assert.deepEqual((await state(page)).ledger['a-wish'], { first: true, help: null, final: true });
+}
 async function wrongMatch(page) {
   const picks = await page.evaluate(() => G.data.journal.pairs.map((p) => ({ id: p.id, wrong: G.data.wishes.find((w) => !w.dreamHidden && w.id !== p.wish).name })));
   assert.equal(picks.length, 5); assert.equal(await page.locator('[data-act="check"]').isDisabled(), true);
@@ -229,11 +237,41 @@ async function wrongMatch(page) {
   await page.locator('[data-help="memo"]').click(); await page.locator('[data-help="answer"]').click(); await page.locator('[data-act="check"]').click();
   assert.deepEqual((await state(page)).ledger['j-match'], { first: false, help: 'student', final: true });
 }
-const ACTION = { study: 'munjang', geomungo: 'eumak', sword: 'muye', strategy: 'jiryak' };
-function plannedAction(scene, step, mode) {
-  const n = Number(scene.id.slice(1, 3)), turn = step === 'prep1' ? 0 : 1;
-  const hit = mode === 'hit' || (mode === 'mix' && (n % 3 === 0 || (n % 3 === 1 && turn === 0)));
-  return Object.keys(ACTION).find((id) => scene.core.includes(ACTION[id]) === hit);
+async function actTarget(page, id, input) {
+  if (input === 'touch') { await seekTarget(page, id); await page.locator('[data-act="interact"][data-target="' + id + '"]').tap(); }
+  else if (input === 'keyboard') { await seekTarget(page, id); await page.locator('[data-world]').focus(); await page.keyboard.press('Enter'); }
+  else await target(page, id);
+  if (await page.locator('[data-dialogue]').count()) await dialogue(page);
+}
+async function correctMatch(page) {
+  const picks = await page.evaluate(() => G.data.journal.pairs.map(pair => ({ id: pair.id, pick: G.data.wishes.find(wish => wish.id === pair.wish).name })));
+  assert.equal(picks.length, 5);
+  for (const pick of picks) { await page.locator('[data-slot="' + pick.id + '"]').click(); await page.locator('[data-choice="' + pick.pick + '"]').click(); }
+  await page.locator('[data-act="check"]').click();
+  assert.deepEqual((await state(page)).ledger['j-match'], { first: true, help: null, final: true });
+}
+async function worldStep(page, memo, mode) {
+  const info = await page.evaluate(() => {
+    const scene = G.app.current()?.scene, experience = G.experience.find(G.data, scene), record = G.save.state.rpg?.scenes?.[scene];
+    if (!experience) return null;
+    const nextId = G.experience.next(experience, record?.actions || []);
+    const beat = [...experience.beats, ...(experience.optional || [])].find(value => value.id === nextId);
+    const pearls = (experience.optional || []).filter(value => value.effects?.some(effect => effect.kind === 'pearl'));
+    return { scene, beat, pearls, actions: record?.actions || [] };
+  });
+  if (!info?.beat) return false;
+  const pearl = info.pearls.find(value => !info.actions.some(action => action.id === value.id));
+  const pearlVisible = pearl && await page.locator('[data-world-target="' + pearl.trigger.target + '"]').count() === 1;
+  if (pearlVisible && !memo.pearlScenes.has(info.scene)) {
+    const collect = mode === 'observe' || mode === 'mix' && memo.pearlScenes.size % 2 === 0;
+    memo.pearlScenes.add(info.scene);
+    if (collect) { await actTarget(page, pearl.trigger.target, 'list'); memo.pearls.add(info.scene); return true; }
+  }
+  const input = memo.inputUsed ? 'list' : mode === 'direct' ? 'touch' : mode === 'observe' ? 'list' : 'keyboard';
+  if (info.beat.trigger.target) await actTarget(page, info.beat.trigger.target, input);
+  else { await page.locator('[data-act="interact"]:not([disabled])').click(); if (await page.locator('[data-dialogue]').count()) await dialogue(page); }
+  memo.inputUsed = true; memo.actions++;
+  return true;
 }
 async function savePng(page, tag, s) {
   await page.locator('.name-in').fill('검증');
@@ -262,13 +300,13 @@ async function savePng(page, tag, s) {
   }, bytes.toString('base64'));
   assert.ok(pixels.colors > 10 && pixels.dark > 1000, '빈 PNG가 아님');
   const texts = await page.evaluate(() => window.pngText.join(' '));
-  assert.ok(texts.includes('꿈에서 쌓은 것 ' + s.best + ' → 깨고 남은 것 0'));
-  for (const word of ['점수로 평가하지 않아요', '고친 흔적', '소원', '구슬', '검증']) assert.ok(texts.includes(word), 'PNG 내용 ' + word);
+  assert.ok(!/꿈에서 쌓은 것|깨고 남은 것\s*0|최고 꿈 점수/.test(texts));
+  for (const word of ['취미궁에서 누린 삶', '깨어난 뒤의 선방', '고친 흔적', '소원', '구슬', '도움 안내', '검증']) assert.ok(texts.includes(word), 'PNG 내용 ' + word);
   console.log('  실제 PNG ' + path.basename(file) + ' ' + bytes.length + 'B · 색 ' + pixels.colors + ' · 글 픽셀 ' + pixels.dark);
 }
 async function fullRun(tag, viewport, mode, dpr) {
   const page = await newPage(tag, viewport, dpr);
-  const memo = { steps: new Set(), scenes: [], grades: new Set(), clues: new Set(), fiction: new Set(), variants: 0, reload: false, lock: false, wish: false, match: false, revised: false, pearls: new Set(), idle: 0 };
+  const memo = { steps: new Set(), scenes: [], worldScenes: new Set(), fiction: new Set(), variants: 0, reload: false, lock: false, wish: false, match: false, revised: false, pearls: new Set(), pearlScenes: new Set(), inputUsed: false, actions: 0, idle: 0 };
   const started = Date.now();
   try {
     await page.goto(BASE); await ready(page);
@@ -289,18 +327,14 @@ async function fullRun(tag, viewport, mode, dpr) {
       const stamp = c.scene + '/' + c.step;
       if (!memo.steps.has(stamp)) {
         memo.steps.add(stamp); await checks(page, tag + '/' + stamp);
-        if (['prep1', 'grade', 'staff', 'journal-bond', 'result'].includes(c.step) && (/^e01-/.test(c.scene) || c.ch !== '2')) await page.screenshot({ path: path.join(SHOTS, 'play_' + tag + '_' + c.scene + '_' + c.step + '.png'), scale: 'css' });
+        if (['staff', 'journal-bond', 'result'].includes(c.step) && (/^e01-/.test(c.scene) || c.ch !== '2')) await page.screenshot({ path: path.join(SHOTS, 'play_' + tag + '_' + c.scene + '_' + c.step + '.png'), scale: 'css' });
       }
-      for (const title of await page.locator('.mark.fiction h4').allTextContents()) memo.fiction.add(title);
+      for (const text of await page.locator('.mark.fiction:visible').allTextContents()) memo.fiction.add(text.trim());
       memo.variants += await page.locator('.mark.variant:visible').count();
       if (c.ch === 'R') break;
-      if (c.step === 'clue') {
-        assert.equal(await page.locator('.prep-reflection li').count(), 2);
-        assert.equal(await page.locator('.prep-reflection li').filter({ hasText: '단서와 이어지는 준비' }).count(), s.events[c.scene].hits);
-      }
       if (c.scene === 'c3-awake' && !memo.lock) { await lockChecks(page, memo); continue; }
-      if (c.kind === 'wish' && !memo.wish) { await wrongWish(page); memo.wish = true; continue; }
-      if (c.kind === 'journal' && c.step === 'activity' && !memo.match) { await wrongMatch(page); memo.match = true; continue; }
+      if (c.kind === 'wish' && !memo.wish) { if (mode === 'direct') await correctWish(page); else await wrongWish(page); memo.wish = true; continue; }
+      if (c.kind === 'journal' && c.step === 'activity' && !memo.match) { if (mode === 'direct') await correctMatch(page); else await wrongMatch(page); memo.match = true; continue; }
       if (c.step === 'journal-bond') { const link = page.locator('.link-opt:not([disabled])'); if (await link.count()) { await link.first().click(); continue; } }
       if (c.step === 'interp-pick') {
         assert.equal(await page.locator('.ev-opt').count(), 7);
@@ -312,39 +346,13 @@ async function fullRun(tag, viewport, mode, dpr) {
         memo.changedOption = await page.locator('.interp-opt').nth(1).getAttribute('data-opt');
         await page.locator('.interp-opt').nth(1).click(); await page.locator('.ev-opt[data-ev="E9"]').click(); await next(page); memo.revised = true; continue;
       }
-      if (/^prep[12]$/.test(c.step)) {
-        const buttons = page.locator('[data-act="prep"]:not([disabled])');
-        if (await buttons.count()) {
-          const action = plannedAction(c.data, c.step, mode); await page.locator('[data-act="prep"][data-action="' + action + '"]').click();
-          const selected = (await state(page)).events[c.scene]; assert.equal(selected.turns.at(-1), action);
-          if (!memo.reload) {
-            const before = await state(page); await resume(page);
-            assert.equal((await current(page)).scene, c.scene); assert.equal((await current(page)).step, 'prep2');
-            const after = await state(page); assert.deepEqual(after.events, before.events); assert.deepEqual(after.abil, before.abil); memo.reload = true;
-          }
+      if (await page.locator('[data-world]').count()) {
+        memo.worldScenes.add(c.scene); assert.equal(await page.locator('[data-act="prep"], .grade, [data-score]').count(), 0);
+        if (await worldStep(page, memo, mode)) {
+          if (!memo.reload && mode === 'mix' && memo.actions > 2) { const before = await state(page); await resume(page); const after = await state(page); assert.equal(after.pos, before.pos); assert.deepEqual(after.items, before.items); assert.deepEqual(after.bonds, before.bonds); for (const [id,record] of Object.entries(before.rpg.scenes)) assert.deepEqual(after.rpg.scenes[id]?.actions, record.actions, '재접속 행동 보존 '+id); memo.reload = true; }
           continue;
         }
       }
-      if (c.step === 'scene' && c.data.meet && !memo.pearls.has(c.scene)) {
-        const inspect = page.locator('[data-act="inspect-picture"]');
-        if (await inspect.count()) {
-          await inspect.click(); await page.waitForSelector('.pearl-evidence');
-          const type = c.data.pearl.trace;
-          assert.equal(await page.locator('.pearl-evidence[data-trace="' + type + '"]').count(), 1);
-          assert.equal(await page.locator('.pearl-evidence .mark.' + (type === 'canon' ? 'note' : 'fiction')).count(), 1);
-          if (type === 'canon') assert.ok((await page.locator('.pearl-evidence').innerText()).includes(c.data.pearl.canon));
-          if (mode !== 'miss') await page.locator('.inspect-spot:not([disabled])').click();
-          await page.keyboard.press('Escape'); memo.pearls.add(c.scene); continue;
-        }
-      }
-      if (c.step === 'grade' && !memo.grades.has(c.scene)) {
-        const e = s.events[c.scene]; assert.ok(e?.grade && !e.auto && !e.peek);
-        assert.equal(e.hits, mode === 'hit' ? 2 : mode === 'miss' ? 0 : Number(c.scene.slice(1, 3)) % 3 === 0 ? 2 : Number(c.scene.slice(1, 3)) % 3 === 1 ? 1 : 0);
-        if (mode === 'hit') assert.equal(e.grade, 'shine'); if (mode === 'miss') assert.notEqual(e.grade, 'shine');
-        assert.equal(await page.locator('.grade').getAttribute('data-grade'), e.grade); memo.grades.add(c.scene);
-        console.log('  ' + tag + ' ' + c.scene + ' 적중 ' + e.hits + ' / ' + e.grade);
-      }
-      if (c.step === 'clue') { assert.ok(await page.locator('.clue-card mark').count()); memo.clues.add(c.scene); }
       const staff = page.locator('[data-act="staff"]:not([disabled])');
       if (await staff.count()) {
         critical(!s.awake, '지팡이 클릭 전 깨어남'); assert.equal(await page.locator('[data-act="skip"]').count(), 0);
@@ -359,23 +367,30 @@ async function fullRun(tag, viewport, mode, dpr) {
     await page.waitForSelector('.journal-page'); const s = await state(page);
     critical(s.awake && s.awakeAt === memo.awakeAt, '결과에서 깨어남 소실');
     assert.deepEqual(memo.scenes, initial.order);
-    assert.equal(memo.grades.size, 12); assert.equal(memo.clues.size, 12); assert.equal(Object.keys(s.events).length, 12);
-    assert.ok(memo.reload && memo.lock && memo.wish && memo.match && memo.revised);
-    assert.ok(memo.fiction.size >= 2 && memo.variants > 0, '설정·이본 카드를 실제로 읽음'); assert.equal(memo.pearls.size, 8);
+    assert.ok(memo.worldScenes.size >= 20 && memo.actions > 40 && memo.inputUsed, '실제 월드 행동 경로');
+    if (mode === 'mix') assert.ok(memo.reload); assert.ok(memo.lock && memo.wish && memo.match && memo.revised);
+    assert.equal(memo.pearlScenes.size, 8);
     assert.equal(await page.locator('.ledger tbody tr').count(), 14); assert.equal(await page.locator('.board-view, .house-view, .bond-list').count(), 0);
     assert.equal(s.interp.changed.evidence, 'E9'); assert.ok(s.interp.final && s.interp.revised);
     assert.equal(s.interp.changed.option, memo.changedOption); assert.deepEqual(s.interp.first, memo.firstChoice);
-    assert.equal(s.journal.revealed.misaek, true); assert.equal(s.ledger['a-wish'].help, 'student'); assert.equal(s.ledger['j-match'].help, 'student');
+    assert.equal(s.journal.revealed.misaek, true); assert.equal(s.ledger['a-wish'].help, mode === 'direct' ? null : 'student'); assert.equal(s.ledger['j-match'].help, mode === 'direct' ? null : 'student');
     const comparison = page.locator('details.comparison-reading');
     assert.equal(await comparison.getAttribute('open'), null);
     await comparison.locator('summary').click();
     assert.ok((await comparison.innerText()).includes('별개의 이야기'));
+    assert.ok(await comparison.locator('.mark.variant:visible').count(), '선택한 이본 카드를 실제로 읽음');
     await checks(page, tag + '/comparison');
     await comparison.locator('summary').click();
     assert.deepEqual(await state(page), s, '학생의 선택형 비교 읽기는 기록을 바꾸지 않음');
-    assert.ok(s.wrong.some((w) => w.act === 'a-wish') && s.wrong.some((w) => w.act === 'j-match'));
-    assert.equal(Object.keys(s.pearls).length, mode === 'miss' ? 0 : 8);
-    assert.match(await page.locator('.jp-score').innerText(), new RegExp(s.best + '.*0'));
+    if (mode === 'direct') {
+      assert.equal(s.wrong.filter(w => w.act === 'a-wish' || w.act === 'j-match').length, 0);
+      assert.equal(s.ledger['a-wish'].first, true); assert.equal(s.ledger['j-match'].first, true);
+    } else {
+      assert.ok(s.wrong.some(w => w.act === 'a-wish') && s.wrong.some(w => w.act === 'j-match'));
+      assert.equal(s.ledger['a-wish'].first, false); assert.equal(s.ledger['j-match'].first, false);
+    }
+    assert.equal(Object.keys(s.pearls).length, mode === 'observe' ? 8 : mode === 'direct' ? 0 : 4);
+    assert.equal(await page.locator('.jp-score').count(), 0); assert.equal(await page.locator('[data-trace-image]').count(), 2);
     await page.locator('[data-tool="toc"]').click(); await page.locator('.toc-scene[data-scene="c5-dialogue"]').click();
     await page.waitForSelector('.play[data-scene="c5-dialogue"]');
     for (let i = 0; i < 30 && (await current(page)).scene !== 'r-result'; i++) {
@@ -386,7 +401,7 @@ async function fullRun(tag, viewport, mode, dpr) {
     await checks(page, tag + '/result'); await page.screenshot({ path: path.join(SHOTS, 'complete_' + tag + '_screen.png'), fullPage: true, scale: 'css' });
     assert.ok(page.toasts.length > 0, '알림 검사가 실제 실행됨'); assert.deepEqual(page.toasts.filter((t) => t.hits.length), [], '알림이 본문·단추를 가리지 않음');
     await healthy(page);
-    console.log('  ' + tag + ' 완주 · 사건 12 · 단서 12 · 재접속/잠금4길/오답2/수정/PNG · 알림 ' + page.toasts.length + '회 · ' + ((Date.now() - started) / 1000).toFixed(1) + '초');
+    console.log('  ' + tag + ' 완주 · 실제 월드 행동 ' + memo.actions + ' · 재접속/잠금4길/학습/수정/PNG · 알림 ' + page.toasts.length + '회 · ' + ((Date.now() - started) / 1000).toFixed(1) + '초');
   } finally { await page.context().close(); }
 }
 async function credit(page, selector) {
@@ -397,38 +412,26 @@ async function credit(page, selector) {
 }
 let fatal = false;
 try {
-  await run('말판 준비 상태 관찰: 지연 로딩·실제 노출·캐시 재사용', async () => {
-    const page = await newPage('board-readiness', { width: 390, height: 844 }, 2);
+  await run('월드 그림 지연 로딩·실제 표시·캐시 재사용', async () => {
+    const page = await newPage('world-readiness', { width: 390, height: 844 }, 2);
     let release;
     try {
-      await page.goto(BASE); await ready(page);
       const gate = new Promise((resolve) => { release = resolve; });
-      await page.route('**/assets/board/board.webp', async (route) => { await gate; await route.continue(); });
-      const selected = await page.evaluateHandle(() => {
-        document.getElementById('app').replaceChildren(G.board.view({ wishes: false }));
-        return [...document.querySelectorAll('.board-art:not(.has-img) .board-img')];
-      });
-      const cold = await boardReadiness(page);
-      assert.equal(cold.unready.length, 1); assert.deepEqual(cold.exposed, []);
-      await selected.evaluate((imgs) => { imgs[0].style.display = 'block'; });
-      const visible = await boardReadiness(page);
-      assert.equal(visible.exposed.length, 1, '실제 미준비 노출은 검출해야 함');
-      assert.equal(visible.exposed[0].naturalWidth, 0);
-      await selected.evaluate((imgs) => { imgs[0].style.removeProperty('display'); });
-      release(); await page.waitForSelector('.board-art.has-img .board-img');
-      const legacyWouldPass = await selected.evaluate((imgs) => imgs.every((img) => getComputedStyle(img).display === 'none'));
-      assert.equal(legacyWouldPass, false, '선택 뒤 로딩이 끝나면 기존 방식은 정상 표시를 오판함');
-      await selected.dispose();
+      await page.route('**/assets/world/map-bridge.webp', async route => { await gate; await route.continue(); });
+      await page.goto(BASE); await ready(page); await start(page); await page.waitForSelector('[data-world] img.world-art');
+      const cold = await page.locator('[data-world] img.world-art').evaluate(img => ({ naturalWidth: img.naturalWidth, visible: img.checkVisibility(), shell: !!img.closest('.game-shell'), targets: document.querySelectorAll('[data-world-target]').length }));
+      assert.deepEqual(cold, { naturalWidth: 0, visible: true, shell: true, targets: 1 });
+      release(); await page.waitForFunction(() => document.querySelector('[data-world] img.world-art')?.naturalWidth === 384);
       await checks(page, '지연 로딩 완료');
-      const loaded = await boardReadiness(page);
-      await page.unroute('**/assets/board/board.webp');
+      const loaded = await page.locator('[data-world] img.world-art').evaluate(img => ({ naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, visible: img.checkVisibility() }));
+      assert.deepEqual(loaded, { naturalWidth: 384, naturalHeight: 320, visible: true });
+      await page.unroute('**/assets/world/map-bridge.webp');
       for (let i = 0; i < 3; i++) {
-        await page.evaluate(() => document.getElementById('app').replaceChildren(G.board.view({ wishes: false })));
-        const before = await boardReadiness(page);
-        assert.deepEqual(before.exposed, [], '캐시 재사용 중에도 미준비 노출 없음');
+        await page.reload(); await ready(page); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('[data-world] img.world-art');
+        assert.equal(await page.locator('[data-world] img.world-art').evaluate(img => img.naturalWidth), 384);
         await checks(page, '캐시 재사용 ' + i);
       }
-      fs.writeFileSync(path.join(SHOTS, 'board-ready-regression.json'), JSON.stringify({ cold, visible, legacyWouldPass, loaded, warmRuns: 3 }, null, 2));
+      fs.writeFileSync(path.join(SHOTS, 'world-ready-regression.json'), JSON.stringify({ cold, loaded, warmRuns: 3 }, null, 2));
       await healthy(page);
     } finally { release?.(); await page.context().close(); }
   });
@@ -440,16 +443,14 @@ try {
         assert.deepEqual(await page.evaluate(() => G.data.problems), []);
         await page.getByRole('button', { name: '설정', exact: true }).click(); await credit(page, '.credit-full'); await page.keyboard.press('Escape');
         await start(page);
-        for (let i = 0; i < 30 && (await current(page)).kind !== 'wish'; i++) { const skip = page.locator('[data-act="skip"]'); if (await skip.count()) await skip.click(); else await next(page); }
-        assert.equal((await current(page)).kind, 'wish');
         await page.waitForFunction(() => !!G.audio.now());
         await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="music"]').click(); await page.keyboard.press('Escape');
         await page.waitForFunction(() => !G.audio.now());
         const before = await page.evaluate(() => window.audioNodes);
-        await page.locator('[data-word="w-water"]').click();
+        await page.evaluate(() => G.audio.ok());
         assert.ok(await page.evaluate(() => window.audioNodes) > before, '켜진 효과음 실제 노드 생성');
         await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="sound"]').click(); await page.keyboard.press('Escape');
-        const muted = await page.evaluate(() => window.audioNodes); await page.locator('[data-word="w-book"]').click();
+        const muted = await page.evaluate(() => window.audioNodes); await page.evaluate(() => G.audio.ok());
         assert.equal(await page.evaluate(() => window.audioNodes), muted, '꺼진 효과음 노드 없음');
         await page.locator('[data-tool="settings"]').click(); await page.locator('[data-set="music"]').click(); await page.keyboard.press('Escape');
         await page.waitForFunction(() => !!G.audio.now()); assert.equal((await state(page)).sound, false);
@@ -462,15 +463,14 @@ try {
     const page = await newPage('file', { width: 390, height: 844 });
     try {
       await page.goto(pathToFileURL(path.join(ROOT, 'index.html')).href); await ready(page); await start(page);
-      await next(page);
-      await page.waitForFunction(() => G.app.current()?.scene === 'c1-bridge');
+      await page.waitForFunction(() => G.app.current()?.scene === 'c1-bridge' && !!document.querySelector('[data-world]'));
       await page.waitForFunction(() => G.audio.via() === 'element' && !!G.audio.now());
       await resume(page); assert.equal((await current(page)).scene, 'c1-bridge'); await healthy(page);
     } finally { await page.context().close(); }
   });
-  await run('학생 완주 휴대폰 모두 적중', () => fullRun('phone', { width: 390, height: 844 }, 'hit', 2));
-  await run('학생 완주 태블릿 모두 빗나감', () => fullRun('tablet', { width: 820, height: 1180 }, 'miss', 2));
-  await run('학생 완주 데스크톱 혼합', () => fullRun('desktop', { width: 1280, height: 860 }, 'mix', 1));
+  await run('학생 완주 휴대폰 직접·정답 경로', () => fullRun('phone', { width: 390, height: 844 }, 'direct', 2));
+  await run('학생 완주 태블릿 선택 관찰·구슬·오답 도움 경로', () => fullRun('tablet', { width: 820, height: 1180 }, 'observe', 2));
+  await run('학생 완주 데스크톱 재접속·혼합 경로', () => fullRun('desktop', { width: 1280, height: 860 }, 'mix', 1));
 } catch (e) { fatal = !!e.critical; if (!issues.length) issues.push(e.message); }
 finally { await browser.close(); await new Promise((r) => server.close(r)); }
 console.log('내용 점검 ' + passed + '/' + EXPECTED_CHECKS + ' 통과');

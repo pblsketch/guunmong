@@ -89,8 +89,12 @@
     if (b.mark === 'interp') el.appendChild(h('div.unscored', '여러 해석이 있어요 · 채점하지 않아요'));
     if (b.mark === 'fiction') {
       const key = b.id || b.title || '';
-      if (b.real && !S().seenFiction[key]) el.appendChild(h('div.real', h('b', '실제로는 → '), T.inline(b.real)));
-      if (key && !opt.peek) { S().seenFiction[key] = true; G.save.write(); }
+      if (b.real && (opt.showReal || !S().seenFiction[key])) el.appendChild(h('div.real', h('b', '실제로는 → '), T.inline(b.real)));
+      if (key && !S().seenFiction[key] && !opt.peek && !opt.readonly && opt.run) {
+        if (!G.save.transact(opt.run, draft => { draft.seenFiction[key] = true; }, { readonly: opt.readonly })) {
+          G.ui.toast('안내를 읽은 기록을 저장하지 못했어요. 다시 열면 안내가 나와요.');
+        }
+      }
     }
     return el;
   };

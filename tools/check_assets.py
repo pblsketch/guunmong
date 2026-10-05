@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""게임용 그림 141장의 경로·크기·32색·무손실과 승인된 새 그림의 해시를 점검한다.
+"""기존 141장과 승인된 탑다운 그림의 경로·크기·32색·무손실·해시를 점검한다.
 
     python tools/check_assets.py        # 문제가 있으면 종료 코드 1
     python tools/check_assets.py --sim-candidates --sim-manifest manifest96.json
@@ -50,6 +50,18 @@ EXPECT += [("ui/title.webp", (320, 480), False), ("ui/icon-192.png", (192, 192),
 
 APPROVED = json.loads(open(os.path.join(ROOT, "tools", "manifest_sim96.json"), encoding="utf-8").read())["entries"]
 EXPECT += [(e["product"].removeprefix("assets/"), (e["cell"][0] * e["frames"], e["cell"][1] * e["rows"]), True) for e in APPROVED]
+import topdown_approved as topdown
+import rpg_npc_approved as npcs
+import rpg_disguise_approved as disguise
+TOPDOWN = topdown.load()
+for entry in TOPDOWN["entries"] + TOPDOWN["derived"]:
+    s = entry["sprite"]
+    opaque = entry.get("kind") == "map" or entry["key"] in ("prop-floor-grey", "prop-floor-wood")
+    EXPECT.append((s["src"].removeprefix("assets/"), (s["width"]*s["frames"], s["height"]*s["rows"]), not opaque))
+NPCS = npcs.load()
+EXPECT.append(('world/walk-yang-disguise.webp', (160,128), True))
+for entry in NPCS['entries']:
+    EXPECT.append((entry['sprite']['src'].removeprefix('assets/'), (32, 32), True))
 
 
 def main():
@@ -82,6 +94,13 @@ def main():
         if os.path.exists(product) and hashlib.sha256(open(product, "rb").read()).hexdigest() != entry["approved_sha256"]:
             bad.append("approved hash mismatch " + entry["name"])
             print("  !", bad[-1])
+    try:
+        topdown.verify(TOPDOWN, "--topdown-provenance" in sys.argv[1:])
+        npcs.verify(NPCS, "--topdown-provenance" in sys.argv[1:])
+        disguise.check("--topdown-provenance" in sys.argv[1:])
+    except (ValueError, OSError, KeyError) as error:
+        bad.append("topdown " + str(error))
+        print("  !", bad[-1])
     if "--sim-candidates" in sys.argv[1:]:
         # 승인 전 후보는 선택 검사만 한다. 제품 필수 목록에는 승인 뒤 등록한다.
         import process_sim_assets as sim

@@ -16,6 +16,8 @@
 | Python 패키지 fonttools, brotli | 부분 글꼴(woff2) 만들기 | 글꼴 도구 실패 |
 | Codex CLI(로그인됨, `~/.codex/auth.json`) + PowerShell | 그림 생성 | 그림 생성 불가 |
 
+아래 설치가 필요한 경우 사용자 확인을 받은 뒤 실행한다. 게임 실행에는 이 개발 도구 설치가 필요하지 않다.
+
 ```powershell
 pip install pillow numpy scipy fonttools brotli
 cd tests
@@ -32,9 +34,13 @@ cd ..
 
 주소 바로가기: `?teacher=1`(선생님용 켜기, `0`은 끄기), `?ch=2`(그 장의 첫 장면), `?scene=e03-geomungo`(그 장면), `?fixture=1`(점검용 임시 데이터, 저장도 따로). `ch`·`scene`은 열 수 있을 때만 열린다. 아직 안 연 장면을 보려면 `?teacher=1`을 함께 붙인다.
 
+일반 본편은 fixture 없이 연다. `?fixture=rpg-opening`은 도입 여섯 단위, `?fixture=rpg-waking`은 깨어남 네 단위의 별도 시험 기록이다. 대표 주소·교사 바로가기로 전체 학생 완주를 대신하지 않는다.
+
+같은 저장 열쇠에 한 탭만 진행·저장한다. 다른 탭은 읽기 전용이며 writer를 닫은 뒤 이어 하기로 권한을 요청해 최신 기록을 읽는다. Web Locks가 없거나 권한 요청이 실패하면 저장 가능한 플레이가 열리지 않는다.
+
 ## 기록 초기화
 
-- 게임 안: 설정 → 기록 지우기(확인 후 기록 전체 삭제, 설정은 남음), 또는 처음 화면 → 처음부터 새로.
+- 게임 안: 설정 → 기록 지우기 또는 처음 화면 → 처음부터 새로. 확인 후 화면·대기를 먼저 취소하고 설정 네 개만 남긴 새 회차를 한 번 저장한다. 실패하면 기존 기록을 유지한다.
 - 설정까지 지우려면 브라우저 개발자 도구에서 localStorage의 `guunmong-v2`(임시 데이터는 `guunmong-v2-fixture-stub`)을 지운다.
 
 구판 guunmong-v1은 새 판의 초기화가 읽거나 지우지 않는다.
@@ -54,17 +60,18 @@ python tools/check_assets.py
 
 | 검사 | 범위 |
 | --- | --- |
-| check-assets | 141개 자산, 세 화면 크기의 실제 접근·정수배·동작 재생·외부 요청 없음 |
+| check-assets | 승인 자산 161개, 세 화면 크기의 실제 접근·정수배·동작 재생·외부 요청 없음 |
 | check-bgm | 18곡의 파일·출처·음량 -20 LUFS ±2·봉우리 -0.5 dBTP 아래 |
 | check-content | 로딩 관찰 회귀, 출처·소리·파일 열기, 학생 세 판의 전체 흐름·오답·재접속·잠금·해석·실제 PNG |
 | check-data | 실제 데이터 구조·글 총량·근거·자산 이름·교과서 대조 |
-| check-dream | 준비·사건·결과·단서·말판, 집·구슬·새 그림과 아이콘 |
-| check-chapters | 컷신·소원·지팡이 전후·일지·해석·PNG |
-| check-engine | 임시 자료의 진행·재개·readonly·자동 준비·설정·전체 화면 |
+| check-dream | 혼례까지 실제 행동·물건·소원·생활 공간, 독립 꿈 도구·구슬·읽기 전용·잠금 |
+| check-chapters | 일지·해석 실패 재시도·확정 잠금·장부·PNG 이름과 모델·비동기 취소 |
+| check-engine | 진행·재개·readonly·자동 안내·설정·자료 실패 보존·HTTP/file 권한·bfcache |
+| check-rpg | 키보드·터치·대상 목록, 대표/실제 월드의 행동·정체 공개·지팡이·맵 전환·큰 글자 |
 | check-rights | 추적 파일·이력·커밋 글·자료 이름·본문 겹침 |
-| check-sim | 윤목·등급·보상·저장·검증기 회귀 |
+| check-sim | 체험·보행·저장 호환·회차·일회성 효과·검증기 양성/음성 회귀 |
 
-화면 크기는 휴대폰 390×844 모두 적중, 태블릿 820×1180 모두 빗나감, PC 1280×860 혼합이다. Chrome의 화면 크기 검사이며 실제 기기나 수업 시간 측정과 다르다. 각 검사는 로컬 임의 포트 서버를 정리하고, 캡처와 원본 실행 로그는 tests/shots에 남긴다.
+열 검사 중 전체 학생 세 경로는 휴대폰 390×844 직접·정답, 태블릿 820×1180 선택 관찰·구슬·오답 도움, PC 1280×860 돌아보기·재접속·혼합이다. Chrome의 화면 크기 검사이며 실제 기기나 수업 시간 측정과 다르다. 각 검사는 로컬 임의 포트 서버를 정리하고, 캡처와 원본 실행 로그는 tests/shots에 남긴다.
 
 새 파일은 명시적으로 스테이지한 뒤 권리 검사를 실행한다. check-data는 원래 저장소 design/source의 본문 추출본이 없으면 실패한다. 자료를 저장소에 올려 해결하지 않는다. 개별 check-rights는 자료 부재 시 본문 대조가 생략될 수 있으므로 그 출력만으로 전체 권리 검증을 주장하지 않는다.
 
@@ -101,7 +108,7 @@ cd tests; node check-bgm.mjs
 python tools/make_prompts.py                                    # tools/prompts/*.txt, tools/manifest_*.tsv
 powershell -ExecutionPolicy Bypass -File tools/genqueue.ps1 -Manifest tools/manifest_phase2.tsv -Parallel 3 -Only sc_bridge
 python tools/process_assets.py sc_bridge                        # 말 시트는 python tools/process_sprites.py horse_walk
-python tools/check_assets.py                                    # 141장의 경로·크기·32색·무손실
+python tools/check_assets.py                                    # 승인 제품 161개의 경로·크기·32색·무손실·해시
 python tools/make_review.py                                     # design/review/ 모아 보기
 ```
 
@@ -116,6 +123,16 @@ python tools/process_sim_assets.py --manifest tools/manifest_sim96.json --check
 - 끝나면 `%TEMP%\codex-img-guun-*` 폴더(자격 증명 복사본이 들어 있음)를 지운다.
 - 환경 변수: `GUUN_CODEX_BIN`(codex.exe 경로, 없으면 데스크톱 앱에 딸린 최신 것 → PATH의 `codex`), `GUUN_CODEX_MODEL`(이미지 생성을 부를 모델, 없으면 `~/.codex/config.toml`의 모델). `gen.ps1 -UseModel`이 둘보다 앞선다.
 
+탑다운·정지 NPC·여도사 걷기의 승인 이력은 각각 `tools/manifest_topdown_approved.json`, `tools/manifest_rpg_npcs_approved.json`, `tools/manifest_rpg_disguise_approved.json`에 있다. 원본은 CLI 또는 내장 image_gen의 실제 생성 이력대로 보존한다. 승인 원본이 있는 환경의 추가 검사는 다음과 같다.
+
+```powershell
+python tools/check_assets.py --topdown-provenance
+python tools/rpg_disguise_approved.py
+node tools/check_topdown_products.mjs
+```
+
+제품 검사와 후보 가공은 다르다. 승인 바이트·메타 교체나 새 생성은 사용자 검토 뒤에만 반영하고, 미승인 후보와 원본 폴더는 보존한다.
+
 ## 글꼴 다시 만들기
 
 ```powershell
@@ -125,6 +142,8 @@ python tools/build_fonts.py
 원본 글꼴이 `tools/fonts_src/`에 없으면 GitHub에서 갈무리(Galmuri11.ttf)와 Noto Serif KR(가변 글꼴)과 각 OFL 전문을 받는다(인터넷 필요). 결과는 `assets/fonts/galmuri.woff2`(GuunPixel), `noto-serif-kr.woff2`(GuunSerif, 굵기 500), `noto-serif-cjk-kr-old.woff2`(GuunOld, 한자만), `OFL.txt`.
 
 ## 공개
+
+기존 공개 주소는 https://pblsketch.github.io/guunmong/ 이다. 이번 탑다운 개편은 배포하지 않았으며 이번 세션에는 공개 URL 내용을 조회하지 않았다. 현재 작업판과 공개판의 동일성은 미검증이다. 아래는 승인받은 공개 작업에 사용하는 절차이며 이번에 실행한 기록이 아니다.
 
 공개 위치는 pblsketch 계정의 GitHub Pages(저장소 이름 `guunmong`, 바꿀 수 있음)다. 저장소 만들기, 올리기, Pages 켜기는 각각 사용자에게 먼저 확인을 받는다. 작업 저장소의 이력은 올리지 않고, 지금 추적 파일만 새 저장소의 첫 커밋으로 옮긴다.
 

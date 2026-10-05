@@ -1,0 +1,454 @@
+{
+    "status":  "approved",
+    "generated":  "2026-10-05",
+    "source":  "builtin image_gen",
+    "entry":  {
+                  "id":  "walk-yang-disguise",
+                  "kind":  "walk",
+                  "width":  160,
+                  "height":  128,
+                  "frames":  5,
+                  "rows":  4,
+                  "chroma":  "magenta",
+                  "sourceDirections":  [
+                                           "down",
+                                           "left",
+                                           "right",
+                                           "up"
+                                       ],
+                  "original":  "assets/raw/topdown-disguise-v1/source/walk-yang-disguise.png",
+                  "cell":  {
+                               "width":  32,
+                               "height":  32
+                           },
+                  "anchor":  {
+                                 "x":  16,
+                                 "y":  30
+                             },
+                  "directions":  {
+                                     "down":  {
+                                                  "row":  0,
+                                                  "stand":  0,
+                                                  "walk":  [
+                                                               1,
+                                                               2,
+                                                               3,
+                                                               4
+                                                           ]
+                                              },
+                                     "left":  {
+                                                  "row":  1,
+                                                  "stand":  0,
+                                                  "walk":  [
+                                                               1,
+                                                               2,
+                                                               3,
+                                                               4
+                                                           ]
+                                              },
+                                     "right":  {
+                                                   "row":  2,
+                                                   "stand":  0,
+                                                   "walk":  [
+                                                                1,
+                                                                2,
+                                                                3,
+                                                                4
+                                                            ]
+                                               },
+                                     "up":  {
+                                                "row":  3,
+                                                "stand":  0,
+                                                "walk":  [
+                                                             1,
+                                                             2,
+                                                             3,
+                                                             4
+                                                         ]
+                                            }
+                                 }
+              },
+    "source_sha":  "4fbaea631c9a3f1039e80f08719f492808485f7d0f239e16e65d7117a8754b76",
+    "prompt_sha":  "5d58e0fdfdd37b0ab1cf887ac4744206bf219aa123fda1eb034daa73cea3439d",
+    "candidate_sha":  "5c7eafbbca24630ef7f8f33389a668ba493f84dbb8a06358993b39c107163efb",
+    "review_sha":  "ed583ba56651529fc207815e8a7bece4f35ab153aa116f74db147275b5edee5e",
+    "boxes":  [
+                  [
+                      [
+                          62,
+                          38,
+                          272,
+                          283
+                      ],
+                      [
+                          272,
+                          38,
+                          556,
+                          283
+                      ],
+                      [
+                          556,
+                          38,
+                          846,
+                          283
+                      ],
+                      [
+                          846,
+                          38,
+                          1134,
+                          283
+                      ],
+                      [
+                          1134,
+                          38,
+                          1350,
+                          283
+                      ]
+                  ],
+                  [
+                      [
+                          84,
+                          283,
+                          288,
+                          554
+                      ],
+                      [
+                          288,
+                          283,
+                          572,
+                          554
+                      ],
+                      [
+                          572,
+                          283,
+                          864,
+                          554
+                      ],
+                      [
+                          864,
+                          283,
+                          1150,
+                          554
+                      ],
+                      [
+                          1150,
+                          283,
+                          1355,
+                          554
+                      ]
+                  ],
+                  [
+                      [
+                          63,
+                          554,
+                          262,
+                          822
+                      ],
+                      [
+                          262,
+                          554,
+                          542,
+                          822
+                      ],
+                      [
+                          542,
+                          554,
+                          831,
+                          822
+                      ],
+                      [
+                          831,
+                          554,
+                          1123,
+                          822
+                      ],
+                      [
+                          1123,
+                          554,
+                          1338,
+                          822
+                      ]
+                  ],
+                  [
+                      [
+                          63,
+                          822,
+                          271,
+                          1074
+                      ],
+                      [
+                          271,
+                          822,
+                          557,
+                          1074
+                      ],
+                      [
+                          557,
+                          822,
+                          846,
+                          1074
+                      ],
+                      [
+                          846,
+                          822,
+                          1136,
+                          1074
+                      ],
+                      [
+                          1136,
+                          822,
+                          1348,
+                          1074
+                      ]
+                  ]
+              ],
+    "frames":  [
+                   {
+                       "row":  0,
+                       "frame":  0,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  0,
+                       "frame":  1,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  0,
+                       "frame":  2,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  0,
+                       "frame":  3,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  0,
+                       "frame":  4,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  1,
+                       "frame":  0,
+                       "bbox":  [
+                                    10,
+                                    2,
+                                    26,
+                                    31
+                                ],
+                       "footX":  15.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  1,
+                       "frame":  1,
+                       "bbox":  [
+                                    9,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  1,
+                       "frame":  2,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  1,
+                       "frame":  3,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  1,
+                       "frame":  4,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    24,
+                                    31
+                                ],
+                       "footX":  16.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  2,
+                       "frame":  0,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    23,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  2,
+                       "frame":  1,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  2,
+                       "frame":  2,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    24,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  2,
+                       "frame":  3,
+                       "bbox":  [
+                                    6,
+                                    3,
+                                    23,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  2,
+                       "frame":  4,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  3,
+                       "frame":  0,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  3,
+                       "frame":  1,
+                       "bbox":  [
+                                    7,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  3,
+                       "frame":  2,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.0,
+                       "footY":  30
+                   },
+                   {
+                       "row":  3,
+                       "frame":  3,
+                       "bbox":  [
+                                    6,
+                                    3,
+                                    25,
+                                    31
+                                ],
+                       "footX":  15.5,
+                       "footY":  30
+                   },
+                   {
+                       "row":  3,
+                       "frame":  4,
+                       "bbox":  [
+                                    8,
+                                    3,
+                                    26,
+                                    31
+                                ],
+                       "footX":  16.5,
+                       "footY":  30
+                   }
+               ],
+    "references":  {
+                       "assets/world/walk-yang-scholar.webp":  "55de425a229192b3f3c6135d88d4bbebc6ce87a226ccbbc25fdab031f6c305a5",
+                       "assets/pt/yang_disguise.webp":  "9af27803a484e372fd0ec2b3bd5afdd8d0d82971558e185f805ddd5f04ff6690"
+                   },
+    "approved_date":  "2026-10-05",
+    "approval":  "사용자가 위 여도사 차림 걷기 후보를 그대로 반영하도록 명시 승인했다.",
+    "product":  "assets/world/walk-yang-disguise.webp"
+}

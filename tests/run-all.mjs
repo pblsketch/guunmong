@@ -1,11 +1,11 @@
-// 전체 완료 문. 선택 실행/음량 생략 없이 명시된 아홉 검사를 실행하고 원본 출력을 남긴다.
+// 전체 완료 문. 선택 실행/음량 생략 없이 명시된 열 검사를 실행하고 원본 출력을 남긴다.
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const here = fileURLToPath(new URL('./', import.meta.url));
-const files = ['check-assets.mjs', 'check-bgm.mjs', 'check-content.mjs', 'check-data.mjs', 'check-dream.mjs', 'check-chapters.mjs', 'check-engine.mjs', 'check-rights.mjs', 'check-sim.mjs'];
+const files = ['check-assets.mjs', 'check-bgm.mjs', 'check-content.mjs', 'check-data.mjs', 'check-dream.mjs', 'check-chapters.mjs', 'check-engine.mjs', 'check-rpg.mjs', 'check-rights.mjs', 'check-sim.mjs'];
 fs.mkdirSync(path.join(here, 'shots'), { recursive: true });
 const logPath = path.join(here, 'shots', 'run-all-' + new Date().toISOString().replace(/[:.]/g, '-') + '.log');
 const output = fs.createWriteStream(logPath);

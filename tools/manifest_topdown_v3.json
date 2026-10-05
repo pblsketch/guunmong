@@ -1,0 +1,304 @@
+{
+  "version": 1,
+  "status": "art approval pending",
+  "base": "assets/raw/topdown-v3",
+  "assets": [
+    {
+      "id": "map-bridge",
+      "kind": "map",
+      "reference": "assets/sc/sc_bridge.webp",
+      "mode": "style",
+      "description": "Lotus Peak stone bridge crossing a mountain stream from bottom to top. Broad straight walkable grey stone bridge, low railings, grey rock banks, pine trees at edges, blue stream. The bridge walking surface must be wide and visible from above. No maiden or monk, no flowers held by anyone.",
+      "width": 384,
+      "height": 320,
+      "tile": 32,
+      "prompt": "tools/prompts/topdown_v3_map-bridge.txt",
+      "original": "assets/raw/topdown-v3/originals/map-bridge-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/map-bridge-v1.webp",
+      "status": "unapproved"
+    },
+    {
+      "id": "map-cell",
+      "kind": "map",
+      "reference": "assets/sc/sc_cell.webp",
+      "mode": "style",
+      "description": "An EMPTY compact cutaway monastery meditation cell. ARCHITECTURE ONLY: one back wall at the top, short side walls, open south doorway at bottom center, a window in the back wall, plain muted grey stone floor. Completely REMOVE ALL movable furniture seen in reference: NO tables, desks, stools, chests, pots, vases, candles, incense burners, scrolls, statues or cushions ANYWHERE. No characters. Plain bare floor only. Furniture and cushion are separate dynamic assets, not part of this background. This EXACT same map will be reused at the beginning and after waking, with identical walls, doorway and cushion position. Clear movement space, quiet indigo and grey palette.",
+      "width": 384,
+      "height": 320,
+      "tile": 32,
+      "prompt": "tools/prompts/topdown_v3_map-cell-v2.txt",
+      "original": "assets/raw/topdown-v3/originals/map-cell-v2.png",
+      "candidate": "assets/raw/topdown-v3/candidates/map-cell-v2.webp",
+      "status": "unapproved"
+    },
+    {
+      "id": "map-huayin",
+      "kind": "map",
+      "reference": "assets/sc/sc_huayin.webp",
+      "mode": "style",
+      "description": "A small Huayin county town street: grey stone paving, willow trees at edges, red timber building facades to the north, open wide south entry, readable lanes to both side exits. No people on street, balconies or windows, no mounted rider, no shop text, no future NPC. Architecture and trees ONLY. No tables, pots, jars, crates, benches, stools, chests, vases, shop goods or movable furniture anywhere. Bare open paving for all separate dynamic props.",
+      "width": 384,
+      "height": 320,
+      "tile": 32,
+      "prompt": "tools/prompts/topdown_v3_map-huayin-v2.txt",
+      "original": "assets/raw/topdown-v3/originals/map-huayin-v2.png",
+      "candidate": "assets/raw/topdown-v3/candidates/map-huayin-v2.webp",
+      "status": "unapproved"
+    },
+    {
+      "id": "map-chwimi",
+      "kind": "map",
+      "reference": "assets/sc/sc_c3_feast.webp",
+      "mode": "style",
+      "description": "Chwimi palace open terrace at sunset. An empty broad stone tiled terrace, red timber pavilion along north edge, low stone balustrade along east edge reachable from the floor, distant autumn colors only outside terrace edges. No seated guests, monk, scholar, women or tables. No movable props baked in. Clear top-down floor for a chancellor sprite and separate furniture.",
+      "width": 384,
+      "height": 320,
+      "tile": 32,
+      "prompt": "tools/prompts/topdown_v3_map-chwimi.txt",
+      "original": "assets/raw/topdown-v3/originals/map-chwimi-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/map-chwimi-v1.webp",
+      "status": "unapproved"
+    },
+    {
+      "id": "walk-seongjin",
+      "kind": "walk",
+      "reference": "assets/pt/seongjin.webp",
+      "mode": "same",
+      "description": "Young monk Seongjin, shaved head, pale grey wrap robe, brown prayer beads, same gentle face as reference.",
+      "width": 160,
+      "height": 128,
+      "frames": 5,
+      "rows": 4,
+      "chroma": "magenta",
+      "cell": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 30
+      },
+      "directions": {
+        "down": {
+          "row": 0,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "left": {
+          "row": 1,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "right": {
+          "row": 2,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "up": {
+          "row": 3,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "prompt": "tools/prompts/topdown_v3_walk-seongjin.txt",
+      "original": "assets/raw/topdown-v3/originals/walk-seongjin-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-seongjin-v1.webp",
+      "status": "unapproved"
+    },
+    {
+      "id": "walk-yang-scholar",
+      "kind": "walk",
+      "reference": "assets/board/horse_walk.webp",
+      "mode": "same",
+      "description": "Young Yang Soyu, light blue scholar robe, black soft head wrap, same face and hairstyle as reference. No horse.",
+      "width": 160,
+      "height": 128,
+      "frames": 5,
+      "rows": 4,
+      "chroma": "magenta",
+      "cell": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 30
+      },
+      "directions": {
+        "down": {
+          "row": 0,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "left": {
+          "row": 1,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "right": {
+          "row": 2,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "up": {
+          "row": 3,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "prompt": "tools/prompts/topdown_v3_walk-yang-scholar.txt",
+      "original": "assets/raw/topdown-v3/originals/walk-yang-scholar-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-yang-scholar-v1.webp",
+      "status": "unapproved",
+      "sourceDirections": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    {
+      "id": "walk-yang-chancellor",
+      "kind": "walk",
+      "reference": "assets/board/horse_walk_sang.webp",
+      "mode": "same",
+      "description": "Yang Soyu as chancellor, purple round-collar Tang official robe, black futou cap, gold belt. Preserve the character design of reference. No horse.",
+      "width": 160,
+      "height": 128,
+      "frames": 5,
+      "rows": 4,
+      "chroma": "green",
+      "cell": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 30
+      },
+      "directions": {
+        "down": {
+          "row": 0,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "left": {
+          "row": 1,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "right": {
+          "row": 2,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "up": {
+          "row": 3,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "prompt": "tools/prompts/topdown_v3_walk-yang-chancellor.txt",
+      "original": "assets/raw/topdown-v3/originals/walk-yang-chancellor-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/walk-yang-chancellor-v2.webp",
+      "status": "unapproved",
+      "sourceDirections": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    {
+      "id": "kit-room",
+      "kind": "props",
+      "reference": "assets/sc/sc_cell.webp",
+      "mode": "style",
+      "width": 128,
+      "height": 64,
+      "frames": 4,
+      "rows": 2,
+      "chroma": "magenta",
+      "prompt": "tools/prompts/topdown_v3_kit-room.txt",
+      "original": "assets/raw/topdown-v3/originals/kit-room-v1.png",
+      "candidate": "assets/raw/topdown-v3/candidates/kit-room-v2.webp",
+      "status": "unapproved",
+      "tileFrames": [
+        0,
+        1
+      ],
+      "frameKeys": [
+        "floor-grey",
+        "floor-wood",
+        "wall-grey",
+        "wall-red",
+        "cushion",
+        "table",
+        "stool",
+        "chest"
+      ]
+    }
+  ],
+  "reusedStaff": "assets/sprites/hoseung.webp",
+  "sharedCell": "map-cell"
+}

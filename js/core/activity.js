@@ -1,7 +1,7 @@
 'use strict';
 // 맞대기 칸 채우기와 도움 사다리. 첫 기록·선생님 도움·final 잠금은 G.save가 맡는다.
-// mount(box, act, {tray, readonly, state?, completed?, signal?, onSolved?})
-// state는 journal.match의 picks/tries/memoOpen을 보존한다. completed는 확정된 답을 표시한다.
+// mount(box, act, {tray, readonly, state?, completed?, signal?, run?, canAct?, persist?, onSolved?})
+// state는 지역 입력의 시작값이며 persist가 저장된 결과와 분리해 보존한다.
 (function () {
   const { h, $$, norm } = G.util;
   const T = G.text;
@@ -19,13 +19,22 @@
     const choices = G.util.shuffle([...new Set(pool)], G.util.hash(act.id));
     const filled = { ...(opt.state?.picks || {}) };          // 칸 id → 고른 것
     let sel = null;             // 고른 칸
-    let tries = opt.state?.tries || 0, memoOpen = !!opt.state?.memoOpen, solved = false;
+    let tries = opt.state?.tries || 0, memoOpen = !!opt.state?.memoOpen, solved = false, pendingCheck = false;
     let resolveDone;
     const done = new Promise((r) => (resolveDone = r));
     const cancel = () => resolveDone({ cancelled: true });
     opt.signal?.addEventListener('abort', cancel, { once: true });
+    let warned = false;
+    const canAct = () => !ro && !opt.signal?.aborted && (!opt.canAct || opt.canAct());
+    const failed = () => {
+      if (!warned) G.ui.toast('기록을 저장하지 못했어요. 이 화면의 입력은 남겨 두었으니 다시 시도해 주세요.');
+      warned = true;
+      return false;
+    };
     const persist = () => {
-      if (!ro && opt.state && !opt.signal?.aborted) { Object.assign(opt.state, { picks: { ...filled }, tries, memoOpen }); G.save.write(); }
+      if (!canAct()) return ro ? true : false;
+      if (!opt.persist) return true;
+      return opt.persist({ picks: { ...filled }, tries, memoOpen }) ? true : failed();
     };
 
     const el = h('section.activity', { dataset: { actId: act.id }, 'aria-label': act.title || '읽기 활동' });
@@ -84,10 +93,15 @@
 
     // ── 기록(readonly이면 아무것도 바꾸지 않는다)
     const rec = {
-      try(ok) { if (!ro && scored && !opt.signal?.aborted) G.save.ledgerTry(act.id, ok); },
-      help(who) { if (!ro && scored && !opt.signal?.aborted) G.save.ledgerHelp(act.id, who); },
-      done() { if (!ro && scored && !opt.signal?.aborted) G.save.ledgerDone(act.id); },
-      wrong(slot, picked) { if (!ro && scored && !opt.signal?.aborted) { G.save.wrongNote({ act: act.id, slot: slot.id, picked, answer: answersOf(slot)[0], note: slot.note || act.wrongNote || '' }); G.save.write(); } },
+      try(ok) { return !scored || ro || canAct() && G.save.ledgerTry(act.id, ok, { run: opt.run, readonly: ro }); },
+      help(who) { return !scored || ro || canAct() && G.save.ledgerHelp(act.id, who, { run: opt.run, readonly: ro }); },
+      done() { return !scored || ro || canAct() && G.save.ledgerDone(act.id, { run: opt.run, readonly: ro }); },
+      wrong(slot, picked) {
+        if (!scored || ro) return true;
+        if (!canAct()) return false;
+        if (S().wrong.some((entry) => entry.act === act.id && entry.slot === slot.id)) return true;
+        return G.save.wrongNote({ act: act.id, slot: slot.id, picked, answer: answersOf(slot)[0], note: slot.note || act.wrongNote || '' }, { run: opt.run, readonly: ro });
+      },
     };
 
     function draw() {
@@ -97,25 +111,29 @@
         b.querySelector('.v').replaceChildren(v != null ? T.inline(v, { noFace: true }) : document.createTextNode('　'));
         b.classList.toggle('filled', v != null);
         b.classList.toggle('sel', sel === s.id && !solved);
+        b.disabled = ro || solved;
       }
       const used = new Set(act.reusable ? [] : Object.values(filled));
       for (const b of choiceEls) b.classList.toggle('used', used.has(b.dataset.choice));
-      check.disabled = solved || act.slots.some((s) => filled[s.id] == null);
+      for (const b of choiceEls) b.disabled = ro || solved;
+      check.disabled = ro || solved || act.slots.some((s) => filled[s.id] == null);
     }
     function nextEmpty() { const s = act.slots.find((x) => filled[x.id] == null); return s ? s.id : null; }
     function onSlot(id) {
-      if (solved || opt.signal?.aborted) return;
+      if (solved || !canAct()) return;
       G.audio.tap();
       if (filled[id] != null && sel === id) { delete filled[id]; slotEls[id].classList.remove('wrong', 'shown'); }
+      pendingCheck = false;
       sel = id;
       persist(); draw();
     }
     function onChoice(c) {
-      if (solved || opt.signal?.aborted) return;
+      if (solved || !canAct()) return;
       if (!sel || !act.slots.some((s) => s.id === sel)) sel = nextEmpty() || act.slots[0].id;
       // 한 선택지는 한 칸에만: 다른 칸에 있던 것은 옮긴다(reusable이면 그대로 둔다)
       if (!act.reusable) for (const k in filled) if (filled[k] === c) { delete filled[k]; slotEls[k].classList.remove('wrong', 'shown'); }
       filled[sel] = c;
+      pendingCheck = false;
       slotEls[sel].classList.remove('wrong', 'shown');
       G.audio.place();
       sel = nextEmpty() || sel;
@@ -127,17 +145,22 @@
       persist(); draw();
     }
     function onCheck() {
-      if (solved || opt.signal?.aborted || act.slots.some((s) => filled[s.id] == null)) return;
+      if (solved || !canAct() || act.slots.some((s) => filled[s.id] == null)) return;
       if (!scored) {
         return finish(true, '골랐어요. 채점하지 않는 활동이에요.');
       }
-      tries++; persist();
+      if (!pendingCheck) {
+        const previousTries = tries;
+        tries++;
+        if (!persist()) { tries = previousTries; draw(); return; }
+      }
       const wrong = act.slots.filter((s) => !isRight(s, filled[s.id]));
-      rec.try(wrong.length === 0);
+      if (!rec.try(wrong.length === 0)) { pendingCheck = true; return failed(); }
       if (!wrong.length) { G.audio.ok(); return finish(true, tries === 1 ? '맞았어요!' : '맞았어요.'); }
       G.audio.no();
       for (const s of act.slots) slotEls[s.id].classList.toggle('wrong', wrong.includes(s));
-      for (const s of wrong) rec.wrong(s, filled[s.id]);
+      for (const s of wrong) if (!rec.wrong(s, filled[s.id])) { pendingCheck = true; return failed(); }
+      pendingCheck = false;
       feedback.textContent = '붉게 표시된 칸을 다시 읽어 보세요.' + (tries === 1 ? ' 막히면 여백 메모를 볼 수 있어요.' : '');
       // 사다리 1단: 틀린 칸 표시(위) → 여백 메모가 열린다
       btnMemo.hidden = false;
@@ -149,7 +172,7 @@
     // 사다리 2단: 여백 메모
     btnMemo.addEventListener('click', () => {
       G.audio.hint();
-      rec.help('student');
+      if (!rec.help('student')) return failed();
       memoOpen = true; persist();
       const wrongSlots = act.slots.filter((s) => slotEls[s.id].classList.contains('wrong'));
       memo.replaceChildren(h('span.tag', '여백 메모'),
@@ -163,21 +186,22 @@
     // 사다리 3단: 정답 보기(칸에 정답을 넣어 준다. [확인]은 학생이 누른다)
     btnAnswer.addEventListener('click', () => {
       G.audio.tap();
-      rec.help('student');
+      if (!rec.help('student')) return failed();
       fillAnswers('shown');
       btnAnswer.hidden = true;
       feedback.textContent = '정답을 넣어 두었어요. 원문에서 확인하고 [확인]을 누르세요.';
     });
     // 선생님용: 정답 채우기 / 정답 보기 → 장부에 '도움 사용(선생님용)'. 학생이 풀기 전이면 첫 시도는 null(시도 안 함)로 남는다(G.save.ledgerTry)
-    tFill.addEventListener('click', () => { rec.help('teacher'); fillAnswers('shown'); });
+    tFill.addEventListener('click', () => { if (rec.help('teacher')) fillAnswers('shown'); else failed(); });
     tShow.addEventListener('click', () => {
-      rec.help('teacher');
+      if (!rec.help('teacher')) return failed();
       G.ui.pop(tShow, h('div.answer-key', h('b', '정답'), h('ol', act.slots.map((s) => h('li', s.label ? T.plain(s.label) + ': ' : '', answersOf(s).join(' / '))))));
     });
 
     function finish(ok, msg) {
+      if (!rec.done()) { pendingCheck = true; return failed(); }
+      pendingCheck = false;
       solved = true;
-      rec.done();
       el.classList.add('solved');
       for (const s of act.slots) slotEls[s.id].classList.remove('wrong', 'sel');
       $$('.help', el).forEach((b) => (b.hidden = true));
@@ -197,7 +221,15 @@
       for (const slot of act.slots) slotEls[slot.id].classList.toggle('wrong', !isRight(slot, filled[slot.id]));
       btnMemo.hidden = false;
     }
-    if (opt.completed) { fillAnswers(); finish(true, '확정한 맞대기예요.'); }
+    if (opt.completed) {
+      for (const s of act.slots) filled[s.id] = answersOf(s)[0];
+      solved = true;
+      el.classList.add('solved');
+      feedback.textContent = '확정한 맞대기예요. (다시 읽기라 기록은 그대로예요)';
+      draw();
+      opt.signal?.removeEventListener('abort', cancel);
+      resolveDone({ ok: true, picks: { ...filled } });
+    }
     return { el, done, check };
   };
 })();

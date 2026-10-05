@@ -24,10 +24,17 @@
 .wish-found meter { display: block; width: 70px; }
 .wish-memo { padding: 12px; background: #f8efd7; border-left: 4px solid var(--fiction); }
 .wish-help { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.wish.hidden .nm { display: inline-block; min-width: 1.6em; padding: 0 6px; background: var(--paper); color: var(--ink); letter-spacing: 0; }
 .journal-match, .bond-link, .journal-fairies { margin: 20px 0; }
 .journal-fairies .fairy-card { max-width: 130px; }
 .interp-pick-box h3 { margin: 0 0 16px; }
 .interp-pick-box small { display: block; margin-top: 6px; color: var(--ink-3); }
+.dream-trace-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.dream-trace-card { min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--ink-3); background: var(--paper); text-align: center; }
+.dream-trace-card img { display: block; margin: 0 auto 8px; }
+.dream-trace-card figcaption { font-family: var(--pixel); line-height: 1.5; }
+.dream-trace-evidence { overflow-wrap: anywhere; }
+@media (max-width: 620px) { .dream-trace-images { grid-template-columns: 1fr; } }
 .jp-score { margin: 16px 0; padding: 14px; text-align: center; border: 2px solid var(--fiction); background: #e0efea; }
 .jp-score strong { font-family: var(--pixel); font-size: 1.1rem; }
 .jp-score p { margin: 8px 0 0; }
