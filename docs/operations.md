@@ -149,6 +149,8 @@ python tools/build_fonts.py
 
 공개 위치는 pblsketch 계정의 GitHub Pages(저장소 이름 `guunmong`, 바꿀 수 있음)다. 저장소 만들기, 올리기, Pages 켜기는 각각 사용자에게 먼저 확인을 받는다. 작업 저장소의 이력은 올리지 않고, 지금 추적 파일만 새 저장소의 첫 커밋으로 옮긴다.
 
+같은 날 후속 모바일 보완은 공개 제품 커밋 90a3918로 반영했다. 추적 457개 파일의 트리가 작업판 a1836db와 일치했고 Pages built를 확인했다. 공개 첫 화면 8조건·두 손 조작 4조건과 초기 흐름·저장·재접속·권한 이전은 종료 0이며, 런타임 231개가 Git blob 원본 바이트와 모두 일치했다. 근거는 tests/shots/mobile-public-title.log, mobile-public-controls.log, mobile-public-runtime.log다. 그 뒤 커밋은 배포 확인을 기록한 문서 변경이다.
+
 ```powershell
 cd tests; node run-all.mjs; cd ..                                   # 1. 작업 저장소에서 전체 통과
 $out = "E:\github\guunmong-public"                                  # 2. 작업 저장소 밖의 빈 폴더
