@@ -30,8 +30,9 @@
     const field = h('div.game-field', { dataset: { gameField: '' }, 'aria-hidden': mode === 'world' ? 'false' : 'true' });
     if (lastField) field.appendChild(lastField.cloneNode(true));
     if (mode !== 'world' && scene?.img) field.appendChild(h('img.scene-backdrop', { src: 'assets/sc/' + scene.img + '.webp', alt: '' }));
-    page.prepend(field);
-    const shell = h('div.game-shell', { dataset: { gameShell: '', mode } }, page);
+    const shell = h('div.game-shell', { dataset: { gameShell: '', mode } });
+    if (mode === 'menu') shell.append(field, page);
+    else { page.prepend(field); shell.append(page); }
     return { shell, field };
   }
   function closeSheets() { for (const close of [...sheets]) close(null); ui.closeSheets(); }

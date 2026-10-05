@@ -13,7 +13,7 @@ async function page(profile = 'world-opening', width = 390, opt = {}) {
   if (baseline) {
     for (const file of ['js/game/world.js', 'css/rpg.css', 'js/game/stage.js']) {
       const body = execFileSync('git', ['show', '71d006f:' + file], { cwd: ROOT });
-      await p.route('**/' + file, route => route.fulfill({ body, contentType: file.endsWith('.css') ? 'text/css' : 'text/javascript' }));
+      await p.route('**/' + file + '*', route => route.fulfill({ body, contentType: file.endsWith('.css') ? 'text/css' : 'text/javascript' }));
     }
     await p.reload(); await ready(p);
   }
@@ -226,6 +226,20 @@ try {
         }
         await p.locator('[data-world]').focus(); await p.keyboard.down('s'); await p.locator('[data-tool="home"]').click();
         const exit = await state(p); await p.keyboard.up('s'); await p.waitForTimeout(400); assert.deepEqual(await state(p), exit);
+      } finally { await p.context().close(); }
+    });
+    await test('새 월드의 최초 크기 알림이 첫 입력을 취소하지 않음', async () => {
+      const p = await page();
+      try {
+        const before = await state(p);
+        await p.evaluate(() => {
+          G.app.open(G.app.current().scene, { resume: true });
+          const world = document.querySelector('[data-world]');
+          world.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', bubbles: true }));
+          world.dispatchEvent(new KeyboardEvent('keyup', { key: 's', code: 'KeyS', bubbles: true }));
+        });
+        await idle(p);
+        assert.equal((await state(p)).rpg.cursor.y, before.rpg.cursor.y + 1, '크기는 그대로인 최초 관찰 알림 뒤 첫 걸음 보존');
       } finally { await p.context().close(); }
     });
     await test('이동 저장 실패 오류 경로·상태 불변·재시도', async () => {

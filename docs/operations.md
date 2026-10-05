@@ -143,7 +143,7 @@ python tools/build_fonts.py
 
 ## 공개
 
-공개 주소는 https://pblsketch.github.io/guunmong/ 이다. 2026-10-05 사용자 배포 지시에 따라 탑다운 개편을 기존 공개 저장소 main에 반영했다. 제품 배포 커밋은 6ff7b19이며 GitHub Pages built를 확인했다. 이후 변경은 배포 상태를 적는 문서뿐이다. 작업 저장소 master는 변경하지 않았다.
+공개 주소는 https://pblsketch.github.io/guunmong/ 이다. 2026-10-05 사용자 배포 지시에 따라 탑다운 개편을 기존 공개 저장소 main에 반영했다. 최초 제품 배포 커밋은 6ff7b19이며 GitHub Pages built를 확인했다. 후속 보완도 검증한 추적 파일만 아래 절차로 갱신한다. 작업 저장소 master는 변경하지 않았다.
 
 내보낸 추적 파일 455개의 Git 트리는 검증한 작업판 15fd470과 같았다. 공개 런타임 231개는 HTTP 200과 원본 SHA256을 대조했다. 공개 서버가 텍스트를 LF로 제공하므로 텍스트만 CRLF/LF를 정규화했으며 그림·음원·글꼴은 바이트 그대로 일치했다. 공개 Chrome에서 새 학생의 돌다리→화음현, 키보드·터치·보따리·배경음 설정·저장·재접속·두 탭 권한 이전·가로/세로를 검사해 종료 0, 화면 오류 0이었다. 로컬 증거는 tests/shots/deploy-live.log와 deploy-2026-10-05/live.json 및 캡처에 있다. 공개 전체 완주나 실기기·학생 수업을 검사한 것으로 쓰지 않는다.
 

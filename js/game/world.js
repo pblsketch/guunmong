@@ -16,18 +16,26 @@
     if (beatIndex < 0) beatIndex = experience.beats.length;
     let stage, cursor, actor, world, visible = [], scale = 1, frame = 0;
     let busy = false, finished = false, disposed = false, route = [], raf = null, motion = null, generation = 0, selected = null;
+    let joystickPointer = null, actionPointer = null, ignorePointerClick = false;
     const keys = new Map(), taps = [], objectArt = new Map(), mapListeners = [];
     const box = h('section.world-screen'), heading = h('h2.world-heading');
     const goal = h('p.world-goal', { dataset: { goal: '' } });
     const camera = h('div.world-camera'), actions = h('div.world-actions'), list = h('div.world-target-list');
+    const actionName = h('span.world-action-name'), actionVerb = h('strong.world-action-verb');
+    const actionButton = h('button.btn.primary.world-interact', { type: 'button', hidden: true }, actionName, actionVerb);
+    const actionHint = h('span.world-action-hint', '가까이 다가가세요');
+    actions.append(actionButton, actionHint);
+    const joystickKnob = h('span.world-joystick-knob');
+    const joystick = h('div.world-joystick', { 'aria-hidden': 'true', dataset: { active: 'false' } }, h('span.world-joystick-base'), joystickKnob, h('span.world-joystick-label', '끌어서 이동'));
+    box.dataset.touch = String(matchMedia('(any-pointer: coarse)').matches || navigator.maxTouchPoints > 0);
     const targets = h('details.world-targets', h('summary', '대상 목록'), list);
     const speech = h('div.world-speech');
     const pad = h('div.world-pad', { role: 'group', 'aria-label': '이동 방향' });
-    const controls = h('details.world-controls', h('summary', '조작 안내'), h('p', '방향키·WASD로 걷기 · Enter·Space로 행동하기. 화면을 누르면 그곳으로 걸어요. 대상은 가까이 간 뒤 한 번 더 누르세요.'));
+    const controls = h('details.world-controls', h('summary', '조작 안내'), h('p', '왼쪽을 누른 채 끌면 걸어요. 가까이 가서 오른쪽 노란 단추로 말 걸기·살펴보기를 해요. 화면을 눌러 이동할 수도 있어요. PC는 방향키·WASD로 걷고 E·Enter·Space로 행동해요.'));
     const help = h('div.world-help');
     const tools = h('details.world-tools', h('summary', '조작 도구'), h('div.world-tools-panel', targets, controls, h('details', h('summary', '방향 버튼'), pad), help));
     tools.addEventListener('toggle', () => { if (tools.open) { stop(); refresh(); } else if (!blocked()) world?.focus({ preventScroll: true }); });
-    box.append(heading, goal, camera, actions, speech, tools);
+    box.append(heading, goal, camera, joystick, actions, speech, tools);
     ctx.field.replaceChildren(box);
     let resolve;
     const result = new Promise(r => { resolve = r; });
@@ -41,6 +49,7 @@
     const actorKey = () => stage.appearance || (stage.actor === 'seongjin' ? 'walk-seongjin' : 'walk-yang-scholar');
     function stop() {
       generation++; route = []; keys.clear(); taps.length = 0;
+      resetJoystick();
       cancelAnimationFrame(raf); raf = null; motion = null; frame = 0;
       if (actor) pose(false);
     }
@@ -96,25 +105,34 @@
       }
       pose(!!motion);
     }
-    const resize = new ResizeObserver(layout); resize.observe(camera);
+    let cameraWidth = camera.clientWidth, cameraHeight = camera.clientHeight;
+    const resize = new ResizeObserver(() => {
+      const width = camera.clientWidth, height = camera.clientHeight;
+      if (width !== cameraWidth || height !== cameraHeight) { stop(); resetActionPointer(); }
+      cameraWidth = width; cameraHeight = height; layout(); refresh();
+    }); resize.observe(camera);
     function actionFor(o) { return [...experience.beats, ...experience.optional].find(b => b.id === o.action && b.trigger.target === o.id); }
     function allowed(o) { const b = actionFor(o); return !!b && (b === beat() || experience.optional.includes(b)); }
     function near() {
-      const candidates = motion ? [] : visible.filter(o => W.adjacent(cursor, o) && allowed(o));
+      const candidates = visible.filter(o => W.adjacent(cursor, o) && allowed(o));
       return candidates.find(o => o.id === selected) || candidates.find(o => o.action === beat()?.id) || candidates[0];
     }
     function refresh() {
       if (!active()) return;
       const b = beat(), target = visible.find(o => o.id === b?.trigger.target), nearby = near();
       goal.textContent = b ? '지금 할 일 · ' + (target ? target.label + ' — ' : '') + verbs[b.trigger.kind] : '이 장면의 필수 행동을 마쳤어요.';
-      actions.replaceChildren();
       help.replaceChildren();
       box.dataset.finished = String(finished);
-      if (nearby) {
-        const a = actionFor(nearby);
-        actions.appendChild(h('button.btn.primary', { type: 'button', disabled: blocked(), dataset: { act: 'interact', target: nearby.id, action: a.id }, on: { click: () => interact(nearby) } }, nearby.label + ' · ' + verbs[a.trigger.kind]));
-      } else if (b?.trigger.target === null && b.trigger.kind !== 'staff') {
-        actions.appendChild(h('button.btn.primary', { type: 'button', disabled: blocked(), dataset: { act: 'interact', target: '', action: b.id }, on: { click: () => interact(null) } }, verbs[b.trigger.kind]));
+      box.dataset.paused = String(blocked()); box.dataset.toolsOpen = String(tools.open);
+      if (blocked()) resetActionPointer();
+      const action = nearby ? actionFor(nearby) : b?.trigger.target === null && b.trigger.kind !== 'staff' ? b : null;
+      actionButton.hidden = !action; actionButton.disabled = blocked(); actionHint.hidden = !!action || blocked();
+      if (action) {
+        Object.assign(actionButton.dataset, { act: 'interact', target: nearby?.id || '', action: action.id });
+        actionName.textContent = nearby?.label || ''; actionVerb.textContent = verbs[action.trigger.kind];
+        actionButton.setAttribute('aria-label', (nearby ? nearby.label + ' · ' : '') + verbs[action.trigger.kind]);
+      } else {
+        for (const key of ['act', 'target', 'action']) delete actionButton.dataset[key];
       }
       if (b && b.trigger.kind !== 'staff') help.appendChild(h('button.btn.small', { type: 'button', disabled: blocked(), dataset: { help: 'next' }, on: { click: () => {
         if (blocked()) return;
@@ -131,7 +149,7 @@
     function move(facing) {
       if (blocked() || !validCursor()) { stop(); refresh(); return; }
       const next = W.move(stage.map, cursor, facing, scene.id, localBeat()); cursor.facing = facing;
-      if (!next) { stop(); refresh(); return; }
+      if (!next) { if (joystickPointer?.dragged) { route = []; pose(false); refresh(); } else { stop(); refresh(); } return; }
       const ticket = generation, started = performance.now(), from = { ...cursor };
       motion = { point: from }; pose(true); refresh();
       const tick = now => {
@@ -166,7 +184,7 @@
     }
     function mount() {
       if (!active()) return;
-      stop(); for (const remove of mapListeners.splice(0)) remove();
+      stop(); resetActionPointer(); for (const remove of mapListeners.splice(0)) remove();
       stage = W.stage(G.data, scene.id, localBeat());
       if (!stage) { dispose(); return; }
       const c = !viewOnly() && G.save.state.rpg.cursor;
@@ -183,7 +201,7 @@
       const meta = spriteMeta(actorKey()); if (meta) actor.style.backgroundImage = 'url("' + meta.src + '")'; world.appendChild(actor);
       visible = W.objects(stage.map, scene.id, localBeat()); list.replaceChildren(); objectArt.clear();
       for (const o of visible) {
-        const object = h('button.world-object' + (o.action === beat()?.id ? '.required' : ''), { type: 'button', 'aria-label': o.label, dataset: { object: o.id }, on: { click: () => {
+        const object = h('button.world-object' + (o.action === beat()?.id ? '.required' : ''), { type: 'button', 'aria-label': o.label, dataset: { object: o.id, kind: o.kind }, on: { click: () => {
           if (!blocked() && !motion && W.adjacent(cursor, o) && allowed(o)) interact(o); else seek(o);
         } } });
         const asset = spriteMeta(o.sprite), person = G.data.people?.[o.person];
@@ -248,11 +266,85 @@
       if (blocked() || keys.has(id)) return;
       route = []; keys.set(id, facing); taps.push(facing); advance(generation);
     }
+    function resetJoystick() {
+      const pointer = joystickPointer; joystickPointer = null; keys.delete('joystick');
+      joystick.dataset.active = 'false'; delete joystick.dataset.direction;
+      joystick.style.removeProperty('left'); joystick.style.removeProperty('top'); joystickKnob.style.removeProperty('transform');
+      if (pointer && box.hasPointerCapture(pointer.id)) box.releasePointerCapture(pointer.id);
+    }
+    const beginJoystick = e => {
+      if (!['touch', 'pen'].includes(e.pointerType) || blocked() || tools.open || joystickPointer || !e.target.closest('.world-camera') || e.target.closest('button')) return;
+      box.dataset.touch = 'true';
+      const bounds = box.getBoundingClientRect(), x = e.clientX - bounds.left, y = e.clientY - bounds.top;
+      const top = Math.max(104, goal.getBoundingClientRect().bottom - bounds.top + 8);
+      if (x > bounds.width * .6 || y < top) return;
+      stop(); ignorePointerClick = false;
+      joystickPointer = { id: e.pointerId, x: e.clientX, y: e.clientY, dragged: false };
+      joystick.style.left = Math.max(54, Math.min(x, bounds.width * .6 - 10)) + 'px';
+      joystick.style.top = Math.max(Math.min(top + 52, bounds.height - 68), Math.min(y, bounds.height - 68)) + 'px';
+      world.focus({ preventScroll: true });
+    };
+    const moveJoystick = e => {
+      if (!joystickPointer || e.pointerId !== joystickPointer.id) return;
+      if (blocked() || tools.open) { stop(); refresh(); return; }
+      const dx = e.clientX - joystickPointer.x, dy = e.clientY - joystickPointer.y, distance = Math.hypot(dx, dy);
+      if (distance < 8) { keys.delete('joystick'); delete joystick.dataset.direction; joystickKnob.style.removeProperty('transform'); return; }
+      if (!joystickPointer.dragged) { joystickPointer.dragged = true; box.setPointerCapture(e.pointerId); }
+      e.preventDefault(); joystick.dataset.active = 'true';
+      const fraction = Math.min(1, 44 / distance);
+      joystickKnob.style.transform = `translate(calc(-50% + ${dx * fraction}px), calc(-50% + ${dy * fraction}px))`;
+      const facing = Math.abs(dx) > Math.abs(dy) ? dx < 0 ? 'left' : 'right' : dy < 0 ? 'up' : 'down';
+      joystick.dataset.direction = facing; route = []; taps.length = 0; keys.set('joystick', facing); advance(generation);
+    };
+    const endJoystick = e => {
+      if (!joystickPointer || e.pointerId !== joystickPointer.id) return;
+      if (joystickPointer.dragged) ignorePointerClick = true;
+      resetJoystick(); if (!motion) { pose(false); refresh(); }
+    };
+    const cancelJoystick = e => { if (joystickPointer?.id === e.pointerId) { stop(); refresh(); } };
+    const clickGuard = e => {
+      if (e.detail === 0) return;
+      if (ignorePointerClick || joystickPointer?.dragged && !e.target.closest('.world-actions,.world-tools')) {
+        e.preventDefault(); e.stopPropagation();
+      }
+    };
+    box.addEventListener('pointerdown', () => { ignorePointerClick = false; }, true);
+    box.addEventListener('pointerdown', beginJoystick);
+    box.addEventListener('pointermove', moveJoystick);
+    box.addEventListener('lostpointercapture', e => { if (e.target === box) cancelJoystick(e); });
+    box.addEventListener('click', clickGuard, true);
+    window.addEventListener('pointerup', endJoystick);
+    window.addEventListener('pointercancel', cancelJoystick);
+    function resetActionPointer() {
+      const pointer = actionPointer; actionPointer = null;
+      if (pointer) ignorePointerClick = true;
+      if (pointer && actionButton.hasPointerCapture(pointer.id)) actionButton.releasePointerCapture(pointer.id);
+    }
+    function activateNearby() {
+      if (!actionButton.isConnected || actionButton.hidden || blocked()) return;
+      stop(); const nearby = near();
+      if (nearby) interact(nearby); else if (beat()?.trigger.target === null) interact(null);
+    }
+    actionButton.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || actionPointer || actionButton.hidden || blocked()) return;
+      e.preventDefault(); stop(); refresh();
+      actionPointer = { id: e.pointerId, action: actionButton.dataset.action, target: actionButton.dataset.target };
+      actionButton.setPointerCapture(e.pointerId);
+    });
+    actionButton.addEventListener('pointerup', e => {
+      if (actionPointer?.id !== e.pointerId) return;
+      const pointer = actionPointer, bounds = actionButton.getBoundingClientRect(); resetActionPointer();
+      if (e.clientX >= bounds.left && e.clientX <= bounds.right && e.clientY >= bounds.top && e.clientY <= bounds.bottom &&
+          pointer.action === actionButton.dataset.action && pointer.target === actionButton.dataset.target) activateNearby();
+    });
+    actionButton.addEventListener('pointercancel', e => { if (actionPointer?.id === e.pointerId) resetActionPointer(); });
+    actionButton.addEventListener('lostpointercapture', e => { if (e.target === actionButton && actionPointer?.id === e.pointerId) resetActionPointer(); });
+    actionButton.addEventListener('click', e => { if (e.detail === 0) activateNearby(); });
     const keydown = e => {
       if (e.target !== world || e.ctrlKey || e.altKey || e.metaKey || blocked()) return;
       const facing = keyDirections[e.key];
       if (facing) { e.preventDefault(); if (!e.repeat) press(e.code || e.key, facing); }
-      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const o = near(); if (o) interact(o); else if (beat()?.trigger.target === null) interact(null); }
+      else if (['Enter', ' ', 'e', 'E'].includes(e.key)) { e.preventDefault(); const o = near(); if (o) interact(o); else if (beat()?.trigger.target === null) interact(null); }
     };
     const keyup = e => { if (keys.delete(e.code || e.key)) e.preventDefault(); };
     for (const [facing, label, arrow] of [['up', '위로 걷기', '↑'], ['left', '왼쪽으로 걷기', '←'], ['down', '아래로 걷기', '↓'], ['right', '오른쪽으로 걷기', '→']]) {
@@ -263,22 +355,23 @@
       button.addEventListener('pointercancel', () => { stop(); refresh(); });
       button.addEventListener('click', e => { if (e.detail === 0 && !blocked()) { world.focus({ preventScroll: true }); taps.push(facing); advance(generation); } }); pad.appendChild(button);
     }
-    let wasModal = false;
+    let wasModal = false, wasHidden = document.hidden;
     const pause = () => {
-      const modalOpen = !!document.querySelector('.sheet-back, .fold-ov'); if (document.hidden || modalOpen) stop();
-      if (modalOpen !== wasModal) { wasModal = modalOpen; refresh(); if (!blocked()) world?.focus({ preventScroll: true }); }
+      const modalOpen = !!document.querySelector('.sheet-back, .fold-ov'); if (document.hidden || modalOpen) { stop(); resetActionPointer(); }
+      if (modalOpen !== wasModal || document.hidden !== wasHidden) { wasModal = modalOpen; wasHidden = document.hidden; refresh(); if (!blocked()) world?.focus({ preventScroll: true }); }
     };
     const focus = e => { if (!world?.contains(e.target) && !pad.contains(e.target)) stop(); };
-    const blur = () => { stop(); refresh(); };
+    const blur = () => { stop(); resetActionPointer(); refresh(); };
     const modal = new MutationObserver(pause); modal.observe(document.body, { childList: true, subtree: true });
     const unsubscribe = G.save.onChange(reason => { if (['storage', 'access', 'reset'].includes(reason)) dispose(); });
     document.addEventListener('keydown', keydown); document.addEventListener('keyup', keyup); document.addEventListener('focusin', focus);
     document.addEventListener('visibilitychange', pause); window.addEventListener('blur', blur);
     function dispose() {
       if (disposed) return;
-      stop(); disposed = true; resize.disconnect(); modal.disconnect(); unsubscribe(); for (const remove of mapListeners.splice(0)) remove();
+      stop(); resetActionPointer(); disposed = true; resize.disconnect(); modal.disconnect(); unsubscribe(); for (const remove of mapListeners.splice(0)) remove();
       document.removeEventListener('keydown', keydown); document.removeEventListener('keyup', keyup); document.removeEventListener('focusin', focus);
       document.removeEventListener('visibilitychange', pause); window.removeEventListener('blur', blur); ctx.signal.removeEventListener('abort', dispose); box.remove(); resolve(false);
+      window.removeEventListener('pointerup', endJoystick); window.removeEventListener('pointercancel', cancelJoystick);
     }
     ctx.signal.addEventListener('abort', dispose, { once: true }); mount(); if (!beat()) finish(); return result;
   };

@@ -11,7 +11,7 @@ export async function harness() {
   const scratch = path.join(SHOTS, 'entry.html');
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')
     .replace('<head>', '<head><base href="../../../">');
-  if (!html.includes('href="css/rpg.css"') || !html.includes('src="js/game/world.js"')) throw Error('제품 HTML에 월드 연결 누락');
+  if (!/href="css\/rpg\.css(?:\?[^"\s]*)?"/.test(html) || !/src="js\/game\/world\.js(?:\?[^"\s]*)?"/.test(html)) throw Error('제품 HTML에 월드 연결 누락');
   fs.writeFileSync(scratch, html);
   fs.writeFileSync(path.join(SHOTS, 'away.html'), '<!doctype html><meta charset="utf-8"><title>캐시 복귀 검사</title><p>로컬 검사 페이지</p>');
   const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.webp': 'image/webp', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg' };
@@ -27,6 +27,7 @@ export async function harness() {
   const errors = [];
   function observe(p) {
     p.setDefaultTimeout(5000);
+    p.setDefaultNavigationTimeout(30000);
     p.on('pageerror', e => errors.push(e.stack));
     p.on('console', m => { if (m.type() === 'error' && !m.text().includes('Failed to load resource')) errors.push(m.text()); });
     p.on('response', r => { if (r.status() >= 400) errors.push('HTTP ' + r.status() + ' ' + r.url()); });

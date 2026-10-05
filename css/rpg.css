@@ -15,7 +15,7 @@ html:has(.game-shell), body:has(.game-shell), body:has(.game-shell) #app { width
 .game-shell[data-mode="window"] .main-inner { max-width: 720px; padding: 14px 16px 8px; }
 .game-shell[data-mode="window"] > .play > .tray { position: relative; z-index: 3; width: min(92vw, 760px); max-width: none; background: rgba(239, 227, 198, .97); pointer-events: auto; }
 .game-shell[data-mode="window"] > .play > .tray.empty { display: none; }
-.game-shell[data-mode="menu"] .game-menu-window { align-self: center; width: min(94vw, 720px); min-height: 0; max-height: calc(100dvh - 24px); margin: 12px auto; padding: 18px 16px; overflow: auto; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .97); box-shadow: 0 12px 36px rgba(0,0,0,.45); }
+.game-shell[data-mode="menu"] .game-menu-window { position: relative; z-index: 1; align-self: center; width: min(94vw, 720px); min-height: 0; max-height: calc(100dvh - 24px); margin: 12px auto; padding: 18px 16px; overflow: auto; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .97); box-shadow: 0 12px 36px rgba(0,0,0,.45); }
 body:has(.game-shell) .sheet-back { align-items: center; padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
 body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh - 16px); overflow: auto; overscroll-behavior: contain; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .98); }
 
@@ -27,10 +27,15 @@ body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh 
 .world-object { margin: 0; padding: 0; border: 0; background-color: transparent; color: #201810; cursor: pointer; }
 .world-object > .world-sprite { top: 0; left: 0; }
 .world-object:focus-visible, .world-object.required { outline: 3px solid #fff3a5; outline-offset: 2px; }
+.world-object[data-kind="npc"], .world-object[data-kind="npc"]:focus-visible { outline: none; }
+.world-object[data-kind="npc"].required::after { content: "!"; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); color: #ffe182; font: 900 22px/1 var(--pixel); text-shadow: -1px -1px 0 #302718, 1px -1px 0 #302718, -1px 1px 0 #302718, 1px 1px 0 #302718; pointer-events: none; }
+.world-object[data-kind="npc"]:focus-visible > :is(.world-sprite, img) { filter: drop-shadow(0 0 3px #fff3a5); }
 .world-marker { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-width: 32px; min-height: 32px; padding: 2px; background: #f9ecd0; border: 2px solid #665442; font: 10px/1.1 sans-serif; }
 .world-heading, .world-goal { position: absolute; z-index: 12; left: 50%; transform: translateX(-50%); width: min(76vw, 620px); margin: 0; padding: 5px 10px; border-radius: 5px; background: rgba(28, 27, 23, .82); color: #fff8e7; text-align: center; text-shadow: 1px 1px #000; pointer-events: none; }
 .world-heading { top: max(52px, env(safe-area-inset-top)); width: auto; max-width: 70vw; font-family: var(--pixel); font-size: clamp(15px, 2.5vw, 20px); white-space: nowrap; }
 .world-goal { top: max(88px, calc(env(safe-area-inset-top) + 36px)); font-size: clamp(12px, 2vw, 15px); }
+.world-screen[data-touch="true"] .world-heading { display: none; }
+.world-screen[data-touch="true"] .world-goal { top: max(54px, calc(env(safe-area-inset-top) + 46px)); width: min(calc(100% - 16px), 620px); }
 .world-pad { display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px; margin: 8px 0; }
 .world-direction { width: 44px; min-height: 44px; border: 2px solid #665442; border-radius: 6px; color: #342b23; background: rgba(249,236,208,.94); font: bold 20px sans-serif; touch-action: none; pointer-events: auto; }
 .world-direction[data-direction="up"] { grid-column: 2; }
@@ -39,6 +44,21 @@ body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh 
 .world-direction[data-direction="right"] { grid-column: 3; grid-row: 2; }
 .world-actions { position: absolute; z-index: 16; left: 50%; bottom: max(9px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: min(48vw, 520px); pointer-events: none; }
 .world-actions button, .world-targets button { min-height: 44px; max-width: 100%; white-space: normal; pointer-events: auto; }
+.world-interact { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.world-action-name { font-size: .78em; font-weight: 400; line-height: 1.25; }
+.world-action-verb { font-weight: 700; line-height: 1.3; }
+.world-action-hint, .world-joystick { display: none; }
+.world-screen[data-touch="true"] .world-actions { left: auto; right: max(12px, env(safe-area-inset-right)); bottom: max(68px, calc(env(safe-area-inset-bottom) + 60px)); transform: none; width: min(44vw, 220px); }
+.world-screen[data-touch="true"] .world-interact { width: 100%; min-height: 62px; padding: 10px 12px; border: 2px solid #5d451b; border-radius: 18px; background: #f2c94c; color: #2b2320; box-shadow: 0 4px 0 #5d451b; font-size: 18px; touch-action: manipulation; }
+.world-screen[data-touch="true"] .world-interact:active { transform: translateY(2px); box-shadow: 0 2px 0 #5d451b; }
+.world-screen[data-touch="true"] .world-action-hint { display: block; border-radius: 12px; padding: 10px; background: rgba(24,26,23,.85); color: #fff8e7; font-size: 12px; line-height: 1.4; text-align: center; }
+.world-screen[data-touch="true"] .world-joystick { display: block; position: absolute; left: max(72px, calc(env(safe-area-inset-left) + 64px)); top: calc(100% - max(82px, calc(env(safe-area-inset-bottom) + 72px))); width: 104px; height: 104px; transform: translate(-50%, -50%); z-index: 18; pointer-events: none; }
+.world-joystick-base { position: absolute; inset: 0; border: 2px solid rgba(255,248,231,.72); border-radius: 50%; background: rgba(27,35,28,.35); }
+.world-joystick-knob { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #56422b; background: rgba(249,236,208,.9); box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.world-joystick-label { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2px 7px; border-radius: 8px; background: rgba(24,26,23,.85); color: #fff8e7; font-size: 12px; }
+.world-joystick[data-active="true"] .world-joystick-label { display: none; }
+.world-screen:is([data-paused="true"],[data-tools-open="true"],[data-finished="true"]) .world-joystick, .world-screen[data-tools-open="true"] .world-actions { visibility: hidden; }
+body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
 .world-tools { position: absolute; z-index: 17; right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-width: calc(100% - 16px); border: 2px solid #665442; border-radius: 6px; background: rgba(249,236,208,.96); color: #342b23; pointer-events: auto; }
 .world-tools summary { cursor: pointer; min-height: 44px; padding: 10px; }
 .world-tools-panel { width: min(330px, calc(100vw - 20px)); max-height: 60dvh; padding: 0 10px 10px; overflow: auto; overscroll-behavior: contain; }

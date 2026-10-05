@@ -48,7 +48,7 @@ async function capture(p, name) {
       pageScroll: Math.max(document.documentElement.scrollHeight, document.body.scrollHeight), shell: shell && rect(shell), field: field && rect(field), mode: shell?.dataset.mode, panels,
       scale: art && rect(art).width * devicePixelRatio / art.naturalWidth,
       nodes: nodes.map(el => ({ box: rect(el), text: el.textContent, clipped: el.scrollHeight > el.clientHeight + 1 })),
-      speech: speech && rect(speech), advance: advance && rect(advance), required: required && { box: rect(required), outline: getComputedStyle(required).outlineStyle, inCamera: (()=>{ const r=required.getBoundingClientRect(),c=required.closest('.world-camera').getBoundingClientRect(); return r.left>=c.left&&r.right<=c.right&&r.top>=c.top&&r.bottom<=c.bottom; })(), visible: (() => {
+      speech: speech && rect(speech), advance: advance && rect(advance), required: required && { box: rect(required), kind: required.dataset.kind, marker: getComputedStyle(required, '::after').content, markerDisplay: getComputedStyle(required, '::after').display, outline: getComputedStyle(required).outlineStyle, inCamera: (()=>{ const r=required.getBoundingClientRect(),c=required.closest('.world-camera').getBoundingClientRect(); return r.left>=c.left&&r.right<=c.right&&r.top>=c.top&&r.bottom<=c.bottom; })(), visible: (() => {
         const r = required.getBoundingClientRect(); return document.elementFromPoint(r.left+r.width/2, r.top+r.height/2)?.closest('[data-object]') === required;
       })(), top: (() => {
         const r = required.getBoundingClientRect(), el = document.elementFromPoint(r.left+r.width/2, r.top+r.height/2); return el && { tag: el.tagName, cls: el.className, text: el.textContent };
@@ -64,7 +64,11 @@ async function capture(p, name) {
   if (layout.speech && layout.advance) assert.ok(layout.advance.top >= layout.speech.bottom, '대화·진행 겹침');
   if (layout.required) {
     assert.ok(layout.required.box.width > 0 && layout.required.box.height > 0);
-    assert.notEqual(layout.required.outline, 'none');
+    if (layout.required.kind === 'npc') {
+      assert.equal(layout.required.outline, 'none', 'NPC 사각 테두리 제거');
+      assert.equal(layout.required.marker, '"!"', '필수 NPC의 작은 느낌표 유지');
+      assert.notEqual(layout.required.markerDisplay, 'none', '필수 NPC 표시 숨김 금지');
+    } else assert.notEqual(layout.required.outline, 'none', '물건과 출구의 필수 표시 유지');
     if (layout.required.inCamera && !layout.speech) assert.equal(layout.required.visible, true, '카메라 안 필수 대상 실제 hit: ' + JSON.stringify(layout.required));
     assert.equal(await p.locator('[data-world-target]').count() > 0, true, '화면 밖 대상의 목록 경로 유지');
   }
