@@ -67,6 +67,8 @@
     { id: '5', label: '5장', name: '육관대사' },
     { id: 'R', label: '결과', name: '꿈 일지 마지막 장' },
   ];
+  // 환몽 구조: 각 장이 현실인지 꿈인지 이야기 지도에 표시한다.
+  const FRAME = { 1: { kind: 'real', label: '현실' }, 2: { kind: 'dream', label: '꿈' }, 3: { kind: 'wake', label: '꿈 → 깨어남' }, 4: { kind: 'real', label: '현실' }, 5: { kind: 'real', label: '현실' }, R: { kind: 'real', label: '현실' } };
   const DEFAULT_BGM = { 0: 'calm', 1: 'lotus', 2: 'dream', 3: 'feast', 4: 'reflect', 5: 'lotus', R: 'calm' };
   const KIND_NAME = { waking: '지팡이 소리', journal: '꿈 일지', interp: '육관대사의 물음', result: '결과' };
   app.CHAPTERS = CHAPTERS;
@@ -223,7 +225,32 @@
     if (confirmReset && !await confirm('처음부터 새로 할까요?', '지금까지의 기록이 모두 지워져요. 설정은 그대로예요.', '새로 시작', '그만두기')) return false;
     if (!G.save.reset(r, { confirmed: true, cancel })) { savingDenied(); app.title(); return false; }
     emit('reset'); app.applySettings();
-    const first = app.list()[0]; return first ? app.open(first.id) : false;
+    const first = app.list()[0], opened = first ? app.open(first.id) : false;
+    // 미션 퍼스트: 새로 시작하면 돌다리 위에 임무 창을 먼저 띄운다. 기록을 쓰지 않으며 이야기 지도에서 다시 볼 수 있다.
+    if (opened) app.mission({ start: true });
+    return opened;
+  };
+
+  // ───────── 임무: 왜 이 꿈을 끝까지 살아야 하는지(notes.mission)
+  function missionBlock(m) {
+    return h('div.mission', { dataset: { mission: '' } },
+      h('p.mission-lead', m.lead || ''),
+      h('ol.mission-goals', (m.goals || []).map(g => h('li', g))),
+      m.why ? h('p.mission-why', m.why) : null);
+  }
+  app.mission = function (opt = {}) {
+    const m = (G.data.notes || {}).mission;
+    if (!m) return Promise.resolve(null);
+    const r = run();
+    return sheet(close => h('div', h('h3', m.title || '이번 임무'), missionBlock(m),
+      h('div.actions', h('button.btn.primary', { type: 'button', dataset: { mission: opt.start ? 'start' : 'close' }, on: { click: () => { G.audio.tap(); close(true); } } },
+        opt.start ? (m.start || '시작 ▶') : '닫기'))), [], { cls: 'mission-sheet', dismiss: !opt.start }).then(v => (r === run() ? v : null));
+  };
+  // 이야기 속 위치: 본편 목록에서 몇 번째인지, 꿈 사건 몇 번째인지
+  app.position = function (id) {
+    const list = app.list(), index = list.findIndex(s => s.id === id);
+    const events = list.filter(s => /^e\d{2}-/.test(s.id)), event = events.findIndex(s => s.id === id);
+    return { index: index + 1, total: list.length, event: event + 1, events: events.length };
   };
 
   // ───────── 열기(목차·주소·엔진 API). 열 수 없으면 false
@@ -276,9 +303,11 @@
     const page = h('div.play.ch-' + (sc.ch === 'R' ? 'r' : sc.ch) + (revisit ? '.revisit' : '') + (sc.reality ? '.reality' : ''), { dataset: { scene: id, ch: sc.ch, kind } },
       h('header.topbar',
         ui.iconBtn('home', '처음 화면', menu(() => app.title()), { dataset: { tool: 'home' } }),
-        h('div.where', h('small', ch.label + ' · ' + ch.name), h('strong', sc.title || KIND_NAME[kind] || ch.name)),
+        h('div.where', { title: '이야기 지도 열기', on: { click: menu(() => app.toc()) } },
+          h('small', h('span.where-label', ch.label), h('span.where-name', ' · ' + ch.name), h('span.where-pos', { dataset: { position: '' } }, ' · ' + app.position(id).index + '/' + app.position(id).total)),
+          h('strong', sc.title || KIND_NAME[kind] || ch.name)),
         tools,
-        ui.iconBtn('toc', '목차', menu(() => app.toc()), { dataset: { tool: 'toc' } }),
+        ui.iconBtn('toc', '이야기 지도·목차', menu(() => app.toc()), { dataset: { tool: 'toc' } }),
         ui.iconBtn('gear', '설정', menu(() => app.settings()), { dataset: { tool: 'settings' } }),
         st.teacher ? ui.iconBtn('fold', '화면 접기(잠깐 멈춤)', menu(() => { if (S().teacher) ui.fold(); }), { dataset: { tool: 'fold' } }) : null),
       revisit && !autoAdvance ? h('div.revisit-bar', h('span', '다시 읽는 중 · 활동을 다시 풀어도 기록은 처음 그대로예요'),
@@ -529,8 +558,8 @@
     const activity = (id, title) => {
       const e = S().ledger[id] || { first: null, help: null, final: false };
       return { id, title: activityTitles[id] || title, ...e,
-        firstLabel: e.first === true ? '첫 시도에 맞힘' : e.first === false ? '다시 풀어 맞힘' : '—',
-        helpLabel: e.help === 'teacher' ? '도움 사용(선생님용)' : e.help ? '도움 사용' : e.final ? '도움 없음' : '—' };
+        firstLabel: e.first === true ? '첫 시도에 맞힘' : e.first === false ? '다시 풀어 맞힘' : '없음',
+        helpLabel: e.help === 'teacher' ? '도움 사용(선생님용)' : e.help ? '도움 사용' : e.final ? '도움 없음' : '없음' };
     };
     const events = app.list().filter(sc => sc.kind === 'event').map(sc => {
       const rec = S().rpg?.scenes?.[sc.id];
@@ -541,14 +570,14 @@
       const status = rec?.status === 'auto' ? '자동 안내' : performed ? '완료' : legacy ? '이전 기록' : rec ? '진행' : '미시작';
       const lines = (rec?.actions || []).flatMap(a => [...(e?.beats || []), ...(e?.optional || [])].find(b => b.id === a.id)?.lines || []);
       const clue = [...new Set(lines)].map(i => sc.lines[i]).map(l => typeof l === 'string' ? l : l.text || l.gloss || '').join(' · ');
-      return { id: sc.id, title: sc.title, kind: 'event', status, firstLabel: status, gradeLabel: '—', clue, help: rec?.hint || null, helpLabel: rec?.hint === 'teacher' ? '도움 사용(선생님용)' : rec?.hint ? '도움 사용' : '—' };
+      return { id: sc.id, title: sc.title, kind: 'event', status, firstLabel: status, gradeLabel: '없음', clue, help: rec?.hint || null, helpLabel: rec?.hint === 'teacher' ? '도움 사용(선생님용)' : rec?.hint ? '도움 사용' : '없음' };
     });
     return [activity('a-wish', '소원 찾기'), ...events, activity('j-match', '꿈 일지 맞대기')];
   };
   app.ledgerTable = function () {
     return h('div.ledger', h('h3', '장부'), h('p.small.muted', '학습의 첫 시도와 사건에서 살펴본 근거, 도움을 적어요.'),
       h('table', h('thead', h('tr', ...['활동', '상태·첫 시도', '살펴본 근거', '도움'].map(text => h('th', text)))),
-        h('tbody', app.ledgerRows().map(r => h('tr', { dataset: { act: r.id } }, h('td', r.title), h('td', r.firstLabel), h('td', r.clue || '—'), h('td', r.helpLabel))))));
+        h('tbody', app.ledgerRows().map(r => h('tr', { dataset: { act: r.id } }, h('td', r.title), h('td', r.firstLabel), h('td', r.clue || '없음'), h('td', r.helpLabel))))));
   };
   app.wishes = () => G.experience.wishes(S(), G.data);
   // 소원 채움 표기('chuljang.chul' 등)를 이름으로: 출장입상(장수). 꿈 동안 가려진 소원은 이름을 내지 않는다
@@ -565,7 +594,18 @@
     const st = S();
     const r = run();
     await sheet((close) => {
-      const box = h('div.toc', h('h3', '목차'));
+      const box = h('div.toc', h('h3', '이야기 지도'));
+      // 지금 위치와 전체 길이, 환몽 구조(현실 → 꿈 → 현실), 임무를 한 창에서 본다.
+      const hereId = current?.scene.id || st.pos, pos = app.position(hereId), hereScene = app.list().find(s => s.id === hereId);
+      if (hereScene) {
+        const chNow = CHAPTERS.find(c => c.id === hereScene.ch);
+        box.appendChild(h('div.story-now', { dataset: { storyNow: '' } },
+          h('p', h('b', '지금 위치 '), (chNow ? chNow.label + ' ' + chNow.name + ' · ' : '') + (hereScene.title || KIND_NAME[hereScene.kind] || ''),
+            ' (전체 ' + pos.index + '/' + pos.total + (pos.event ? ' · 꿈의 사건 ' + pos.event + '/' + pos.events : '') + ')'),
+          h('div.story-bar', { role: 'img', 'aria-label': '이야기 진행 ' + pos.index + '/' + pos.total }, h('span', { style: { width: Math.round(pos.index / pos.total * 100) + '%' } }))));
+      }
+      const mission = (G.data.notes || {}).mission;
+      if (mission) box.appendChild(h('details.story-mission', h('summary', mission.title || '이번 임무'), missionBlock(mission)));
       for (const c of CHAPTERS) {
         const scenes = app.list().filter((s) => s.ch === c.id);
         if (!scenes.length) continue;
@@ -574,7 +614,7 @@
         const dLock = st.awake && !st.teacher && chIdx(c.id) <= 3;
         const here = current && current.scene.ch === c.id;
         const row = h('div.toc-ch' + (locked ? '.locked' : '') + (here ? '.current' : ''), { dataset: { ch: c.id } },
-          h('div.toc-title', h('span.no', c.label), h('span.nm', c.name),
+          h('div.toc-title', h('span.no', c.label), h('span.nm', c.name), FRAME[c.id] ? h('span.frame', { dataset: { frame: FRAME[c.id].kind } }, FRAME[c.id].label) : null,
             locked ? h('span.lock', dLock ? '잠김 · 깨어난 뒤에는 꿈으로 돌아갈 수 없어요' : '아직 열리지 않았어요') : null));
         const ul = h('div.toc-scenes');
         scenes.forEach((s, i) => {

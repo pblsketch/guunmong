@@ -1,8 +1,11 @@
 'use strict';
 (function () {
   const { h } = G.util, W = G.world;
-  const verbs = { inspect: '살펴보기', talk: '말걸기', use: '원작 행동 시작하기', exit: '길 따라가기', continue: '이야기 이어가기', staff: '난간 치기' };
+  const verbs = { inspect: '살펴보기', talk: '말 걸기', use: '사용하기', exit: '길 따라가기', continue: '이야기 이어 가기', staff: '난간 치기' };
+  // 한 칸 걷는 시간(ms)과 걷기 그림 한 장의 시간. 좁은 휴대폰에서도 눈으로 따라갈 수 있는 걸음.
+  const STEP_MS = 260, FRAME_MS = 65;
   const keyDirections = { ArrowUp: 'up', w: 'up', W: 'up', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
+  const verbOf = (o, b) => o?.verb || verbs[b.trigger.kind];
   const screen = G.worldScreen = {};
   screen.play = function (ctx, scene) {
     const experience = G.experience.find(G.data, scene.id);
@@ -120,7 +123,7 @@
     function refresh() {
       if (!active()) return;
       const b = beat(), target = visible.find(o => o.id === b?.trigger.target), nearby = near();
-      goal.textContent = b ? '지금 할 일 · ' + (target ? target.label + ' — ' : '') + verbs[b.trigger.kind] : '이 장면의 필수 행동을 마쳤어요.';
+      goal.textContent = b ? '지금 할 일 · ' + (target ? target.label + ': ' + verbOf(target, b) : verbs[b.trigger.kind]) : '이 장면의 필수 행동을 마쳤어요.';
       help.replaceChildren();
       box.dataset.finished = String(finished);
       box.dataset.paused = String(blocked()); box.dataset.toolsOpen = String(tools.open);
@@ -129,8 +132,8 @@
       actionButton.hidden = !action; actionButton.disabled = blocked(); actionHint.hidden = !!action || blocked();
       if (action) {
         Object.assign(actionButton.dataset, { act: 'interact', target: nearby?.id || '', action: action.id });
-        actionName.textContent = nearby?.label || ''; actionVerb.textContent = verbs[action.trigger.kind];
-        actionButton.setAttribute('aria-label', (nearby ? nearby.label + ' · ' : '') + verbs[action.trigger.kind]);
+        actionName.textContent = nearby?.label || ''; actionVerb.textContent = verbOf(nearby, action);
+        actionButton.setAttribute('aria-label', (nearby ? nearby.label + ' · ' : '') + verbOf(nearby, action));
       } else {
         for (const key of ['act', 'target', 'action']) delete actionButton.dataset[key];
       }
@@ -155,8 +158,8 @@
       const tick = now => {
         raf = null;
         if (ticket !== generation || blocked() || !validCursor()) { stop(); refresh(); return; }
-        const t = Math.min(1, (now - started) / 180);
-        motion.point = { x: from.x + (next.x - from.x) * t, y: from.y + (next.y - from.y) * t }; frame = Math.floor((now - started) / 55); pose(true);
+        const t = Math.min(1, (now - started) / STEP_MS);
+        motion.point = { x: from.x + (next.x - from.x) * t, y: from.y + (next.y - from.y) * t }; frame = Math.floor((now - started) / FRAME_MS); pose(true);
         if (t < 1) { raf = requestAnimationFrame(tick); return; }
         if (!viewOnly() && !G.save.move(facing, options())) { stop(); ctx.fail(); return; }
         if (!active() || ticket !== generation) return;
@@ -201,6 +204,12 @@
       const meta = spriteMeta(actorKey()); if (meta) actor.style.backgroundImage = 'url("' + meta.src + '")'; world.appendChild(actor);
       visible = W.objects(stage.map, scene.id, localBeat()); list.replaceChildren(); objectArt.clear();
       for (const o of visible) {
+        // 장식 대상(decor): 원작 장면의 군중처럼 서 있기만 한다. 대상 목록·초점·누르기에서 빠지고 통행만 막는다.
+        if (o.decor) {
+          const asset = spriteMeta(o.sprite), decor = h('div.world-object.world-decor', { 'aria-hidden': 'true', dataset: { object: o.id, kind: o.kind, decor: '' } });
+          if (asset) { const img = h('div.world-sprite'); img.style.backgroundImage = 'url("' + asset.src + '")'; decor.appendChild(img); objectArt.set(o.id, { meta: asset }); }
+          world.appendChild(decor); continue;
+        }
         const object = h('button.world-object' + (o.action === beat()?.id ? '.required' : ''), { type: 'button', 'aria-label': o.label, dataset: { object: o.id, kind: o.kind }, on: { click: () => {
           if (!blocked() && !motion && W.adjacent(cursor, o) && allowed(o)) interact(o); else seek(o);
         } } });
@@ -233,7 +242,18 @@
       const b = o ? actionFor(o) : beat(); if (!b || b.trigger.kind === 'staff' || b.trigger.target !== null && !o) return;
       stop();
       tools.open = false;
-      if (!viewOnly() && !saved()?.actions.some(a => a.id === b.id)) { const outcome = G.save.applyExperience(scene.id, b.id, options()); if (!outcome.ok) { ctx.fail(); return; } }
+      const fresh = !viewOnly() && !saved()?.actions.some(a => a.id === b.id);
+      // 위기 도전: 처음 수행할 때와 다시 읽기에서 연다. 풀어야 행동이 기록되고(다시 읽기는 기록 없음), 물러나면 같은 자리에서 다시 시도한다.
+      const trial = (fresh || replay) && G.challenge?.find(scene.id, b.id, 'play');
+      if (trial) {
+        busy = true; refresh();
+        const solved = await G.challenge.play({ ...ctx, allow: permitted }, trial, box);
+        if (!active()) return;
+        busy = false;
+        if (!solved) { refresh(); world?.focus({ preventScroll: true }); return; }
+        if (blocked() || motion || o && (!visible.includes(o) || !W.adjacent(cursor, o))) { refresh(); return; }
+      }
+      if (fresh) { const outcome = G.save.applyExperience(scene.id, b.id, options()); if (!outcome.ok) { ctx.fail(); return; } }
       busy = true; refresh();
       const dialogueCtx = { ...ctx, main: speech, next(label = '다음 ▶') {
         return new Promise(r => {
@@ -247,7 +267,9 @@
         });
       } };
       const label = o?.label, hideFace = !!o?.person && G.text.nameOf(o.person) !== label;
-      const done = await G.stage.play(dialogueCtx, scene, { textOnly: true, label, hideFace, targetPerson: o?.person, lines: b.lines.map(i => scene.lines[i]) });
+      const talk = (fresh || replay) && G.challenge?.find(scene.id, b.id, 'talk');
+      const choice = talk ? { ...talk, allow: () => permitted() && !document.querySelector('.sheet-back, .fold-ov') } : null;
+      const done = await G.stage.play(dialogueCtx, scene, { textOnly: true, label, hideFace, targetPerson: o?.person, lines: b.lines.map(i => scene.lines[i]), choice });
       if (!active() || !done) return;
       if (b.effects.some(effect => effect.kind === 'pearl') && !await G.pearl.explain({ ...dialogueCtx, readonly: !!viewOnly(), peek: true }, scene)) return;
       if (!active()) return;

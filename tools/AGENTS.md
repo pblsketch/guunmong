@@ -11,9 +11,10 @@
 | `process_sprites.py` | 말 걷기 시트(32×32 칸 6열×4줄, 발밑 (16,30)) | `assets/board/horse_walk*.webp` |
 | `process_sim_assets.py` | manifest_sim96의 셀 크기·발 기준으로 동작과 아이콘 후보 가공 | assets/raw/sim-v2/candidates96 및 검토판 |
 | `manifest_sim96.json` | 승인 제품과 생성 원본·프롬프트·해시 연결 | 재가공·정적 검사 기준 |
-| `check_assets.py` | 승인 자산 161개의 경로·크기·32색·무손실·승인 해시 | 종료 코드 |
+| `check_assets.py` | 승인 자산 204개의 경로·크기·32색·무손실·승인 해시 | 종료 코드 |
 | `make_topdown_prompts.py`, `generate_topdown_candidates.py`, `process_topdown_candidates.py` | 탑다운 원본·후보 가공과 검토판 | assets/raw/topdown-v3의 보존 자료 |
 | `topdown_approved.py`, `rpg_npc_approved.py`, `rpg_disguise_approved.py` | 각 approved manifest의 승인 제품·원본 검증 | 승인 해시·메타 대조 |
+| `process_rpg_v4.py`, `rpg_v4_approved.py` | v4 후보(장소 14·선녀 7·NPC 14·물건 8)를 assets/raw/rpg-art-v4에 가공·검토판, 승인 설치(--install 한 번)와 제품 검증 | 후보·검토판, manifest_rpg_v4_approved.json |
 | `process_rpg_npcs.py`, `check_topdown_products.mjs` | 정지 NPC 후보 가공, 실제 제품 HTTP·프레임·정수배 확인 | 후보 및 검사 출력 |
 | `make_review.py` | 사용자 확인용 모아 보기 | `design/review/` |
 | `make_bgm.py` | 국립국악원 악구 WAV를 이어 곡으로, 음량 맞추기 | `assets/bgm/*.mp3`, `js/data/bgm.js` |
@@ -36,7 +37,7 @@
 - `build_fonts.py`는 `js/**/*.js`, `index.html`, `manifest.webmanifest`의 글자만 모은다. GuunOld는 한자와 몇몇 부호만 담는다(옛한글 자모 없음). 부분 글꼴 이름은 OFL에 따라 `Guun…`으로 바꾼다.
 - 새로 만든 그림은 모아 보기로 사용자에게 먼저 보여 준 뒤에만 `assets/`에 넣는다.
 
-현재 161개는 기존 141개·탑다운 16개·NPC 3개·여도사 걷기 1개다. 탑다운 16개에는 승인 후보 그대로 8개와 키트에서 픽셀 변경 없이 분리한 칸 8개가 포함된다. `manifest_topdown_v3.json`의 미승인 후보 목록과 세 approved manifest를 구분한다.
+현재 204개는 기존 141개·탑다운 16개·NPC 3개·여도사 걷기 1개·v4 43개(장소 14·선녀 7·NPC 14·물건 8, tools/manifest_rpg_v4_approved.json)다. 탑다운 16개에는 승인 후보 그대로 8개와 키트에서 픽셀 변경 없이 분리한 칸 8개가 포함된다. `manifest_topdown_v3.json`의 미승인 후보 목록과 세 approved manifest를 구분한다.
 
 ## 동작 시트와 원본 보존
 

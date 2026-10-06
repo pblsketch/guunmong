@@ -6,7 +6,7 @@
 //  - 데이터 파일은 모두 window.GUUN 아래에 제 몫을 적는다. 예: (window.GUUN = window.GUUN || {}).scenes = [...]
 // <script> 태그로 읽으므로 index.html을 파일로 바로 열어도(file://) 동작한다.
 (function () {
-  const FILES = ['people', 'chapters', 'board', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes', 'bgm', 'sprites', 'maps', 'experiences'];
+  const FILES = ['people', 'chapters', 'board', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes', 'bgm', 'sprites', 'maps', 'experiences', 'challenges'];
   const D = (G.data = { ok: false, fixture: null, loaded: [], missing: [], problems: [] });
 
   function addScript(src) {
@@ -43,6 +43,7 @@
       sprites: src.sprites || {},
       maps: src.maps || [],
       experiences: src.experiences || [],
+      challenges: Array.isArray(src.challenges) ? src.challenges : [],
     });
     const fixtureProfiles = { 'world-opening': 'world-opening', 'world-event': 'world-event', 'rpg-opening': 'rpg-opening', 'rpg-waking': 'rpg-waking', 'rpg-front': 'rpg-front' };
     const profile = D.fixture ? fixtureProfiles[D.fixture] || 'fixture' : 'production';
@@ -102,6 +103,14 @@
     }
     const interp = d.interp || {};
     for (const key of ['dialogue', 'lastWords', 'ending']) texts.push(...lines(interp[key]));
+    // 위기 도전과 생각 선택의 서술·반응도 이야기 총량에 넣는다. 선택지 이름·질문·단추·노트는 뺀다.
+    for (const c of array(d.challenges)) {
+      if (!object(c)) continue;
+      for (const key of ['intro', 'fail', 'success']) if (typeof c[key] === 'string') texts.push(plain(c[key]));
+      for (const clue of array(c.clues)) if (typeof clue === 'string') texts.push(plain(clue));
+      for (const spot of array(c.spots)) if (typeof spot?.clue === 'string') texts.push(plain(spot.clue));
+      for (const o of array(c.options)) texts.push(...(typeof o?.reply === 'string' ? [plain(o.reply)] : lines(o?.reply)));
+    }
     return { texts, count: texts.reduce((n, text) => n + (text.match(/[가-힣]/g) || []).length, 0) };
   };
   G.checkData = function (d = D, options = {}) {
@@ -267,6 +276,8 @@
         if (!['npc', 'item', 'scenery', 'exit', 'pearl'].includes(o.kind) || typeof o.solid !== 'boolean' ||
             typeof o.label !== 'string' || !o.label.trim() || !(o.action === null || identifiers(o.action))) issue('object-fields', o.id);
         if (!Array.isArray(o.visibleAt) || o.visibleAt.some((v) => typeof v !== 'string' || !/^[a-z0-9-]+:[a-z0-9-]+$/.test(v))) issue('object-visible', o.id);
+        if (o.verb != null && (typeof o.verb !== 'string' || !o.verb.trim() || o.verb.length > 8)) issue('object-verb', o.id);
+        if (o.decor != null && (o.decor !== true || o.action !== null || o.person != null || o.verb != null)) issue('object-decor', o.id);
         if (o.person != null && !Object.hasOwn(d.people || {}, o.person)) issue('object-person', o.id);
         if (o.sprite != null && !asset(o.sprite)) issue('object-sprite', o.id);
       }
@@ -399,9 +410,44 @@
     }
     original(d.maps); original(d.experiences);
     if (partial) original(d.scenes);
+    checkChallenges(d, experienceById, issue);
     if (G.storyText(d).count > 4400) issue('story-limit', G.storyText(d).count);
     return out;
   };
+  // 위기 도전과 생각 선택(js/data/challenges.js). 형식은 js/data/README.md의 '위기 도전과 생각 선택'.
+  function checkChallenges(d, experienceById, issue) {
+    const ids = new Set(), slots = new Set();
+    const text = (v) => typeof v === 'string' && !!v.trim(), name = (id) => typeof id === 'string' && /^[a-z][a-z0-9-]*$/.test(id);
+    for (const c of array(d.challenges)) {
+      if (!object(c) || typeof c.id !== 'string' || !/^ch-[a-z0-9-]+$/.test(c.id) || ids.has(c.id)) { issue('challenge-id', c?.id); continue; }
+      ids.add(c.id);
+      const e = experienceById.get(c.scene), b = e && array(e.beats).find((beat) => beat?.id === c.beat);
+      if (!b) { issue('challenge-beat', c.id); continue; }
+      const slot = c.scene + '/' + c.beat + '/' + (c.kind === 'talk' ? 'talk' : 'play');
+      if (slots.has(slot)) issue('challenge-duplicate', c.id); slots.add(slot);
+      const options = array(c.options), optionIds = new Set(options.map((o) => o?.id));
+      if (!['sequence', 'search'].includes(c.kind) && (options.length < 2 || optionIds.size !== options.length || options.some((o) => !object(o) || !name(o.id) || !text(o.label)))) issue('challenge-options', c.id);
+      if (c.kind === 'talk') {
+        if (!Number.isInteger(c.at) || c.at < 0 || c.at >= array(b.lines).length || !text(c.prompt) ||
+            options.some((o) => !object(o?.reply) || !text(o.reply.text) || o.reply.say != null && !Object.hasOwn(d.people || {}, o.reply.say))) issue('challenge-talk', c.id);
+        continue;
+      }
+      if (!['pick', 'deduce', 'sequence', 'search'].includes(c.kind)) { issue('challenge-kind', c.id); continue; }
+      if (!text(c.title) || !text(c.intro) || !text(c.note)) issue('challenge-text', c.id);
+      if (c.kind === 'pick' && (!optionIds.has(c.answer) || options.some((o) => !text(o?.reply)))) issue('challenge-pick', c.id);
+      if (c.kind === 'deduce' && (array(c.clues).length < 2 || array(c.clues).some((v) => !text(v)) || !text(c.question) || !optionIds.has(c.answer) || !text(c.fail) || !text(c.success))) issue('challenge-deduce', c.id);
+      if (c.kind === 'sequence') {
+        const notes = array(c.notes);
+        if (!['flute', 'zither'].includes(c.instrument) || notes.length < 3 || notes.length > 7 || notes.some((n) => !text(n?.label) || !Number.isInteger(n.midi) || n.midi < 48 || n.midi > 96) ||
+            !array(c.rounds).length || array(c.rounds).some((r) => !Array.isArray(r) || r.length < 3 || r.some((i) => !Number.isInteger(i) || i < 0 || i >= notes.length)) || !text(c.fail) || !text(c.success)) issue('challenge-sequence', c.id);
+      }
+      if (c.kind === 'search') {
+        const spots = array(c.spots), spotIds = new Set(spots.map((v) => v?.id));
+        if (spots.length < 3 || spotIds.size !== spots.length || spots.some((v) => !object(v) || !name(v.id) || !text(v.label)) || !spotIds.has(c.answer) ||
+            spots.some((v) => v?.id !== c.answer && !text(v?.clue)) || !Number.isInteger(c.tries) || c.tries < 1 || c.tries >= spots.length || !text(c.fail) || !text(c.success)) issue('challenge-search', c.id);
+      }
+    }
+  }
   G.checkSprites = function (sprites) {
     const out = [], issue = (code, id) => out.push(code + ': ' + id);
     if (!object(sprites)) return ['sprites: invalid'];

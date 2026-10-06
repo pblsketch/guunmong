@@ -86,7 +86,7 @@
     const el = h('div.mark.' + b.mark, h('span.tag', KIND[b.mark] || b.mark),
       b.title ? h('h4', b.title) : null,
       b.body ? h('div.body', T.inline(b.body)) : null);
-    if (b.mark === 'interp') el.appendChild(h('div.unscored', '여러 해석이 있어요 · 채점하지 않아요'));
+    if (b.mark === 'interp') el.appendChild(h('div.unscored', '여러 해석이 있어요'));
     if (b.mark === 'fiction') {
       const key = b.id || b.title || '';
       if (b.real && (opt.showReal || !S().seenFiction[key])) el.appendChild(h('div.real', h('b', '실제로는 → '), T.inline(b.real)));

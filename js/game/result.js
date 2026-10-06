@@ -72,14 +72,14 @@
       h('div.jp-meta', h('label', h('span', '이름 '), nameIn), h('span.jp-date', L.date)),
       h('div.jp-block.dream-trace', h('h4', '꿈의 앞과 뒤'),
         h('div.dream-trace-images', traceFigure(L.dreamTrace.before), traceFigure(L.dreamTrace.after)),
-        h('p.dream-trace-evidence', '이 대비를 돌아본 근거 · ' + (L.dreamTrace.evidence || '—'))),
+        h('p.dream-trace-evidence', '이 대비를 돌아본 근거 · ' + (L.dreamTrace.evidence || '없음'))),
       h('div.jp-q', h('b', '물음 '), L.question),
       h('div.jp-block', h('h4', '나의 해석'), h('p.jp-interp', L.interp)),
-      h('div.jp-block', h('h4', '근거 구절'), h('p.jp-ev', L.evidence || '—')),
-      h('div.jp-block.jp-trace', h('h4', it.revised ? '고친 흔적' : '고친 흔적 없음'), h('p', L.revision || '—')),
+      h('div.jp-block', h('h4', '근거 구절'), h('p.jp-ev', L.evidence || '없음')),
+      h('div.jp-block.jp-trace', h('h4', it.revised ? '고친 흔적' : '고친 흔적 없음'), h('p', L.revision || '없음')),
       h('div.jp-keep', h('section', h('h4', '성진의 소원'), h('ul.result-wishes', L.wishes.map((w) => h('li', h('b', w.name), w.evidence ? h('span.small', ' · ' + w.evidence) : null)))), D.pearlKeep()),
       h('div.jp-block.jp-help', h('h4', '도움 안내'), h('p', L.help.length ? L.help.join(' / ') : '도움 없이 마쳤어요.')),
-      h('p.small.muted', '해석은 채점하지 않아요. 친구의 해석과 근거를 견주어 보세요.'));
+      h('p.small.muted', '해석에는 하나뿐인 정답이 없어요. 친구의 해석과 근거를 견주어 보세요.'));
   }
 
   function ledgerBox() {
@@ -91,9 +91,9 @@
     const found = ps.filter((s) => S().pearls[s.meet]).length;
     return h('div.ledger-box',
       h('div.stats',
-        h('div.stat', h('b', tried.length ? firstOk + ' / ' + tried.length : '—'), h('span', '첫 시도에 맞힌 활동')),
+        h('div.stat', h('b', tried.length ? firstOk + ' / ' + tried.length : '없음'), h('span', '첫 시도에 맞힌 활동')),
         h('div.stat', h('b', String(helped)), h('span', '도움 사용한 활동')),
-        h('div.stat', h('b', '찾은 구슬 ' + found + ' / ' + ps.length), h('span', '점수로 치지 않아요'))),
+        h('div.stat', h('b', '찾은 구슬 ' + found + ' / ' + ps.length), h('span', '찾아도, 지나쳐도 되는 구슬'))),
       app.ledgerTable(),
       ((G.data.notes || {}).teacher || {}).ledger ? h('details.teacher-guide', { open: S().teacher },
         h('summary', '선생님께 · 장부 보는 법'), h('p', T.inline(G.data.notes.teacher.ledger)),
@@ -116,7 +116,7 @@
     if (st.wrong.length) {
       s.appendChild(h('div.notes.wrong-notes', h('h3', '오답 노트'), h('ul', st.wrong.map((w) => {
         const t = app.activityTitles[w.act] || (app.list().find((x) => x.activity && x.activity.id === w.act) || {}).title || w.act;
-        return h('li', h('b', plain(t)), ' — 고른 것: ' + plain(w.picked) + ' / 정답: ' + plain(w.answer), w.note ? h('div.small.muted', T.inline(w.note)) : null);
+        return h('li', h('b', plain(t)), ': 고른 것 ' + plain(w.picked) + ', 정답 ' + plain(w.answer), w.note ? h('div.small.muted', T.inline(w.note)) : null);
       }))));
     } else s.appendChild(h('div.notes.wrong-notes', h('h3', '오답 노트'), h('p.small', '틀린 칸이 없어요.')));
     const N = G.data.notes || {};
@@ -172,11 +172,11 @@
     const px = 70, inner = W - px * 2 - 60;
     g0.font = `26px ${serif}`;
     const blocks = [
-      ['꿈의 대비', L.dreamTrace.before.label + ' → ' + L.dreamTrace.after.label + '\n이 대비를 돌아본 근거 · ' + (L.dreamTrace.evidence || '—'), '#2b2320'],
+      ['꿈의 대비', L.dreamTrace.before.label + ' → ' + L.dreamTrace.after.label + '\n이 대비를 돌아본 근거 · ' + (L.dreamTrace.evidence || '없음'), '#2b2320'],
       ['물음', L.question, '#2b2320'],
       ['나의 해석', L.interp, '#34508f'],
-      ['근거 구절', L.evidence || '—', '#2b2320'],
-      [L.revised ? '고친 흔적' : '고친 흔적 없음', L.revision || '—', '#5b4a3c'],
+      ['근거 구절', L.evidence || '없음', '#2b2320'],
+      [L.revised ? '고친 흔적' : '고친 흔적 없음', L.revision || '없음', '#5b4a3c'],
       ['소원', L.wishes.map((w) => w.name + (w.evidence ? ' · ' + w.evidence : '')).join('\n'), '#5b4a3c'],
       ['구슬', L.pearls.length ? L.pearls.join(' · ') : '찾은 구슬 없음', '#5b4a3c'],
       ['도움 안내', L.help.length ? L.help.join('\n') : '도움 없이 마쳤어요.', '#5b4a3c'],
@@ -219,7 +219,7 @@
       y += 30;
     }
     g.fillStyle = '#6a5a47'; g.font = `18px ${serif}`; g.textAlign = 'right';
-    g.fillText('김만중 「구운몽」 학습 게임 · 해석은 채점하지 않아요', W - px - 20, H - 74);
+    g.fillText('김만중 「구운몽」 학습 게임 · 해석에는 하나뿐인 정답이 없어요', W - px - 20, H - 74);
     return c;
   };
   let resultUrl = null, revokeTimer = null;

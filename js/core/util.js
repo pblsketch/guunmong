@@ -5,7 +5,7 @@ window.G = window.G || {};
 (function () {
   const U = (G.util = {});
 
-  // h('div.cls#id', {attrs}, children...) — 간단한 요소 생성기
+  // h('div.cls#id', {attrs}, children...): 간단한 요소 생성기
   U.h = function (sel, attrs, ...kids) {
     const m = sel.match(/^([a-z0-9]+)?((?:[.#][\w-]+)*)$/i);
     const el = document.createElement((m && m[1]) || 'div');

@@ -11,7 +11,7 @@
     const linkBox = h('section.bond-link', h('h3', data.bondLink.prompt));
     const out = h('div.link-out', { role: 'status' });
     const buttons = data.bondLink.choices.map((id) => h('button.btn.link-opt', { type: 'button', dataset: { wish: id, must: '' }, disabled: true }, G.data.wishes.find((w) => w.id === id)?.dreamHidden && !journal.revealed?.[id] ? '?' : name(id)));
-    linkBox.append(h('p.small', '어떤 마음과 잇든 채점하지 않아요.'), h('div.link-opts', buttons), out);
+    linkBox.append(h('p.small', '어느 마음과 이어도 괜찮아요.'), h('div.link-opts', buttons), out);
     const fairies = h('section.journal-fairies', h('h3', '구슬이 비추는 팔선녀'));
     const scale = G.util.pixNear(96, 96);
     const grid = h('div.fairy-grid');

@@ -26,7 +26,8 @@ async function toStaff(p,big=false,touch=false){
     await p.locator('#tray [data-act="next"]').click();
   }
   await at(p,'c3-staff');
-  if(!await p.locator('[data-act="staff"]').count())await p.locator('#tray [data-act="next"]').click();
+  // 컷신이 스스로 지팡이 단계로 넘어가면 다음 단추가 사라지므로, 지팡이 단추가 나타날 때까지 보이는 다음 단추만 실제로 누른다.
+  for(let i=0;i<20&&!await p.locator('[data-act="staff"]').count();i++)await p.locator('#tray [data-act="next"]').click({timeout:1000}).catch(()=>{});
   await p.waitForSelector('[data-act="staff"]');
 }
 async function pose(p){return p.locator('.cut-sprite').evaluate(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return{position:s.backgroundPosition,width:r.width,height:r.height,animation:s.animationName,field:!!el.closest('[data-game-field]')};});}

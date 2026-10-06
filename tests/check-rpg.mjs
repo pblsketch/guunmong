@@ -7,3 +7,4 @@ await import('./fixtures/mobile-controls-suite.mjs');
 await import('./fixtures/rpg-waking-suite.mjs');
 await import('./fixtures/rpg-front-suite.mjs');
 await import('./fixtures/rpg-tiles-suite.mjs');
+await import('./fixtures/challenge-suite.mjs');

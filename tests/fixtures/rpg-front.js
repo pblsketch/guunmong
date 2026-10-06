@@ -193,6 +193,243 @@ window.GUUN = {
       ]
     }
   ],
+  "challenges": [
+    {
+      "id": "ch-bridge-reply",
+      "scene": "c1-bridge",
+      "beat": "bridge-meet",
+      "kind": "talk",
+      "at": 1,
+      "prompt": "성진은 어떻게 답할까?",
+      "options": [
+        {
+          "id": "polite",
+          "label": "길을 비켜 달라고 정중히 청한다",
+          "reply": {
+            "say": "fairy_chae",
+            "text": "말씀은 고우시네요. 그래도 길값은 길값이지요."
+          }
+        },
+        {
+          "id": "laugh",
+          "label": "중에게 무슨 재물이 있겠느냐며 웃는다",
+          "reply": {
+            "say": "fairy_chae",
+            "text": "빈손이라 하시니 더 궁금해지는걸요."
+          }
+        },
+        {
+          "id": "look",
+          "label": "말없이 손에 든 것을 살핀다",
+          "reply": {
+            "say": "fairy_chae",
+            "text": "무엇을 내놓으실지 기다려 볼게요."
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-tianjin-poem",
+      "scene": "e02-tianjin",
+      "beat": "tianjin-write",
+      "kind": "pick",
+      "title": "섬월이 부를 시",
+      "intro": "섬월은 쌓인 시 가운데 아직 한 편도 고르지 않았다. 어떤 시를 쓸까?",
+      "options": [
+        {
+          "id": "boast",
+          "label": "벼슬과 집안을 뽐내는 시",
+          "reply": "섬월이 종이를 접어 내려놓았다. 자랑은 가락에 얹히지 않았다."
+        },
+        {
+          "id": "heart",
+          "label": "눈앞의 풍경에 마음을 담은 시",
+          "reply": "섬월이 붓끝을 따라 읽다가 고개를 들었다."
+        },
+        {
+          "id": "mock",
+          "label": "다른 선비의 시를 비웃는 시",
+          "reply": "선비들이 웅성거렸다. 섬월은 못 들은 척 눈을 돌렸다."
+        }
+      ],
+      "answer": "heart",
+      "note": "시의 주제를 고르는 일은 게임이 꾸민 장치예요. 섬월이 소유의 시를 골라 노래한 일은 원작에 있어요."
+    },
+    {
+      "id": "ch-geomungo-tune",
+      "scene": "e03-geomungo",
+      "beat": "geomungo-play",
+      "kind": "pick",
+      "title": "마지막 곡조",
+      "intro": "소저는 곡마다 이름과 내력을 짚는다. 마음을 전할 마지막 곡은 무엇일까?",
+      "options": [
+        {
+          "id": "battle",
+          "label": "싸움터의 기세를 담은 곡",
+          "reply": "소저가 곡의 내력만 조용히 짚었다. 마음은 아직 닿지 않았다."
+        },
+        {
+          "id": "parting",
+          "label": "헤어짐을 슬퍼하는 곡",
+          "reply": "소저가 고개를 끄덕였지만 발 너머는 고요했다."
+        },
+        {
+          "id": "phoenix",
+          "label": "봉황이 짝을 찾는 곡, 봉구황",
+          "reply": "줄을 고르는 손끝이 조금 떨렸다."
+        }
+      ],
+      "answer": "phoenix",
+      "note": "앞서 탄 곡의 이름과 차례는 판본마다 달라요. 봉구황으로 뜻을 전한 일은 두 계열에 모두 있어요."
+    },
+    {
+      "id": "ch-chunun-ghost",
+      "scene": "e05-chunun",
+      "beat": "chunun-talisman",
+      "kind": "deduce",
+      "title": "선녀인가, 귀신인가",
+      "intro": "부적을 받기 전에 지금까지 본 것을 짚어 보자.",
+      "clues": [
+        "선녀와 귀신은 목소리가 같았다.",
+        "둘 다 소유가 홀로 있을 때만 나타났다.",
+        "누구도 얼굴을 똑바로 보이지 않았다."
+      ],
+      "question": "선녀와 귀신의 정체는 무엇일까?",
+      "options": [
+        {
+          "id": "fairy",
+          "label": "정말 하늘에서 내려온 선녀"
+        },
+        {
+          "id": "ghost",
+          "label": "정말 장여랑의 귀신"
+        },
+        {
+          "id": "one",
+          "label": "한 사람이 두 모습으로 꾸민 일"
+        }
+      ],
+      "answer": "one",
+      "fail": "소유는 더 깊이 홀렸다. 단서를 다시 보자.",
+      "success": "정체를 알아챘다. 하지만 이야기 속 소유는 아직 모른다.",
+      "note": "단서를 모아 추리하는 일은 게임이 꾸민 장치예요. 가춘운이 선녀와 귀신으로 꾸며 소유를 속인 일은 원작에 있어요."
+    },
+    {
+      "id": "ch-gyeonghong-reply",
+      "scene": "e06-gyeonghong",
+      "beat": "gyeonghong-companion",
+      "kind": "talk",
+      "at": 0,
+      "prompt": "소유는 어떻게 답할까?",
+      "options": [
+        {
+          "id": "welcome",
+          "label": "길벗이 생겨 반갑다고 한다",
+          "reply": {
+            "say": "gyeonghong",
+            "text": "그럼 말머리를 나란히 하지요."
+          }
+        },
+        {
+          "id": "careful",
+          "label": "처음 본 사이라 조심스럽다고 한다",
+          "reply": {
+            "say": "gyeonghong",
+            "text": "눈이 밝으시군요. 그래도 길은 하나인걸요."
+          }
+        },
+        {
+          "id": "ask",
+          "label": "이름과 고향부터 묻는다",
+          "reply": {
+            "say": "gyeonghong",
+            "text": "적생이라 불러 주세요. 고향 이야기는 길에서 천천히 하지요."
+          }
+        }
+      ]
+    },
+    {
+      "id": "ch-gyeonghong-who",
+      "scene": "e06-gyeonghong",
+      "beat": "gyeonghong-discover",
+      "kind": "deduce",
+      "title": "밤사이 바뀐 사람",
+      "intro": "아침에 보니 곁의 사람이 섬월이 아니다.",
+      "clues": [
+        "적생은 낙양까지 꼭 함께 가겠다고 청했다.",
+        "적생은 섬월의 이름을 듣고도 놀라지 않았다.",
+        "어젯밤 곁에 있던 이의 웃음소리가 적생과 닮았다."
+      ],
+      "question": "밤사이 섬월과 자리를 바꾼 이는 누구일까?",
+      "options": [
+        {
+          "id": "chunun",
+          "label": "별당의 가춘운"
+        },
+        {
+          "id": "gyeonghong",
+          "label": "길벗 적생"
+        },
+        {
+          "id": "gyeongpae",
+          "label": "정씨 집의 소저"
+        }
+      ],
+      "answer": "gyeonghong",
+      "fail": "그 사람은 이 길에 온 적이 없다. 단서를 다시 보자.",
+      "success": "길벗의 웃음이 떠올랐다.",
+      "note": "단서를 모아 추리하는 일은 게임이 꾸민 장치예요. 적경홍이 남장을 하고 동행하다가 섬월과 자리를 바꾼 일은 원작에 있어요."
+    },
+    {
+      "id": "ch-tungso-melody",
+      "scene": "e07-tungso",
+      "beat": "tungso-play",
+      "kind": "sequence",
+      "title": "학을 부르는 가락",
+      "intro": "도인에게 배운 가락을 들은 그대로 불어 보자.",
+      "instrument": "flute",
+      "notes": [
+        {
+          "label": "궁",
+          "midi": 72
+        },
+        {
+          "label": "상",
+          "midi": 74
+        },
+        {
+          "label": "각",
+          "midi": 76
+        },
+        {
+          "label": "치",
+          "midi": 79
+        },
+        {
+          "label": "우",
+          "midi": 81
+        }
+      ],
+      "rounds": [
+        [
+          0,
+          2,
+          1,
+          3
+        ],
+        [
+          0,
+          2,
+          4,
+          3,
+          1
+        ]
+      ],
+      "fail": "가락이 엇나가자 밤바람만 불었다. 다시 들어 보자.",
+      "success": "가락 끝에 날갯짓 소리가 들렸다.",
+      "note": "가락을 따라 부는 일은 게임이 꾸민 장치예요. 소유의 퉁소 소리에 학이 날아든 일은 원작에 있어요."
+    }
+  ],
   "chapters": {
     "1": {
       "intro": "성진으로 돌다리를 걷고, 선방에서 떠오르는 소원을 찾아보세요.",
@@ -468,7 +705,7 @@ window.GUUN = {
       "map": "map-namjeon",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -530,7 +767,7 @@ window.GUUN = {
       "map": "map-tianjin",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -601,7 +838,7 @@ window.GUUN = {
             "target": "tianjin-pearl"
           },
           "lines": [
-            4
+            2
           ],
           "effects": [
             {
@@ -618,7 +855,7 @@ window.GUUN = {
       "map": "map-jeong-house",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -708,7 +945,7 @@ window.GUUN = {
       "map": "map-exam",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -767,8 +1004,8 @@ window.GUUN = {
           ],
           "map": "map-hallim",
           "spawn": {
-            "x": 2,
-            "y": 7,
+            "x": 5,
+            "y": 8,
             "facing": "up"
           },
           "appearance": "walk-yang-chancellor"
@@ -781,7 +1018,7 @@ window.GUUN = {
       "map": "map-chunun-garden",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -852,7 +1089,7 @@ window.GUUN = {
           ],
           "map": "map-chunun-room",
           "spawn": {
-            "x": 2,
+            "x": 5,
             "y": 8,
             "facing": "up"
           },
@@ -884,7 +1121,7 @@ window.GUUN = {
       "map": "map-hebei",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -943,7 +1180,7 @@ window.GUUN = {
       "map": "map-gyeonghong-road",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -991,7 +1228,7 @@ window.GUUN = {
           "effects": [],
           "map": "map-gyeonghong-room",
           "spawn": {
-            "x": 2,
+            "x": 5,
             "y": 8,
             "facing": "up"
           },
@@ -1045,7 +1282,7 @@ window.GUUN = {
       "map": "map-tungso",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -1140,7 +1377,7 @@ window.GUUN = {
       "map": "map-bongnae",
       "actor": "yang",
       "spawn": {
-        "x": 1,
+        "x": 5,
         "y": 8,
         "facing": "up"
       },
@@ -1371,12 +1608,112 @@ window.GUUN = {
           "sprite": "npc-fairy-green"
         },
         {
+          "id": "bridge-fairy-scarlet",
+          "x": 4,
+          "y": 0,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-scarlet"
+        },
+        {
+          "id": "bridge-fairy-ivory",
+          "x": 5,
+          "y": 0,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-ivory"
+        },
+        {
+          "id": "bridge-fairy-pink",
+          "x": 6,
+          "y": 0,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-pink"
+        },
+        {
+          "id": "bridge-fairy-violet",
+          "x": 7,
+          "y": 0,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-violet"
+        },
+        {
+          "id": "bridge-fairy-gold",
+          "x": 5,
+          "y": 1,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-gold"
+        },
+        {
+          "id": "bridge-fairy-navy",
+          "x": 6,
+          "y": 1,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-navy"
+        },
+        {
+          "id": "bridge-fairy-aqua",
+          "x": 5,
+          "y": 2,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-meet"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-aqua"
+        },
+        {
           "id": "bridge-flower",
           "x": 5,
           "y": 4,
           "kind": "item",
           "solid": true,
           "label": "복숭아꽃",
+          "verb": "건네기",
+          "sprite": "prop-peach",
           "visibleAt": [
             "c1-bridge:bridge-flower"
           ],
@@ -1389,6 +1726,7 @@ window.GUUN = {
           "kind": "exit",
           "solid": true,
           "label": "선방으로 돌아가는 길",
+          "sprite": "prop-path",
           "visibleAt": [
             "c1-bridge:bridge-home"
           ],
@@ -1552,6 +1890,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "창가",
+          "sprite": "prop-window",
           "visibleAt": [
             "c1-cell:cell-window",
             "c1-cell:cell-sit"
@@ -1564,7 +1903,8 @@ window.GUUN = {
           "y": 5,
           "kind": "scenery",
           "solid": true,
-          "label": "방석에 앉기",
+          "label": "방석",
+          "verb": "앉기",
           "visibleAt": [
             "c1-cell:cell-window",
             "c1-cell:cell-sit"
@@ -1578,7 +1918,7 @@ window.GUUN = {
           "y": 4,
           "kind": "scenery",
           "solid": true,
-          "label": "경전 놓인 자리",
+          "label": "경전",
           "visibleAt": [
             "c1-cell:cell-window",
             "c1-cell:cell-sit"
@@ -1621,6 +1961,7 @@ window.GUUN = {
           "kind": "exit",
           "solid": true,
           "label": "저승으로 향하는 출입구",
+          "sprite": "prop-gate",
           "visibleAt": [
             "c1-exile:exile-leave"
           ],
@@ -1783,7 +2124,8 @@ window.GUUN = {
           "y": 3,
           "kind": "scenery",
           "solid": true,
-          "label": "버들 아래에서 누각 살피기",
+          "label": "누각에 닿은 버들",
+          "sprite": "prop-willow",
           "visibleAt": [
             "e01-huayin:huayin-look"
           ],
@@ -1795,7 +2137,8 @@ window.GUUN = {
           "y": 4,
           "kind": "item",
           "solid": true,
-          "label": "붓 놓인 자리",
+          "label": "붓과 종이",
+          "verb": "시 쓰기",
           "visibleAt": [
             "e01-huayin:huayin-write"
           ],
@@ -1823,6 +2166,7 @@ window.GUUN = {
           "kind": "item",
           "solid": true,
           "label": "유모가 건넨 답시",
+          "verb": "받기",
           "visibleAt": [
             "e01-huayin:huayin-reply"
           ],
@@ -1836,6 +2180,7 @@ window.GUUN = {
           "kind": "exit",
           "solid": true,
           "label": "과거 길",
+          "sprite": "prop-path",
           "visibleAt": [
             "e01-huayin:huayin-leave"
           ],
@@ -1866,8 +2211,8 @@ window.GUUN = {
           0,
           0,
           0,
-          0,
-          0,
+          1,
+          1,
           0,
           0,
           0,
@@ -1876,114 +2221,16 @@ window.GUUN = {
         ],
         [
           0,
-          1,
-          1,
+          0,
+          0,
           0,
           0,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
           0,
           0,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0
         ],
         [
@@ -1992,8 +2239,106 @@ window.GUUN = {
           0,
           0,
           0,
+          1,
+          1,
           0,
           0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
           0,
           0,
           0,
@@ -2005,11 +2350,12 @@ window.GUUN = {
       "objects": [
         {
           "id": "namjeon-ridge",
-          "x": 2,
-          "y": 3,
+          "x": 4,
+          "y": 6,
           "kind": "scenery",
           "solid": true,
           "label": "산등성이의 좁은 길",
+          "sprite": "prop-path",
           "visibleAt": [
             "l-namjeon:namjeon-climb"
           ],
@@ -2017,11 +2363,12 @@ window.GUUN = {
         },
         {
           "id": "namjeon-dosa",
-          "x": 9,
-          "y": 2,
+          "x": 5,
+          "y": 1,
           "kind": "npc",
           "solid": true,
           "label": "남전산 도인",
+          "sprite": "npc-hermit",
           "visibleAt": [
             "l-namjeon:namjeon-learn"
           ],
@@ -2030,11 +2377,12 @@ window.GUUN = {
         },
         {
           "id": "namjeon-instruments",
-          "x": 8,
-          "y": 7,
+          "x": 7,
+          "y": 4,
           "kind": "item",
           "solid": true,
           "label": "거문고와 백옥 퉁소",
+          "verb": "받기",
           "visibleAt": [
             "l-namjeon:namjeon-receive"
           ],
@@ -2190,7 +2538,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-tianjin",
       "objects": [
         {
           "id": "tianjin-guests",
@@ -2198,7 +2546,7 @@ window.GUUN = {
           "y": 2,
           "kind": "scenery",
           "solid": true,
-          "label": "시회에 모인 자리",
+          "label": "시를 겨루는 선비들",
           "visibleAt": [
             "e02-tianjin:tianjin-enter"
           ],
@@ -2212,6 +2560,7 @@ window.GUUN = {
           "kind": "item",
           "solid": true,
           "label": "시전과 붓",
+          "verb": "시 쓰기",
           "visibleAt": [
             "e02-tianjin:tianjin-write"
           ],
@@ -2225,6 +2574,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "계섬월",
+          "sprite": "npc-singer",
           "visibleAt": [
             "e02-tianjin:tianjin-listen"
           ],
@@ -2238,7 +2588,9 @@ window.GUUN = {
           "kind": "pearl",
           "solid": true,
           "label": "술잔 곁 구슬 흔적 · 선택",
-          "visibleAt": [],
+          "visibleAt": [
+            "e02-tianjin:tianjin-listen"
+          ],
           "action": "tianjin-pearl",
           "sprite": "prop-stool"
         }
@@ -2391,7 +2743,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-jeong-house",
       "objects": [
         {
           "id": "geomungo-clothes",
@@ -2400,6 +2752,7 @@ window.GUUN = {
           "kind": "item",
           "solid": true,
           "label": "여도사 차림",
+          "verb": "갈아입기",
           "visibleAt": [
             "e03-geomungo:geomungo-dress"
           ],
@@ -2412,7 +2765,8 @@ window.GUUN = {
           "y": 4,
           "kind": "item",
           "solid": true,
-          "label": "거문고 자리",
+          "label": "거문고",
+          "verb": "타기",
           "visibleAt": [
             "e03-geomungo:geomungo-play"
           ],
@@ -2426,6 +2780,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "발 너머 소저",
+          "sprite": "npc-noble-lady",
           "visibleAt": [
             "e03-geomungo:geomungo-response"
           ],
@@ -2592,7 +2947,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-grey",
+      "art": "map-exam",
       "objects": [
         {
           "id": "exam-seat",
@@ -2600,7 +2955,8 @@ window.GUUN = {
           "y": 4,
           "kind": "scenery",
           "solid": true,
-          "label": "시험 자리와 붓",
+          "label": "시험장의 책상과 붓",
+          "verb": "글 쓰기",
           "visibleAt": [
             "e04-exam:exam-write"
           ],
@@ -2769,7 +3125,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-hallim",
       "objects": [
         {
           "id": "hallim-desk",
@@ -2806,16 +3162,30 @@ window.GUUN = {
         ],
         [
           0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -2840,48 +3210,6 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          0,
-          0,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          0,
-          0,
           1,
           1,
           1,
@@ -2921,10 +3249,38 @@ window.GUUN = {
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
           0,
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
           0,
           0,
           0,
@@ -2935,11 +3291,12 @@ window.GUUN = {
       "objects": [
         {
           "id": "chunun-fairy",
-          "x": 9,
-          "y": 2,
+          "x": 8,
+          "y": 3,
           "kind": "npc",
           "solid": true,
           "label": "흰 옷의 낯선 이",
+          "sprite": "npc-white-robe",
           "visibleAt": [
             "e05-chunun:chunun-fairy"
           ],
@@ -2953,6 +3310,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "장여랑이라 하는 이",
+          "sprite": "npc-white-robe",
           "visibleAt": [
             "e05-chunun:chunun-ghost"
           ],
@@ -2961,11 +3319,12 @@ window.GUUN = {
         },
         {
           "id": "chunun-talisman",
-          "x": 8,
-          "y": 7,
+          "x": 6,
+          "y": 5,
           "kind": "item",
           "solid": true,
           "label": "귀신을 쫓는다는 부적",
+          "verb": "몸에 지니기",
           "visibleAt": [
             "e05-chunun:chunun-talisman"
           ],
@@ -3121,7 +3480,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-chunun-room",
       "objects": [
         {
           "id": "chunun-screen",
@@ -3143,6 +3502,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "가춘운",
+          "sprite": "npc-white-robe",
           "visibleAt": [
             "e05-chunun:chunun-reveal"
           ],
@@ -3215,22 +3575,8 @@ window.GUUN = {
           1,
           1,
           1,
-          0,
-          0,
           1,
           1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          0,
           1,
           1,
           1,
@@ -3260,8 +3606,22 @@ window.GUUN = {
           1,
           1,
           1,
+          1,
+          1,
+          1,
+          1,
+          0
+        ],
+        [
           0,
-          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
           1,
           1,
           0
@@ -3309,7 +3669,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "map-bridge",
+      "art": "map-hebei",
       "objects": [
         {
           "id": "hebei-edict",
@@ -3331,6 +3691,7 @@ window.GUUN = {
           "kind": "item",
           "solid": true,
           "label": "사신의 부절",
+          "verb": "내보이기",
           "visibleAt": [
             "l-hebei:hebei-token"
           ],
@@ -3344,6 +3705,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "연왕",
+          "sprite": "npc-yeonwang",
           "visibleAt": [
             "l-hebei:hebei-persuade"
           ],
@@ -3374,16 +3736,30 @@ window.GUUN = {
         ],
         [
           0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
           1,
           1,
           1,
           1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -3403,19 +3779,6 @@ window.GUUN = {
         [
           0,
           1,
-          0,
-          0,
-          1,
-          1,
-          1,
-          1,
-          0,
-          0,
-          1,
-          0
-        ],
-        [
-          0,
           1,
           1,
           1,
@@ -3424,35 +3787,6 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          0,
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0
-        ],
-        [
-          0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          0,
-          0,
           1,
           0
         ],
@@ -3489,10 +3823,38 @@ window.GUUN = {
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
           0,
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
           0,
           0,
           0,
@@ -3504,7 +3866,7 @@ window.GUUN = {
         {
           "id": "gyeonghong-horse",
           "x": 2,
-          "y": 2,
+          "y": 4,
           "kind": "scenery",
           "solid": true,
           "label": "함께 달릴 말",
@@ -3521,6 +3883,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "적생",
+          "sprite": "npc-jeoksaeng",
           "visibleAt": [
             "e06-gyeonghong:gyeonghong-companion"
           ],
@@ -3676,7 +4039,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-gyeonghong-room",
       "objects": [
         {
           "id": "gyeonghong-seat",
@@ -3698,6 +4061,7 @@ window.GUUN = {
           "kind": "npc",
           "solid": true,
           "label": "적경홍",
+          "sprite": "npc-gyeonghong",
           "visibleAt": [
             "e06-gyeonghong:gyeonghong-reveal"
           ],
@@ -3739,16 +4103,16 @@ window.GUUN = {
         ],
         [
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
           0
         ],
         [
@@ -3762,7 +4126,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -3776,7 +4140,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -3790,7 +4154,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -3804,7 +4168,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -3818,7 +4182,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -3832,21 +4196,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
-          0
-        ],
-        [
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0
         ],
         [
@@ -3854,10 +4204,24 @@ window.GUUN = {
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
           0,
           0,
           0,
           0,
+          1,
+          1,
+          1,
+          1,
           0,
           0,
           0,
@@ -3873,6 +4237,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "한림원의 밤 뜰",
+          "sprite": "prop-lantern",
           "visibleAt": [
             "e07-tungso:tungso-night"
           ],
@@ -3885,6 +4250,7 @@ window.GUUN = {
           "kind": "item",
           "solid": true,
           "label": "백옥 퉁소",
+          "verb": "불기",
           "visibleAt": [
             "e07-tungso:tungso-play"
           ],
@@ -3898,6 +4264,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "가락에 내려온 학",
+          "sprite": "prop-crane",
           "visibleAt": [
             "e07-tungso:tungso-crane"
           ],
@@ -3906,7 +4273,7 @@ window.GUUN = {
         {
           "id": "tungso-message",
           "x": 8,
-          "y": 7,
+          "y": 6,
           "kind": "scenery",
           "solid": true,
           "label": "궁중에서 전해 온 이야기",
@@ -3923,7 +4290,9 @@ window.GUUN = {
           "kind": "pearl",
           "solid": true,
           "label": "달빛 속 구슬 흔적 · 선택",
-          "visibleAt": [],
+          "visibleAt": [
+            "e07-tungso:tungso-message"
+          ],
           "action": "tungso-pearl",
           "sprite": "prop-cushion"
         }
@@ -4076,7 +4445,7 @@ window.GUUN = {
           0
         ]
       ],
-      "art": "prop-floor-wood",
+      "art": "map-bongnae",
       "objects": [
         {
           "id": "bongnae-fan",
@@ -4097,7 +4466,8 @@ window.GUUN = {
           "y": 5,
           "kind": "item",
           "solid": true,
-          "label": "시를 쓰는 붓",
+          "label": "궁녀의 부채",
+          "verb": "시 써 주기",
           "visibleAt": [
             "l-bongnae:bongnae-write"
           ],
@@ -4110,7 +4480,8 @@ window.GUUN = {
           "y": 3,
           "kind": "item",
           "solid": true,
-          "label": "돌아온 답시와 문방",
+          "label": "돌아온 답시",
+          "verb": "읽기",
           "visibleAt": [
             "l-bongnae:bongnae-reply"
           ],
@@ -4175,7 +4546,7 @@ window.GUUN = {
       }
     ],
     "discuss": [
-      "꿈에서 쌓은 점수가 사라질 때 어떤 생각이 들었나요? 그 경험과 작품의 구절을 이어 설명해 보세요.",
+      "취미궁과 선방을 나란히 보면 어떤 생각이 드나요? 그 경험과 작품의 구절을 이어 설명해 보세요.",
       "성진이 처음 바라던 삶과 깨어난 뒤 선택한 삶은 어떻게 다른가요? 작품의 사건을 근거로 이야기해 보세요."
     ],
     "comparison": {
@@ -4192,7 +4563,7 @@ window.GUUN = {
         "대사의 말을 듣고 해석이나 근거를 바꾼 까닭은 무엇인가요?"
       ],
       "extra": "사건의 길과 결말은 모두 같아요. 구슬 찾기는 선택이며 인연은 점수와 연결하지 않아요. 기록은 이 브라우저에 남으므로 공용 기기는 수업 뒤 확인을 거쳐 지워 주세요.",
-      "ledger": "소원 찾기·맞대기는 첫 시도와 도움을 봐요. 사건은 준비 적중 0·1·2, 등급, 예고 단서, 핵심 능력 보기 사용을 읽어요. 등급에는 쌓인 능력과 윤목도 작용하므로 독해 점수로 쓰지 않아요. 선생님용 바로 가기로 채운 사건은 —로 남아요. 꿈 점수는 장부에 넣지 않고 평가에도 쓰지 않아요."
+      "ledger": "소원 찾기·맞대기는 첫 시도와 도움을 봐요. 사건은 미시작·진행·완료·자동 안내를 구분하고, 학생이 살펴본 행동 근거와 도움 여부를 읽어요. 옛 준비 적중과 등급은 새 수행으로 바꾸지 않아요."
     },
     "ui": {
       "abilities": {
@@ -4243,7 +4614,7 @@ window.GUUN = {
           "mark": "fiction",
           "id": "fc-pearls",
           "title": "그림 속 구슬 흔적",
-          "body": "반짝이는 흔적은 눌러 볼 수 있어요. 놓쳐도 다음으로 갈 수 있고 감점은 없어요.",
+          "body": "반짝이는 곳을 누르면 숨은 구슬을 찾을 수 있어요. 그냥 지나쳐도 이야기는 이어져요.",
           "real": "정경패·난양공주의 탄생에는 명주 이야기가 전해져요. 모든 만남에 흔적을 숨기고 띠 색으로 잇는 것은 게임의 장치예요."
         },
         "items": {
@@ -4386,9 +4757,9 @@ window.GUUN = {
         {
           "mark": "fiction",
           "id": "fc-opening-space",
-          "title": "걷는 자리와 새 대사",
-          "body": "길과 방 안의 자리, 누를 대상은 게임의 연출이에요. 인물의 말은 새로 쓴 풀이예요.",
-          "real": "돌다리의 만남 뒤 선방으로 돌아가 세상의 삶을 동경하는 사건 차례는 원작을 따라요."
+          "title": "게임이 꾸민 부분",
+          "body": "걸어 다니는 길과 방, 눌러 볼 수 있는 대상은 게임이 꾸민 연출이에요. 인물의 말도 원작의 뜻을 살려 새로 썼어요.",
+          "real": "돌다리에서 선녀들을 만난 뒤 선방으로 돌아와 세상의 삶을 동경하게 되는 흐름은 원작을 따라요."
         }
       ]
     },
@@ -4529,7 +4900,7 @@ window.GUUN = {
           "mark": "fiction",
           "id": "fc-pearls",
           "title": "그림 속 구슬 흔적",
-          "body": "반짝이는 흔적은 눌러 볼 수 있어요. 놓쳐도 다음으로 갈 수 있고 감점은 없어요.",
+          "body": "반짝이는 곳을 누르면 숨은 구슬을 찾을 수 있어요. 그냥 지나쳐도 이야기는 이어져요.",
           "real": "정경패·난양공주의 탄생에는 명주 이야기가 전해져요. 모든 만남에 흔적을 숨기고 띠 색으로 잇는 것은 게임의 장치예요."
         },
         "과거 길에 오른 소유가 화음현의 버들 아래 멈췄다.",
@@ -5448,6 +5819,307 @@ window.GUUN = {
     },
     "npc-nurse": {
       "src": "assets/world/npc-nurse.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-tianjin": {
+      "src": "assets/world/map-tianjin.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-jeong-house": {
+      "src": "assets/world/map-jeong-house.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-exam": {
+      "src": "assets/world/map-exam.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-hallim": {
+      "src": "assets/world/map-hallim.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-chunun-room": {
+      "src": "assets/world/map-chunun-room.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-hebei": {
+      "src": "assets/world/map-hebei.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-gyeonghong-room": {
+      "src": "assets/world/map-gyeonghong-room.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-bongnae": {
+      "src": "assets/world/map-bongnae.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-wonsu": {
+      "src": "assets/world/map-wonsu.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-yoyeon": {
+      "src": "assets/world/map-yoyeon.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-bansagok": {
+      "src": "assets/world/map-bansagok.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-baekryong": {
+      "src": "assets/world/map-baekryong.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-seungsang": {
+      "src": "assets/world/map-seungsang.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-honrye": {
+      "src": "assets/world/map-honrye.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-scarlet": {
+      "src": "assets/world/npc-fairy-scarlet.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-ivory": {
+      "src": "assets/world/npc-fairy-ivory.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-pink": {
+      "src": "assets/world/npc-fairy-pink.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-violet": {
+      "src": "assets/world/npc-fairy-violet.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-gold": {
+      "src": "assets/world/npc-fairy-gold.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-navy": {
+      "src": "assets/world/npc-fairy-navy.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-aqua": {
+      "src": "assets/world/npc-fairy-aqua.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-hermit": {
+      "src": "assets/world/npc-hermit.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-singer": {
+      "src": "assets/world/npc-singer.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-noble-lady": {
+      "src": "assets/world/npc-noble-lady.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-white-robe": {
+      "src": "assets/world/npc-white-robe.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-yeonwang": {
+      "src": "assets/world/npc-yeonwang.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-jeoksaeng": {
+      "src": "assets/world/npc-jeoksaeng.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-gyeonghong": {
+      "src": "assets/world/npc-gyeonghong.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-general": {
+      "src": "assets/world/npc-general.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-assassin": {
+      "src": "assets/world/npc-assassin.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-yoyeon": {
+      "src": "assets/world/npc-yoyeon.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-neungpa": {
+      "src": "assets/world/npc-neungpa.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-old-monk": {
+      "src": "assets/world/npc-old-monk.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-messenger": {
+      "src": "assets/world/npc-messenger.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-chae": {
+      "src": "assets/world/npc-chae.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-peach": {
+      "src": "assets/world/prop-peach.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-path": {
+      "src": "assets/world/prop-path.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-gate": {
+      "src": "assets/world/prop-gate.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-window": {
+      "src": "assets/world/prop-window.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-willow": {
+      "src": "assets/world/prop-willow.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-crane": {
+      "src": "assets/world/prop-crane.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-lantern": {
+      "src": "assets/world/prop-lantern.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-pool": {
+      "src": "assets/world/prop-pool.webp",
       "width": 32,
       "height": 32,
       "frames": 1,

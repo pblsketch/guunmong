@@ -3,7 +3,7 @@
 // 주소 뒤에 붙이는 바로가기(자세한 것은 js/game/app.js의 app.boot):
 //   ?teacher=1 / ?teacher=0   선생님용 켜기 / 끄기
 //   ?ch=2, ?scene=장면id      그 장·장면으로(열 수 있을 때만. 깨어난 뒤 0~3장은 선생님용만)
-//   ?fixture=1                임시 데이터(tests/fixtures/stub.js)로 열기 — 점검용
+//   ?fixture=1                임시 데이터(tests/fixtures/stub.js)로 열기(점검용)
 // 아무것도 밖으로 보내지 않는다(분석 도구 없음). 저장은 이 브라우저에만 한다.
 (function () {
   // 첫 터치·키 누름에서 소리를 켤 수 있게(브라우저 정책)

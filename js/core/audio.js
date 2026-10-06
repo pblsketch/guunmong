@@ -239,7 +239,7 @@
   }
   // ───────── 악보 읽기
   // 표기: 음(1~5, 0=쉼) + 옥타브(^ 위, v 아래) : 길이(단위 수) + 꾸밈(~ 떨기, < 밀어 올리기, > 꺾어 내리기)
-  // 예) "1:4 2:2 3:2 | 4:6~ 1^:2" — | 는 마디 구분(보기 편하게)
+  // 예) "1:4 2:2 3:2 | 4:6~ 1^:2": | 는 마디 구분(보기 편하게)
   // 선법: 평조(밝고 너그러움) = 솔라도레미 꼴, 계면조(슬프고 애절함) = 라도레미솔 꼴
   const MODES = { pyeong: [0, 2, 5, 7, 9], gyemyeon: [0, 3, 5, 7, 10] };
   function parse(str, mode, tonic) {
@@ -614,6 +614,11 @@
   SFX.shatter = () => { hiss(1.1, 0.18, 5000, 160, 'highpass'); [0, 0.12, 0.28].forEach((t, i) => tone('triangle', 180 - i * 30, 40, 0.4, 0.12, t)); };
   for (const k of Object.keys(SFX)) A[k] = () => { if (!sfxOn()) return; try { SFX[k](); } catch (e) { /* 무시 */ } };
   A.SFX_NAMES = Object.keys(SFX);
+  // 위기 도전의 가락 한 음: flute는 대금 소리로 퉁소를, zither는 가야금 소리로 거문고를 대신한다.
+  A.note = (midi, instrument) => {
+    if (!sfxOn()) return;
+    try { if (instrument === 'flute') daegeum(ctx.currentTime, midi, 0.45, 0.7, '', sfxBus, null, 0.35); else pl(midi, 0, 0.8, 0.6); } catch (e) { /* 무시 */ }
+  };
   A.grade = (grade) => A[{ near: 'gradeNear', fine: 'gradeFine', shine: 'gradeShine' }[grade] || 'gradeNear']();
 
   // ───────── 점검용: 곡을 오프라인으로 렌더해 AudioBuffer로 돌려준다(게임과 같은 소리 길)

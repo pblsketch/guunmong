@@ -86,7 +86,8 @@
     function show(line) {
       if (!active()) return;
       const b = typeof line === 'string' ? { text: line } : line || {};
-      const targetSpeaking = !b.say || !opt.targetPerson || b.say === opt.targetPerson;
+      // 인물 대상: 그 인물의 말과 서술 줄에 공개 호칭을 쓴다. 물건 대상과 생각 선택의 질문 줄은 대상 이름을 화자로 쓰지 않는다.
+      const targetSpeaking = !!opt.targetPerson && !b.prompt && (!b.say || b.say === opt.targetPerson);
       speaker.textContent = opt.label && targetSpeaking ? opt.label : b.say ? G.text.nameOf(b.say) : '';
       portrait(opt.hideFace && targetSpeaking ? null : b.say, b.mood, { shake: b.shake });
       dialogue.replaceChildren(b.mark ? G.text.block(b, { run: ctx.run, readonly: ctx.readonly }) : G.text.inline(b.text || b.gloss || '', { noFace: true }));
@@ -132,18 +133,28 @@
   G.stage.play = async function (ctx, scene, opt = {}) {
     const stage = G.stage.mount(ctx, scene, opt);
     const list = opt.lines || [...[].concat(scene.narration || []), ...(scene.lines || [])];
+    const step = async (line) => {
+      if (!stage.active()) return false;
+      stage.show(line);
+      const next = () => { if (stage.active()) (opt.textOnly ? ctx.main : ctx.page).querySelector(opt.textOnly ? '[data-act="next"]' : '#tray [data-act="next"]')?.click(); };
+      const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
+      stage.dialogue.addEventListener('click', next);
+      stage.dialogue.addEventListener('keydown', key);
+      const done = await ctx.next();
+      stage.dialogue.removeEventListener('click', next);
+      stage.dialogue.removeEventListener('keydown', key);
+      return !!done && stage.active();
+    };
     try {
-      for (const line of list.length ? list : ['']) {
-        if (!stage.active()) return false;
-        stage.show(line);
-        const next = () => { if (stage.active()) (opt.textOnly ? ctx.main : ctx.page).querySelector(opt.textOnly ? '[data-act="next"]' : '#tray [data-act="next"]')?.click(); };
-        const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
-        stage.dialogue.addEventListener('click', next);
-        stage.dialogue.addEventListener('keydown', key);
-        const done = await ctx.next();
-        stage.dialogue.removeEventListener('click', next);
-        stage.dialogue.removeEventListener('keydown', key);
-        if (!done || !stage.active()) return false;
+      for (const [index, line] of (list.length ? list : ['']).entries()) {
+        if (!await step(line)) return false;
+        // 생각 선택(opt.choice): 이 줄 뒤에 말을 고르고 상대의 반응을 본 다음 원래 대사로 돌아간다.
+        if (opt.choice && index === opt.choice.at) {
+          stage.show({ text: opt.choice.prompt, prompt: true });
+          const picked = await G.challenge.choose({ ...ctx, allow: opt.choice.allow }, opt.choice, (tray) => stage.dialogue.closest('.stage-story').appendChild(tray));
+          if (!picked || !stage.active()) return false;
+          if (!await step(picked.reply)) return false;
+        }
       }
       return stage.active();
     } finally { stage.dispose(); }

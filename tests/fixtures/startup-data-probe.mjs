@@ -109,7 +109,7 @@ export async function startupDataFailures() {
       else navigator.locks.request = () => Promise.reject(new Error('startup-data-probe: locks failure'));
     }, options.locks);
     const p = await context.newPage(); p.setDefaultTimeout(7000);
-    let expected404 = 0, expectedConsole = 0;
+    let expected404 = 0, expectedConsole = 0, console404 = 0;
     p.on('pageerror', error => networkErrors.push(error.stack));
     p.on('request', request => {
       if (!request.url().startsWith(origin + '/')) networkErrors.push('외부 요청 ' + request.url());
@@ -127,7 +127,8 @@ export async function startupDataFailures() {
       if (message.type() !== 'error') return;
       const expected = mode === 'loaderthrow' ? LOADER_ERROR : mode === 'bootthrow' ? BOOT_ERROR : null;
       if (expected && (message.text() === 'Error: ' + expected || message.text().startsWith('Error: ' + expected + '\n'))) expectedConsole++;
-      else if (mode === '404' && message.text() === 'Failed to load resource: the server responded with a status of 404 (Not Found)') return;
+      // 예상한 404의 콘솔 메시지는 기기가 바쁘면 다음 모드로 바뀐 뒤 도착할 수 있다. 이미 센 예상 404 수만큼만 받아들인다.
+      else if (message.text() === 'Failed to load resource: the server responded with a status of 404 (Not Found)' && (mode === '404' || console404 < expected404)) { console404++; return; }
       else networkErrors.push('console ' + message.text());
     });
     return { p, context, setMode: value => { mode = value; modes.set(id, value); }, expected: () => ({ expected404, expectedConsole }) };

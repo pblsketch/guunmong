@@ -22,10 +22,13 @@
 | sprites.js | sprites | 승인된 그림과 방향별 걷기 메타 |
 | maps.js | maps | 공유 장소·보행 칸·대상 |
 | experiences.js | experiences | 장면별 순서 있는 행동·본문 줄 참조·원작 효과 |
+| challenges.js | challenges | 원작 위기 대목의 도전과 생각 선택 |
 
 `js/core/data.js`의 FILES가 위 파일을 읽는다. 모든 진행 단위는 scenes에, 승인된 동작·아이콘 메타는 sprites에 둔다.
 
 본편은 `optional`이 없는 28단위이며 `c1-bridge`부터 시작한다. `cut-josin`만 `optional:true`로 보존한다. 결과의 선택형 비교 읽기에서만 읽으며 본편 목록·목차·진행 저장에 넣지 않는다. 다른 장면에 optional을 붙이면 데이터 오류다. 옛 `pos:cut-josin` 기록은 현재 본편의 재개 위치로 이어 간다.
+
+`notes.mission`은 `{title,lead,goals[],why,start}`이며 새로 시작할 때 돌다리 위 임무 창과 이야기 지도(목차)에 보인다. 기록을 쓰지 않는다. 미래 사건·숨은 정체·인연 개수를 쓰지 않는다.
 
 `notes.comparison`은 `{scene,title,lead,question}`이며 scene은 선택형 자료 id다. 비교 읽기는 기본으로 접혀 있고 열거나 읽어도 점수·진행·깨어남·해석을 바꾸지 않는다.
 이본 노트의 `comparison`이 자료 id를 가리키면 해당 비교 읽기 안에만 표시하고 일반 이본 노트에서는 제외한다.
@@ -57,7 +60,7 @@ bgm은 `bgm.tracks`의 열쇠다. bgm은 `{ title, tracks: { 곡id: { file, len,
 | 자료 | 형식 |
 | --- | --- |
 | map | {id,width,height,tile,walk,art,objects}. id는 유일 문자열, 크기는 양의 정수. walk는 height×width의 0/1 배열, 1이 보행 칸 |
-| object | {id,x,y,kind,solid,label,visibleAt,action,person?,sprite?}. id는 맵 안에서 유일, x/y는 맵 안 정수. kind는 npc/item/scenery/exit/pearl. solid는 boolean, action은 행동 id 또는 null. person은 실제 인물 id이며 label과 구분 |
+| object | {id,x,y,kind,solid,label,visibleAt,action,person?,sprite?,verb?,decor?}. id는 맵 안에서 유일, x/y는 맵 안 정수. kind는 npc/item/scenery/exit/pearl. solid는 boolean, action은 행동 id 또는 null. person은 실제 인물 id이며 label과 구분. verb는 행동 단추·지금 할 일에 보일 8자 이하 동사(예: 앉기, 불기)이며 없으면 행동 종류의 기본 동사(말 걸기·살펴보기·사용하기·길 따라가기)를 쓴다. decor:true는 action:null인 장식(예: 돌다리의 팔선녀)으로 대상 목록·초점·누르기에서 빠지고 solid면 통행만 막는다. person·verb를 두지 않는다 |
 | experience | {scene,map,actor,spawn,beats,optional}. scene은 기존 id, actor는 seongjin/yang, spawn은 {x,y,facing}, facing은 up/down/left/right. 안전 입구는 보행 가능하고 공개된 solid 칸이 아님 |
 | beat | {id,trigger:{kind,target},lines,effects,map?,spawn?,appearance?}. id는 장면의 beats와 optional 전체에서 유일. kind는 inspect/talk/use/exit/continue/staff. target은 현재 map 대상 id, continue/staff는 null |
 | lines | 해당 scenes.lines의 0기준 정수 인덱스 배열. 본문을 복사하거나 text 필드를 추가하지 않음 |
@@ -299,13 +302,27 @@ app이 접근을 확인하고 pos를 바꿀 때는 같은 draft에서 rpg.cursor
 | facts(state,data), wishes(state,data) | 원작 story id 배열, 기존 표시 API 모양의 소원 배열. 인연·성장 수치 입력 없음 |
 | storyIds | wonsu/seungsang/portrait의 고정 단계 id 객체 |
 
+## 위기 도전과 생각 선택
+
+challenges는 배열이며 항목은 {id,scene,beat,kind,...}다. id는 ch-로 시작하고 유일하다. scene/beat는 실제 experience의 필수 beat다. 한 beat에는 도전(talk 아닌 것) 하나와 생각 선택(talk) 하나까지 둘 수 있다. 도전 결과·실패·고른 말은 저장하지 않는다. 처음 수행할 때 도전을 풀어야 그 beat의 행동이 기록되며 다시 읽기에서는 기록 없이 해 볼 수 있다(결정 0019).
+
+| kind | 필드 |
+| --- | --- |
+| talk | at(그 beat lines 배열의 0기준 위치. 이 줄을 보인 뒤 고른다), prompt, options[{id,label,reply:{say?,text}}] 둘 이상. 무엇을 골라도 다음 원작 대사로 이어진다 |
+| pick | title, intro, options[{id,label,reply}], answer, note. 틀린 선택지의 reply가 이야기 속 대가이고 그 선택지만 잠긴다 |
+| deduce | title, intro, clues[문자열 둘 이상], question, options[{id,label}], answer, fail, success, note. 단서를 모두 펼쳐야 질문이 열린다 |
+| search | title, intro, spots[{id,label,clue?}] 셋 이상, answer(clue 없음), tries(1 이상, 자리 수 미만), fail, success, note. 틀린 자리는 clue를 보이고 기회를 하나 쓴다. 기회가 다하면 fail 뒤 처음부터 다시 한다 |
+| sequence | title, intro, instrument(flute/zither), notes[{label,midi}] 3~7, rounds[[음 번호…] 길이 3 이상], fail, success, note. 들려준 가락을 빛과 소리로 함께 보인다 |
+
+note는 성공한 뒤 '원작과 게임'에만 보인다. 숨은 정체를 title·intro·선택지에 미리 쓰지 않는다. 점수·시간 제한·게임 오버·장부 필드를 두지 않는다.
+
 ## 검사와 이야기 글 셈
 
 G.checkData(data=G.data,options={})는 경고 배열이며 기본 production은 기존 28단위·12사건·3이음·여덟 인연·열 근거와 모든 새 맵·체험을 검사한다. fixture는 구판 3사건 자료 전용이며 데이터 자신이 가진 fixture 값으로 기준을 낮추지 않는다.
 
 엔진 부품 시험은 호출자가 {profile:'world-opening'} 또는 {profile:'world-event'}를 명시한다. 전자는 c1-bridge/c1-cell/c3-awake, 후자는 e04-exam/e08-wonsu를 이 순서로 검사하며 대체 표시를 허용한다. 대표 콘텐츠의 rpg-opening은 c1-bridge/c1-cell/c1-wish/c1-exile/c1-rebirth/e01-huayin 여섯 단위, rpg-waking은 c3-feast/c3-monk/c3-staff/c3-awake 네 단위를 정확한 순서로 검사한다. 대표 콘텐츠는 승인된 자산 키만 사용하며 대체 표시는 허용하지 않는다. rpg-opening의 월드는 돌다리·선방·꾸짖음·첫 만남에, rpg-waking의 체험은 네 단위 모두에 필요하다. 두 대표 fixture는 같은 이름의 명시 프로필과 별도 저장 열쇠로 읽는다. 작은 시험의 맵·행동·보행·줄·효과 검증은 본편 전체 통과가 아니다. G.checkWorldData는 새 월드 계약, G.checkSprites는 그림 메타의 경고 배열이다. 로더는 missing/problems가 있으면 ok:false로 시작을 막는다.
 
-G.storyText(data)는 {texts,count}다. event/link/cut/waking/wish의 lines·narration, 1·3·5장 scene/interp의 lines·narration, timeline.lines, wish.monologue, 남아 있는 구판 gradeText, interp.dialogue/lastWords/ending을 센다. 기존 셈에서 제외한 종류에 월드가 있으면 참조한 본문 줄도 한 번 포함한다. refs는 새 글을 복사하지 않는다. mark 카드·예고·노트·인연 카드·해석 선택지·근거·단추는 제외한다. 강조·인물 링크 표식을 벗기고 가~힣만 세며 4,400 이하다. 실제 근거는 한 줄 안에 있어야 한다.
+G.storyText(data)는 {texts,count}다. event/link/cut/waking/wish의 lines·narration, 1·3·5장 scene/interp의 lines·narration, timeline.lines, wish.monologue, 남아 있는 구판 gradeText, interp.dialogue/lastWords/ending을 센다. 기존 셈에서 제외한 종류에 월드가 있으면 참조한 본문 줄도 한 번 포함한다. refs는 새 글을 복사하지 않는다. challenges의 intro·fail·success·clues·spots.clue·options.reply도 센다. mark 카드·예고·노트·인연 카드·해석 선택지·근거·단추와 도전의 title·question·prompt·선택지 label·note는 제외한다. 강조·인물 링크 표식을 벗기고 가~힣만 세며 4,400 이하다. 실제 근거는 한 줄 안에 있어야 한다.
 
 ## 승인된 동작 그림과 아이콘
 

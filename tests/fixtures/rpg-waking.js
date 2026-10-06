@@ -25,6 +25,7 @@ window.GUUN = {
   },
   "board": [],
   "bonds": [],
+  "challenges": [],
   "chapters": {
     "3": {
       "intro": "원하던 것을 누린 소유가 높은 대에 올라요. 아직 꿈속이에요.",
@@ -381,6 +382,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "선방의 창가",
+          "sprite": "prop-window",
           "visibleAt": [
             "c3-awake:awake-window"
           ],
@@ -393,6 +395,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "닫힌 출입구",
+          "sprite": "prop-gate",
           "visibleAt": [
             "c3-awake:awake-door"
           ],
@@ -445,7 +448,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -459,7 +462,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -473,7 +476,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -487,7 +490,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -501,7 +504,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
+          0,
           0
         ],
         [
@@ -515,21 +518,7 @@ window.GUUN = {
           1,
           1,
           1,
-          1,
-          0
-        ],
-        [
           0,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
-          1,
           0
         ],
         [
@@ -537,10 +526,24 @@ window.GUUN = {
           0,
           0,
           0,
-          0,
+          1,
+          1,
           1,
           1,
           0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
           0,
           0,
           0,
@@ -569,6 +572,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "옛 궁터와 무덤이 보이는 높은 대",
+          "sprite": "prop-lantern",
           "visibleAt": [
             "c3-feast:feast-overlook"
           ],
@@ -580,7 +584,7 @@ window.GUUN = {
           "y": 4,
           "kind": "scenery",
           "solid": true,
-          "label": "함께 뜻을 나누던 자리",
+          "label": "뜻을 함께한 이들",
           "visibleAt": [
             "c3-feast:feast-vow"
           ],
@@ -594,6 +598,7 @@ window.GUUN = {
           "kind": "scenery",
           "solid": true,
           "label": "돌길의 지팡이 소리",
+          "sprite": "prop-path",
           "visibleAt": [
             "c3-monk:monk-hear"
           ],
@@ -685,7 +690,7 @@ window.GUUN = {
       }
     ],
     "discuss": [
-      "꿈에서 쌓은 점수가 사라질 때 어떤 생각이 들었나요? 그 경험과 작품의 구절을 이어 설명해 보세요.",
+      "취미궁과 선방을 나란히 보면 어떤 생각이 드나요? 그 경험과 작품의 구절을 이어 설명해 보세요.",
       "성진이 처음 바라던 삶과 깨어난 뒤 선택한 삶은 어떻게 다른가요? 작품의 사건을 근거로 이야기해 보세요."
     ],
     "comparison": {
@@ -702,7 +707,7 @@ window.GUUN = {
         "대사의 말을 듣고 해석이나 근거를 바꾼 까닭은 무엇인가요?"
       ],
       "extra": "사건의 길과 결말은 모두 같아요. 구슬 찾기는 선택이며 인연은 점수와 연결하지 않아요. 기록은 이 브라우저에 남으므로 공용 기기는 수업 뒤 확인을 거쳐 지워 주세요.",
-      "ledger": "소원 찾기·맞대기는 첫 시도와 도움을 봐요. 사건은 준비 적중 0·1·2, 등급, 예고 단서, 핵심 능력 보기 사용을 읽어요. 등급에는 쌓인 능력과 윤목도 작용하므로 독해 점수로 쓰지 않아요. 선생님용 바로 가기로 채운 사건은 —로 남아요. 꿈 점수는 장부에 넣지 않고 평가에도 쓰지 않아요."
+      "ledger": "소원 찾기·맞대기는 첫 시도와 도움을 봐요. 사건은 미시작·진행·완료·자동 안내를 구분하고, 학생이 살펴본 행동 근거와 도움 여부를 읽어요. 옛 준비 적중과 등급은 새 수행으로 바꾸지 않아요."
     },
     "ui": {
       "abilities": {
@@ -753,7 +758,7 @@ window.GUUN = {
           "mark": "fiction",
           "id": "fc-pearls",
           "title": "그림 속 구슬 흔적",
-          "body": "반짝이는 흔적은 눌러 볼 수 있어요. 놓쳐도 다음으로 갈 수 있고 감점은 없어요.",
+          "body": "반짝이는 곳을 누르면 숨은 구슬을 찾을 수 있어요. 그냥 지나쳐도 이야기는 이어져요.",
           "real": "정경패·난양공주의 탄생에는 명주 이야기가 전해져요. 모든 만남에 흔적을 숨기고 띠 색으로 잇는 것은 게임의 장치예요."
         },
         "items": {
@@ -1300,8 +1305,366 @@ window.GUUN = {
       "frames": 1,
       "rows": 1
     },
+    "walk-yang-disguise": {
+      "src": "assets/world/walk-yang-disguise.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 5,
+      "rows": 4,
+      "cell": {
+        "width": 32,
+        "height": 32
+      },
+      "anchor": {
+        "x": 16,
+        "y": 30
+      },
+      "directions": {
+        "down": {
+          "row": 0,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "left": {
+          "row": 1,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "right": {
+          "row": 2,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "up": {
+          "row": 3,
+          "stand": 0,
+          "walk": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      }
+    },
     "npc-nurse": {
       "src": "assets/world/npc-nurse.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-tianjin": {
+      "src": "assets/world/map-tianjin.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-jeong-house": {
+      "src": "assets/world/map-jeong-house.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-exam": {
+      "src": "assets/world/map-exam.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-hallim": {
+      "src": "assets/world/map-hallim.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-chunun-room": {
+      "src": "assets/world/map-chunun-room.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-hebei": {
+      "src": "assets/world/map-hebei.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-gyeonghong-room": {
+      "src": "assets/world/map-gyeonghong-room.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-bongnae": {
+      "src": "assets/world/map-bongnae.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-wonsu": {
+      "src": "assets/world/map-wonsu.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-yoyeon": {
+      "src": "assets/world/map-yoyeon.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-bansagok": {
+      "src": "assets/world/map-bansagok.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-baekryong": {
+      "src": "assets/world/map-baekryong.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-seungsang": {
+      "src": "assets/world/map-seungsang.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "map-honrye": {
+      "src": "assets/world/map-honrye.webp",
+      "width": 384,
+      "height": 320,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-scarlet": {
+      "src": "assets/world/npc-fairy-scarlet.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-ivory": {
+      "src": "assets/world/npc-fairy-ivory.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-pink": {
+      "src": "assets/world/npc-fairy-pink.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-violet": {
+      "src": "assets/world/npc-fairy-violet.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-gold": {
+      "src": "assets/world/npc-fairy-gold.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-navy": {
+      "src": "assets/world/npc-fairy-navy.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-fairy-aqua": {
+      "src": "assets/world/npc-fairy-aqua.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-hermit": {
+      "src": "assets/world/npc-hermit.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-singer": {
+      "src": "assets/world/npc-singer.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-noble-lady": {
+      "src": "assets/world/npc-noble-lady.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-white-robe": {
+      "src": "assets/world/npc-white-robe.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-yeonwang": {
+      "src": "assets/world/npc-yeonwang.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-jeoksaeng": {
+      "src": "assets/world/npc-jeoksaeng.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-gyeonghong": {
+      "src": "assets/world/npc-gyeonghong.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-general": {
+      "src": "assets/world/npc-general.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-assassin": {
+      "src": "assets/world/npc-assassin.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-yoyeon": {
+      "src": "assets/world/npc-yoyeon.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-neungpa": {
+      "src": "assets/world/npc-neungpa.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-old-monk": {
+      "src": "assets/world/npc-old-monk.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-messenger": {
+      "src": "assets/world/npc-messenger.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "npc-chae": {
+      "src": "assets/world/npc-chae.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-peach": {
+      "src": "assets/world/prop-peach.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-path": {
+      "src": "assets/world/prop-path.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-gate": {
+      "src": "assets/world/prop-gate.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-window": {
+      "src": "assets/world/prop-window.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-willow": {
+      "src": "assets/world/prop-willow.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-crane": {
+      "src": "assets/world/prop-crane.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-lantern": {
+      "src": "assets/world/prop-lantern.webp",
+      "width": 32,
+      "height": 32,
+      "frames": 1,
+      "rows": 1
+    },
+    "prop-pool": {
+      "src": "assets/world/prop-pool.webp",
       "width": 32,
       "height": 32,
       "frames": 1,

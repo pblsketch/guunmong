@@ -74,7 +74,7 @@ try {
     await p.evaluate(()=>G.app.open('e08-wonsu'));assert.deepEqual((await state(p)).rpg.scenes['e04-exam'],partial);
     await p.locator('[data-tool="settings"]').click();await p.locator('[data-set="clear"]').click();await p.getByRole('button',{name:'지우기',exact:true}).click();
     await p.evaluate(()=>G.app.open('e08-wonsu'));let s=await state(p);assert.equal(s.rpg.scenes['e04-exam'].status,'auto');assert.equal(s.rpg.scenes['e04-exam'].hint,'teacher');
-    const rows=await p.evaluate(()=>G.app.ledgerRows());assert.deepEqual(rows.map(r=>r.id),['a-wish','e04-exam','e08-wonsu','j-match']);assert.equal(rows[1].firstLabel,'자동 안내');assert.equal(rows[1].gradeLabel,'—');
+    const rows=await p.evaluate(()=>G.app.ledgerRows());assert.deepEqual(rows.map(r=>r.id),['a-wish','e04-exam','e08-wonsu','j-match']);assert.equal(rows[1].firstLabel,'자동 안내');assert.equal(rows[1].gradeLabel,'없음');
     await p.locator('[data-tool="settings"]').click();for(const key of ['teacher','big'])assert.equal(await p.locator('[data-set="'+key+'"]').getAttribute('aria-pressed'),'true');await p.keyboard.press('Escape');
     await p.context().close();
   });

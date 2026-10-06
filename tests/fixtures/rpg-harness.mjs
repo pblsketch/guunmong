@@ -48,6 +48,8 @@ export const ready = p => p.waitForFunction(() => G.app.booted);
 export const state = p => p.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
 export async function start(p) {
   await p.getByRole('button', { name: '시작하기', exact: true }).click();
+  // 미션 퍼스트: 새로 시작하면 임무 창이 먼저 뜬다(임무 자료가 있는 제품 자료). 실제 단추로 닫는다.
+  if (await p.evaluate(() => !!G.data.notes?.mission)) await p.locator('[data-mission="start"]').click();
   await p.waitForSelector('[data-world]');
 }
 export async function target(p, id) {
@@ -100,10 +102,36 @@ export async function fieldCell(p, x, y, touch = false) {
   if (touch) await p.touchscreen.tap(point.x, point.y); else await p.mouse.click(point.x, point.y);
   await idle(p);
 }
-export async function dialogue(p) {
-  await p.waitForSelector('[data-dialogue]');
+// 위기 도전 창을 실제 단추로 푼다. 답은 공개 자료에서 읽지만 저장·상태를 주입하지 않는다.
+export async function challenge(p, { wrong = false } = {}) {
+  const id = await p.evaluate(() => document.querySelector('.challenge-book')?.dataset.challengeId || null);
+  if (!id) return null;
+  const c = await p.evaluate(id => JSON.parse(JSON.stringify(G.data.challenges.find(c => c.id === id))), id);
+  const book = p.locator('.challenge-book');
+  if (wrong && c.kind !== 'sequence') {
+    const miss = c.kind === 'search' ? c.spots.find(s => s.id !== c.answer).id : c.options.find(o => o.id !== c.answer).id;
+    if (c.kind === 'deduce') for (let i = 0; i < c.clues.length; i++) await book.locator('[data-clue="' + i + '"]').click();
+    await book.locator(c.kind === 'search' ? '[data-spot="' + miss + '"]' : '[data-option="' + miss + '"]').click();
+  }
+  if (c.kind === 'pick') await book.locator('[data-option="' + c.answer + '"]').click();
+  if (c.kind === 'deduce') {
+    for (let i = 0; i < c.clues.length; i++) if (await book.locator('[data-clue="' + i + '"][aria-pressed="false"]').count()) await book.locator('[data-clue="' + i + '"]').click();
+    await book.locator('[data-option="' + c.answer + '"]').click();
+  }
+  if (c.kind === 'search') await book.locator('[data-spot="' + c.answer + '"]').click();
+  if (c.kind === 'sequence') for (const [round, notes] of c.rounds.entries()) {
+    await p.waitForSelector('.challenge-book[data-round="' + round + '"][data-ready="true"]', { timeout: 20000 });
+    for (const n of notes) await book.locator('[data-note="' + n + '"]').click();
+  }
+  await p.locator('.challenge-book[data-solved="true"] [data-challenge="continue"]').click();
+  return c;
+}
+export async function dialogue(p, options = {}) {
+  await p.waitForSelector('[data-dialogue], .challenge-book');
+  if (await challenge(p, options)) await p.waitForSelector('[data-dialogue]');
   while (await p.locator('[data-dialogue]').count()) {
-    await p.locator('[data-dialogue] [data-act="next"]').click();
+    if (await p.locator('[data-dialogue] .choice-tray [data-talk]').count()) await p.locator('[data-dialogue] .choice-tray [data-talk]').first().click();
+    else await p.locator('[data-dialogue] [data-act="next"]').click();
     await p.waitForTimeout(30);
   }
 }

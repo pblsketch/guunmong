@@ -103,6 +103,6 @@
   D.pearlKeep = function () {
     return h('div.pearl-keep', { role: 'group', 'aria-label': '구슬' }, h('h4', '구슬'), h('div.beads', D.pearlScenes().map(scene => {
       const bead = D.bead(!!S().pearls[scene.meet]); bead.dataset.bond = scene.meet; bead.setAttribute('aria-label', S().pearls[scene.meet] ? '찾은 구슬' : '찾지 못한 구슬'); return bead;
-    })), h('p.small.muted', '구슬 찾기는 선택이며 점수로 세지 않아요.'));
+    })), h('p.small.muted', '구슬은 찾고 싶을 때 찾아도 돼요.'));
   };
 })();

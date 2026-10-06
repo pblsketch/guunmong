@@ -1,4 +1,4 @@
-/* 구운몽: 한바탕 꿈 — 한지·먹·인주 위의 도트 그림
+/* 구운몽: 한바탕 꿈: 한지·먹·인주 위의 도트 그림
    글꼴(모두 SIL OFL 1.1, 게임에 쓰인 글자만 남긴 부분 글꼴. 파일은 글꼴 작업이 만든다):
      제목·단추·말판 이름 = 갈무리(도트)          assets/fonts/galmuri.woff2
      본문·풀이           = Noto Serif KR           assets/fonts/noto-serif-kr.woff2
@@ -448,7 +448,7 @@ html.teacher .help-row { display: flex; }
 .stage-1 .deco .wall { background: #f4ecd8; }
 .stage-1 .deco .pillars { display: block; left: 12%; right: 12%; top: 34%; bottom: 10%; background: repeating-linear-gradient(90deg, #7d4a2a 0 6px, transparent 6px 33%); }
 .stage-1 .deco .o1 { display: block; right: 16%; top: 38%; width: 10px; height: 16px; background: #e0602a; box-shadow: 0 0 10px 3px rgba(240, 160, 60, .7); }
-/* 3단계: 승상부 — 겹지붕, 붉은 기둥, 돌계단 */
+/* 3단계: 승상부: 겹지붕, 붉은 기둥, 돌계단 */
 .stage-2 .deco .roof { background: #2f4f4a; top: 4%; height: 32%; clip-path: polygon(4% 100%, 96% 100%, 100% 60%, 86% 18%, 14% 18%, 0 60%); background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, .16) 0 4px, transparent 4px 9px); }
 .stage-2 .deco .ridge { display: block; left: 22%; right: 22%; top: 3%; height: 5%; background: #1f3532; }
 .stage-2 .deco .wall { background: #f8f0dc; left: 8%; right: 8%; }
@@ -457,7 +457,7 @@ html.teacher .help-row { display: flex; }
 .stage-2 .deco .o1, .stage-2 .deco .o2 { display: block; top: 38%; width: 10px; height: 16px; background: #e0602a; box-shadow: 0 0 10px 3px rgba(240, 160, 60, .7); }
 .stage-2 .deco .o1 { left: 14%; }
 .stage-2 .deco .o2 { right: 14%; }
-/* 4단계: 취미궁 — 금빛 용마루, 단청, 구름 */
+/* 4단계: 취미궁: 금빛 용마루, 단청, 구름 */
 .stage-3 .deco .roof { background: #1d3f63; top: 8%; height: 30%; clip-path: polygon(2% 100%, 98% 100%, 100% 58%, 84% 14%, 16% 14%, 0 58%);
   background-image: repeating-linear-gradient(90deg, rgba(255, 220, 120, .25) 0 3px, transparent 3px 8px); }
 .stage-3 .deco .ridge { display: block; left: 18%; right: 18%; top: 8%; height: 5%; background: var(--gold); box-shadow: 0 0 8px rgba(240, 200, 90, .8); }

@@ -22,6 +22,9 @@ const topdownKeys = new Set(topdownEntries.map(e => e.key));
 const npcApproval = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/manifest_rpg_npcs_approved.json'), 'utf8'));
 assert.equal(npcApproval.status, 'approved'); assert.equal(npcApproval.entries.length, 3);
 const npcEntries = npcApproval.entries, npcKeys = new Set(npcEntries.map(e => e.key));
+const v4Approval = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/manifest_rpg_v4_approved.json'), 'utf8'));
+assert.equal(v4Approval.status, 'approved'); assert.equal(v4Approval.entries.length, 43);
+const v4Entries = v4Approval.entries, v4Keys = new Set(v4Entries.map(e => e.key));
 const disguiseApproval = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/manifest_rpg_disguise_approved.json'), 'utf8'));
 assert.equal(disguiseApproval.status, 'approved');
 const disguiseKey = 'walk-yang-disguise';
@@ -44,6 +47,10 @@ for (const [key, entry] of Object.entries(D.sprites)) {
     assert.deepEqual(JSON.parse(JSON.stringify(entry)), topdownEntries.find(e => e.key === key).sprite, key + ' 승인 메타');
     continue;
   }
+  if (v4Keys.has(key)) {
+    assert.deepEqual(JSON.parse(JSON.stringify(entry)), v4Entries.find(e => e.key === key).sprite, key + ' v4 승인 메타');
+    continue;
+  }
   if (npcKeys.has(key)) {
     assert.deepEqual(JSON.parse(JSON.stringify(entry)), npcEntries.find(e => e.key === key).sprite, key + ' NPC 승인 메타');
     continue;
@@ -51,7 +58,8 @@ for (const [key, entry] of Object.entries(D.sprites)) {
   assert.equal(entry.width, ['study', 'geomungo', 'sword', 'strategy', 'hoseung'].includes(key) ? 96 : 32);
   assert.equal(entry.height, entry.width); assert.equal(entry.rows, 1); assert.equal(entry.frames, entry.width === 96 ? 4 : 1);
 }
-assert.equal(Object.keys(D.sprites).length, 12 + topdownEntries.length + npcEntries.length + 1);
+assert.equal(Object.keys(D.sprites).length, 12 + topdownEntries.length + npcEntries.length + 1 + v4Entries.length);
+for (const e of v4Entries) assert.ok(D.sprites[e.key], 'v4 승인 키 누락: ' + e.key);
 assert.ok(D.sprites[disguiseKey]);
 for (const e of topdownEntries) assert.ok(D.sprites[e.key], '승인 키 누락: ' + e.key);
 for (const e of npcEntries) assert.ok(D.sprites[e.key], 'NPC 승인 키 누락: ' + e.key);
@@ -62,7 +70,7 @@ for (const size of [192, 512]) assert.ok(manifest.icons.some((i) => i.src === 'a
 const python = spawnSync('python', [path.join(ROOT, 'tools/check_assets.py')], { cwd: ROOT, encoding: 'utf8' });
 process.stdout.write(python.stdout || ''); process.stderr.write(python.stderr || '');
 assert.equal(python.status, 0, '기존·탑다운 자산 크기·32색·무손실·승인 해시');
-const totalAssets = 141 + topdownEntries.length + npcEntries.length + 1;
+const totalAssets = 141 + topdownEntries.length + npcEntries.length + 1 + v4Entries.length;
 assert.match(python.stdout, new RegExp(`${totalAssets} expected, ${totalAssets} present`));
 console.log('✓ 참조 파일 ' + required.size + '개 · Python 자산 ' + totalAssets + '개');
 const topdownBrowser = spawnSync(process.execPath, [path.join(ROOT, 'tools/check_topdown_products.mjs')], { cwd: ROOT, encoding: 'utf8' });
@@ -154,7 +162,7 @@ try {
     }
     await page.evaluate(()=>G.dream.open('pearls')); await shot(tag+'_pearls'); await page.keyboard.press('Escape');
     await page.goto(origin+'/index.html?fixture=rpg-waking'); await ready();
-    await page.getByRole('button',{name:'시작하기',exact:true}).click();
+    await page.getByRole('button',{name:'시작하기',exact:true}).click();if (await page.evaluate(() => !!G.data.notes?.mission)) await page.locator('[data-mission="start"]').click();
     for (let n=0;n<35;n++) {
       const c=await cur(); if(c?.step==='staff')break;
       if(await page.locator('[data-dialogue]').count()){await dialogue(page);continue;}

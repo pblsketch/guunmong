@@ -152,7 +152,7 @@ const current = (page) => page.evaluate(() => G.app.current());
 const state = (page) => page.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
 const ready = (page) => page.waitForFunction(() => window.G?.app?.booted);
 const next = (page) => page.locator('#tray [data-act="next"]').click();
-async function start(page) { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); }
+async function start(page) { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); if (await page.evaluate(() => !!G.data.notes?.mission)) await page.locator('[data-mission="start"]').click(); }
 async function resume(page) { await page.reload(); await ready(page); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('.play'); }
 async function boardReadiness(page) {
   return page.evaluate(() => {
@@ -192,7 +192,8 @@ async function run(name, fn) {
   try { await fn(); passed++; console.log('✓ ' + name); }
   catch (error) { const e = networkViolation || error; issues.push(name + ': ' + e.message); console.error('✗ ' + name + ': ' + e.stack); if (e.critical) throw e; }
 }
-async function dismissToast(page) { const toast = page.locator('.toast:visible'); if (await toast.count()) await toast.click(); }
+// 알림은 시간이 지나면 스스로 사라진다. 누르려는 사이 사라졌으면 닫힌 것으로 본다(사라지지 않고 남아 있으면 실패).
+async function dismissToast(page) { const toast = page.locator('.toast:visible'); if (await toast.count()) await toast.click({ timeout: 3000 }).catch(async error => { if (await page.locator('.toast:visible').count()) throw error; }); }
 async function lockChecks(page, memo) {
   const saved = await state(page); critical(saved.awake, '선방 도착 전 깨어남 없음');
   memo.awakeAt = saved.awakeAt;
@@ -237,11 +238,11 @@ async function wrongMatch(page) {
   await page.locator('[data-help="memo"]').click(); await page.locator('[data-help="answer"]').click(); await page.locator('[data-act="check"]').click();
   assert.deepEqual((await state(page)).ledger['j-match'], { first: false, help: 'student', final: true });
 }
-async function actTarget(page, id, input) {
+async function actTarget(page, id, input, options = {}) {
   if (input === 'touch') { await seekTarget(page, id); await page.locator('[data-act="interact"][data-target="' + id + '"]').tap(); }
   else if (input === 'keyboard') { await seekTarget(page, id); await page.locator('[data-world]').focus(); await page.keyboard.press('Enter'); }
   else await target(page, id);
-  if (await page.locator('[data-dialogue]').count()) await dialogue(page);
+  if (await page.locator('[data-dialogue], .challenge-book').count()) await dialogue(page, options);
 }
 async function correctMatch(page) {
   const picks = await page.evaluate(() => G.data.journal.pairs.map(pair => ({ id: pair.id, pick: G.data.wishes.find(wish => wish.id === pair.wish).name })));
@@ -268,8 +269,9 @@ async function worldStep(page, memo, mode) {
     if (collect) { await actTarget(page, pearl.trigger.target, 'list'); memo.pearls.add(info.scene); return true; }
   }
   const input = memo.inputUsed ? 'list' : mode === 'direct' ? 'touch' : mode === 'observe' ? 'list' : 'keyboard';
-  if (info.beat.trigger.target) await actTarget(page, info.beat.trigger.target, input);
-  else { await page.locator('[data-act="interact"]:not([disabled])').click(); if (await page.locator('[data-dialogue]').count()) await dialogue(page); }
+  // 관찰 판은 위기 도전에서 한 번 틀려 이야기 속 대가를 본 뒤 다시 푼다.
+  if (info.beat.trigger.target) await actTarget(page, info.beat.trigger.target, input, { wrong: mode === 'observe' });
+  else { await page.locator('[data-act="interact"]:not([disabled])').click(); if (await page.locator('[data-dialogue], .challenge-book').count()) await dialogue(page); }
   memo.inputUsed = true; memo.actions++;
   return true;
 }
@@ -428,7 +430,8 @@ try {
       await page.unroute('**/assets/world/map-bridge.webp');
       for (let i = 0; i < 3; i++) {
         await page.reload(); await ready(page); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('[data-world] img.world-art');
-        assert.equal(await page.locator('[data-world] img.world-art').evaluate(img => img.naturalWidth), 384);
+        // 캐시에 있는 그림도 디코딩은 비동기일 수 있으므로 같은 그림이 짧은 시간 안에 실제 크기로 표시되는지 본다.
+        await page.waitForFunction(() => document.querySelector('[data-world] img.world-art')?.naturalWidth === 384, null, { timeout: 3000 });
         await checks(page, '캐시 재사용 ' + i);
       }
       fs.writeFileSync(path.join(SHOTS, 'world-ready-regression.json'), JSON.stringify({ cold, loaded, warmRuns: 3 }, null, 2));

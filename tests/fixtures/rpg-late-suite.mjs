@@ -62,11 +62,14 @@ try {
     }[current.id + ':' + current.beat];
     if (publicPeople) {
       assert.match(await page.locator('[data-world-target="' + publicPeople[0] + '"]').textContent(), new RegExp(publicPeople[1]));
-      assert.equal(await page.locator('[data-object="' + publicPeople[0] + '"].world-person img').count(), 1, publicPeople[1] + ' 공개 뒤 실제 초상');
+      // 2026-10-06 승인 전신 그림(v4)으로 바뀌었다. 공개 뒤에는 그 인물의 승인 전신 그림이 실제로 표시돼야 한다.
+      const body = await page.locator('[data-object="' + publicPeople[0] + '"]').evaluate(el => { const o = G.data.maps.flatMap(m => m.objects).find(v => v.id === el.dataset.object), s = G.data.sprites[o.sprite]; return { src: s?.src, shown: getComputedStyle(el.querySelector('.world-sprite')).backgroundImage, pending: el.dataset.artPending || null }; });
+      assert.ok(body.src && body.shown.includes(body.src) && !body.pending, publicPeople[1] + ' 공개 뒤 승인 전신 그림');
     }
     if (current.id === 'e09-yoyeon' && current.beat === 'yoyeon-choice') {
       assert.doesNotMatch(await page.locator('.world-target-list').textContent(), /심요연/);
       assert.equal(await page.locator('[data-object="yoyeon-choice"].world-person img').count(), 0);
+      assert.match(await page.locator('[data-object="yoyeon-choice"] .world-sprite').evaluate(el => getComputedStyle(el).backgroundImage), /npc-assassin/, '공개 전 자객 그림');
     }
     if (current.id === 'e12-honrye' && current.beat === 'honrye-reveal') {
       assert.doesNotMatch(await page.locator('.world-target-list').textContent(), /정경패|영양공주/);

@@ -38,7 +38,9 @@ async function pageCase(name, fn, { width = 390, height = 740, big = false, prof
     if (big) { await p.locator('[data-tool="settings"]').click(); await p.locator('[data-set="big"]').click(); await p.keyboard.press('Escape'); }
     await p.evaluate(() => document.fonts.ready);
     await p.evaluate(() => {
-      window.mobileProbe = { pointers: [], events: [], oldCamera: null };
+      window.mobileProbe = { pointers: [], events: [], oldCamera: null, upCursor: null };
+      // 손을 뗀 바로 그 순간의 저장 위치. 검사 쪽의 읽기 시점과 실제 해제 사이에 끝난 걸음을 판정에서 빼기 위함이다.
+      document.addEventListener('pointerup', () => { const c = G.save.state.rpg?.cursor; mobileProbe.upCursor = c ? { x: c.x, y: c.y } : null; }, true);
       document.addEventListener('pointerdown', e => {
         if (e.target.closest('.world-camera')) mobileProbe.pointers.push({ id: e.pointerId, trusted: e.isTrusted, type: e.pointerType });
       }, true);
@@ -174,7 +176,8 @@ try {
         assert.ok(box.width > 0 && box.height > 0 && box.x >= 0 && box.y >= 0 && box.x + box.width <= width + 1 && box.y + box.height <= height + 1, selector + ' 화면 안');
       }
       await p.screenshot({ path: path.join(out, name + '-hold.png') });
-      const release = await cursor(p); await touch.up(); await stopped(p);
+      await touch.up(); await stopped(p);
+      const release = await p.evaluate(() => mobileProbe.upCursor); assert.ok(release, '실제 손 떼기 관찰');
       assert.ok(distance(release, await cursor(p)) <= 1, '손을 뗀 뒤 진행 중 한 칸만 마침');
       assert.equal(await actions(p), story, '이동으로 원작 행동 자동 수행 금지');
       assert.ok(await p.evaluate(() => mobileProbe.pointers.some(e => e.trusted && e.type === 'touch')), '실제 CDP touch 경로');
@@ -186,7 +189,7 @@ try {
       assert.ok(button.x > width / 2, '행동 단추는 오른쪽 엄지 영역');
       const label = await p.locator('[data-world-target="' + target + '"]').textContent();
       assert.ok(button.text.includes(label.replace(' · 다음 행동', '').trim()), '현재 인접 대상 이름');
-      assert.match(button.text, /말걸기|살펴보기|따라가기|시작하기|이어가기/);
+      assert.match(button.text, /말 걸기|살펴보기|따라가기|사용하기|이어 가기/);
       await p.screenshot({ path: path.join(out, name + '-action.png') });
       await touch.tap(button); await p.waitForSelector('[data-dialogue]');
       assert.notEqual(await actions(p), story, '실제 행동 tap이 기록됨');
@@ -223,9 +226,9 @@ try {
       const before = await actions(p); await touch.tap(await hitPoint(p, '[data-object="' + target + '"]'));
       await p.waitForSelector('[data-dialogue]'); assert.notEqual(await actions(p), before, '사각형 없는 실제 NPC 터치');
       await dialogue(p);
-      const props = await p.locator('.world-object.required:not([data-kind="npc"])').evaluateAll(els => els.map(el => ({ outline: getComputedStyle(el).outlineStyle, width: getComputedStyle(el).outlineWidth })));
+      const props = await p.locator('.world-object.required:not([data-kind="npc"])').evaluateAll(els => els.map(el => ({ outline: getComputedStyle(el).outlineStyle, marker: getComputedStyle(el, '::after').content })));
       assert.ok(props.length > 0, '대표 다음 행동 물건');
-      assert.ok(props.every(prop => prop.outline !== 'none' && parseFloat(prop.width) > 0), '물건 필수 표시 유지');
+      assert.ok(props.every(prop => prop.outline === 'none' && prop.marker === '"!"'), '물건도 사각 테두리 없이 느낌표로 필수 표시');
       const nextTarget = await firstTarget(p); await seekTarget(p, nextTarget); await idle(p);
       await touch.tap(await hitPoint(p, '[data-act="interact"]')); await p.waitForSelector('[data-dialogue]');
       evidence.push({ name: 'npc-outline-marker-focus-and-touch', normal, ordinary, focused, props, scope: '대표 도입 NPC·물건 UI 및 일반 상태 CSS 복제 회귀' });

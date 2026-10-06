@@ -1,0 +1,798 @@
+{
+  "version": 1,
+  "status": "approved",
+  "approved_date": "2026-10-06",
+  "approval": "사용자가 검토판 세 장(장소 14·선녀 7·NPC 14·물건 8)을 보고 모두 승인했다.",
+  "generator": "Codex CLI image_gen via tools/gen.ps1",
+  "processor": "tools/process_rpg_v4.py",
+  "entries": [
+    {
+      "key": "map-tianjin",
+      "kind": "map",
+      "name": "map-tianjin",
+      "approved_sha256": "9d96ee980d5ef908f4d376ea53e3ac0a7af50fb7f03e899737f1096be7acb096",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-tianjin-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-tianjin-v1.png",
+      "original_sha256": "f0bc9908c23384a16684e26d85d9f4f63be49a73b2dec0280dca59f47c17207b",
+      "prompt": "tools/prompts/rpg_v4_map-tianjin.txt",
+      "prompt_sha256": "518977a6d238ee06dae29968f8081f2a48224ff7597e6371d7cfcab5a02f81ee",
+      "sprite": {
+        "src": "assets/world/map-tianjin.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-jeong-house",
+      "kind": "map",
+      "name": "map-jeong-house",
+      "approved_sha256": "ce7654abf8f7cededaeb446d5c6c8605a582d4537220f9db3bdc98ce802b97b9",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-jeong-house-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-jeong-house-v1.png",
+      "original_sha256": "663b47e0f4e9f34cd8fdd9f50670bf2338227e2348fad22e827a3be9795f2d25",
+      "prompt": "tools/prompts/rpg_v4_map-jeong-house.txt",
+      "prompt_sha256": "8620f8ab1e60acff83e51308d62a93072ca94e402dead82bc34b59c9f9298637",
+      "sprite": {
+        "src": "assets/world/map-jeong-house.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-exam",
+      "kind": "map",
+      "name": "map-exam",
+      "approved_sha256": "0265106265b3e5d10dc31ca414886aeb85f8a98d3bd8c7b73a8fa6b46fe1b76f",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-exam-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-exam-v1.png",
+      "original_sha256": "ca671482ab902103ffc43db4c0f0ab64610a2a7e301e6e652ddba9dad21b972c",
+      "prompt": "tools/prompts/rpg_v4_map-exam.txt",
+      "prompt_sha256": "7275566617a6d160c403277485fa8a197919f59303e964cd52488ade7e9fdeec",
+      "sprite": {
+        "src": "assets/world/map-exam.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-hallim",
+      "kind": "map",
+      "name": "map-hallim",
+      "approved_sha256": "e85afced6f70447ae3fece3decb01c7e603a315d6b1f000024731d93f5b9172a",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-hallim-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-hallim-v1.png",
+      "original_sha256": "85729b96fea05889f838fe4f39bf8e324eebfcc8f3bce99a0317b691079a7b3d",
+      "prompt": "tools/prompts/rpg_v4_map-hallim.txt",
+      "prompt_sha256": "07a8e27e64fcbde255bb2faea27d63346c6e22a89480e07e3ddfcb50798948a5",
+      "sprite": {
+        "src": "assets/world/map-hallim.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-chunun-room",
+      "kind": "map",
+      "name": "map-chunun-room",
+      "approved_sha256": "cde0762a84be8d6e7816f12b69bfd66a8b4c35c71ba1274364b3927b9e1bfe6e",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-chunun-room-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-chunun-room-v1.png",
+      "original_sha256": "6e4c8f0e1a7157e372a09d1df6249ba84142aae408e0d937a56ec481b179263d",
+      "prompt": "tools/prompts/rpg_v4_map-chunun-room.txt",
+      "prompt_sha256": "c06aad6d8611524764635e3047c375fe8f795e68dc51319c5d867f7778f250ac",
+      "sprite": {
+        "src": "assets/world/map-chunun-room.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-hebei",
+      "kind": "map",
+      "name": "map-hebei",
+      "approved_sha256": "8cab43031744b691ecb80617fa87d1b872f03155ec3ac3d0db37fa3e779aee4d",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-hebei-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-hebei-v1.png",
+      "original_sha256": "3abcd722624a43a7e297d51a921f40583212d11e1a1391a0fdc1fc8e4f3659ae",
+      "prompt": "tools/prompts/rpg_v4_map-hebei.txt",
+      "prompt_sha256": "e0cb8c57a3c538846f78778edc6848f4ec8676cef8a4e371ca4546e7f0824aa7",
+      "sprite": {
+        "src": "assets/world/map-hebei.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-gyeonghong-room",
+      "kind": "map",
+      "name": "map-gyeonghong-room",
+      "approved_sha256": "c7d807aefdb15ba57bc8f8558d1c25a14eab73ec87b2ae2e048c293a48d99e2f",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-gyeonghong-room-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-gyeonghong-room-v1.png",
+      "original_sha256": "83eb08591dc171d051cb40018458be0f38e69ac58bb9b3cea23403f0f8cf461f",
+      "prompt": "tools/prompts/rpg_v4_map-gyeonghong-room.txt",
+      "prompt_sha256": "fbc930df243933a6678ea4daf24b19aa8eb895f557ec23733fcb1ca51b91c396",
+      "sprite": {
+        "src": "assets/world/map-gyeonghong-room.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-bongnae",
+      "kind": "map",
+      "name": "map-bongnae",
+      "approved_sha256": "98f747aa28ba857c1e86ad131f43246e2b0aa5cc316782cbb11003bb215b929b",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-bongnae-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-bongnae-v1.png",
+      "original_sha256": "ca897ffe35a762ab457a557ab702b7b74738522dca092e621b65014380b2dd0a",
+      "prompt": "tools/prompts/rpg_v4_map-bongnae.txt",
+      "prompt_sha256": "54304d2978063903d9b28d1d50a05d50cf04211bead4efcb7c8d6512a13e84c5",
+      "sprite": {
+        "src": "assets/world/map-bongnae.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-wonsu",
+      "kind": "map",
+      "name": "map-wonsu",
+      "approved_sha256": "8cf7c742e1721bb099913cf1d00a944224b3ce78a163388d19e1966e49c6ffb6",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-wonsu-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-wonsu-v1.png",
+      "original_sha256": "9203bb19e7680195b7c10ee5945e9467d267a3ebb4331764af6a7744a8272b72",
+      "prompt": "tools/prompts/rpg_v4_map-wonsu.txt",
+      "prompt_sha256": "f65d764fe46049a21335d7b99f5d8ef302122c45893af34320ad0783185b531a",
+      "sprite": {
+        "src": "assets/world/map-wonsu.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-yoyeon",
+      "kind": "map",
+      "name": "map-yoyeon",
+      "approved_sha256": "73144ca1a76390a34642673fe9d4b1fa093624df1ac7aeb557e27a9d16f1619b",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-yoyeon-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-yoyeon-v1.png",
+      "original_sha256": "e21dcece257f318e84c883b32d4f0029fecad6bdfcffc96c2456323e32d2499c",
+      "prompt": "tools/prompts/rpg_v4_map-yoyeon.txt",
+      "prompt_sha256": "fd030064ccb71cb29b36547f914b4eb259a2cb6b74aaa1f8529e540926bcc72f",
+      "sprite": {
+        "src": "assets/world/map-yoyeon.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-bansagok",
+      "kind": "map",
+      "name": "map-bansagok",
+      "approved_sha256": "7926857096dc44eb91d2f3de475da9465dea8bc800c55bf5d869ac65fc15e7b6",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-bansagok-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-bansagok-v1.png",
+      "original_sha256": "f27fa3396e1d2e87997389dd23980107e1e3107aa90d9545f464aa59efb1d9e0",
+      "prompt": "tools/prompts/rpg_v4_map-bansagok.txt",
+      "prompt_sha256": "46853a11bf8806fde3b578481348d4744f8915983e6bf87dad72db58f388ccf4",
+      "sprite": {
+        "src": "assets/world/map-bansagok.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-baekryong",
+      "kind": "map",
+      "name": "map-baekryong",
+      "approved_sha256": "60ea301ff03fcffb5c1e0ff43c5a0ee918d5e77b95bd2679b9b4a4b9fcbb9ac3",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-baekryong-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-baekryong-v1.png",
+      "original_sha256": "965f83ea5bd96d33f9c44c9614b84aa4927c6b380ffd629bdf7b27da86d2273b",
+      "prompt": "tools/prompts/rpg_v4_map-baekryong.txt",
+      "prompt_sha256": "ce2b51c92ef626da5394a731d2c1e605dd858ec71a12528de97b257f3a37eecc",
+      "sprite": {
+        "src": "assets/world/map-baekryong.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-seungsang",
+      "kind": "map",
+      "name": "map-seungsang",
+      "approved_sha256": "dbd1c9a2e8a8aa85f4da20195ceeb41870a302368aba055d37b588cdd56e552d",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-seungsang-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-seungsang-v1.png",
+      "original_sha256": "8ab44fbb370a549fc2851c6a67f26e9e361b1bd60ccc2a3eb137d2adbedabf49",
+      "prompt": "tools/prompts/rpg_v4_map-seungsang.txt",
+      "prompt_sha256": "c856c378fd52463933bdad51a8951f67fafee718aaf8c4a3cecdcdbb4edbca2a",
+      "sprite": {
+        "src": "assets/world/map-seungsang.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "map-honrye",
+      "kind": "map",
+      "name": "map-honrye",
+      "approved_sha256": "af2078807c366f318e91bd8e5aed0ff6195203b35520247cdd82f8c80bfe60f3",
+      "candidate": "assets/raw/rpg-art-v4/candidates/map-honrye-v1.webp",
+      "original": "assets/raw/rpg-art-v4/originals/map-honrye-v1.png",
+      "original_sha256": "0bed2751a29e3d494e9334c88a9cb57f5e1f6af89f929164b718b278110749bf",
+      "prompt": "tools/prompts/rpg_v4_map-honrye.txt",
+      "prompt_sha256": "3f22d370dc4161de0d6ac0136f75bcb710946012a2133fbf229a98104bde2c7f",
+      "sprite": {
+        "src": "assets/world/map-honrye.webp",
+        "width": 384,
+        "height": 320,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-scarlet",
+      "kind": "npc",
+      "name": "선녀 · 다홍 띠",
+      "approved_sha256": "2ded6773e2104d0608811220726df5ac495bb1e43756c203463e910f63334793",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-scarlet-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-scarlet.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-ivory",
+      "kind": "npc",
+      "name": "선녀 · 상아빛 띠",
+      "approved_sha256": "4243a13ea284b2818b713c1bd4bfbbebdbfd10d4bb5ecf26e39bbf6f5f923845",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-ivory-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-ivory.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-pink",
+      "kind": "npc",
+      "name": "선녀 · 분홍 띠",
+      "approved_sha256": "4e56b69049fa1adee07db1505e4eabdc0b836da525e55625d252ce742f13bae7",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-pink-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-pink.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-violet",
+      "kind": "npc",
+      "name": "선녀 · 보라 띠",
+      "approved_sha256": "e796b7a5b9eb2660f6c38d190dd5889e0490f9f4fa0141781115688a757299de",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-violet-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-violet.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-gold",
+      "kind": "npc",
+      "name": "선녀 · 금빛 띠",
+      "approved_sha256": "4ec6f4cdfa4f783e7ba4be7f5820151981eacc4c7f21ea50a2f22c1832df7d05",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-gold-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-gold.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-navy",
+      "kind": "npc",
+      "name": "선녀 · 남색 띠",
+      "approved_sha256": "4bf4912adae01c1d84126368ebcd23e9e7364aef12d5d8129d05454f31d9971b",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-navy-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-navy.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-fairy-aqua",
+      "kind": "npc",
+      "name": "선녀 · 물빛 띠",
+      "approved_sha256": "7885d05371d9ee9ad83e2460bbd17fde1a22c43e3cb1f79fa254d3db980e9d8e",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-fairy-aqua-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/fairies-v1.png",
+      "original_sha256": "1b57f513cc4a8a81aca470dd446cba8eced4b3332fd633fb9a8943e36835bf3e",
+      "prompt": "tools/prompts/rpg_v4_fairies.txt",
+      "prompt_sha256": "d65708b1b7459fbe64b7b950ab7cdc8defb2c599ad6c89947e08c6904bbf7c84",
+      "sprite": {
+        "src": "assets/world/npc-fairy-aqua.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-hermit",
+      "kind": "npc",
+      "name": "남전산 도인",
+      "approved_sha256": "c357c414c920c1aef564552aaae5b6c6293e4d700e6f4e381c4154e138a65681",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-hermit-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-hermit.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-singer",
+      "kind": "npc",
+      "name": "계섬월",
+      "approved_sha256": "7fd01f66af05f95b78f611d781341bf1763867e35afe00d407bde0becf62fc60",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-singer-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-singer.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-noble-lady",
+      "kind": "npc",
+      "name": "발 너머 소저·정경패",
+      "approved_sha256": "37ba4b507a82dcf7a6376af6ea7b8f3f424341cec2192c1049aae47a76a46c69",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-noble-lady-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-noble-lady.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-white-robe",
+      "kind": "npc",
+      "name": "흰 옷의 낯선 이·가춘운",
+      "approved_sha256": "1df13d4b0ee76e7a27fb4b8045bff08c44c9eefed3ca734cdd3172d568e597f2",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-white-robe-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-white-robe.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-yeonwang",
+      "kind": "npc",
+      "name": "연왕",
+      "approved_sha256": "e9a1a9c8621911fce30ce3c1584b96f155f75ed52d141ac7a60bb29b8cde5815",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-yeonwang-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-yeonwang.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-jeoksaeng",
+      "kind": "npc",
+      "name": "적생",
+      "approved_sha256": "f328e9c523eacc358f509cfebf7d139b1758830afd5b9b0fe4f2f8b545196f5e",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-jeoksaeng-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-jeoksaeng.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-gyeonghong",
+      "kind": "npc",
+      "name": "적경홍",
+      "approved_sha256": "74ab70b91c24f37f7144fdb4dc3901124e0fbb802a0f817aa915c6a574cab5ed",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-gyeonghong-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-a-v1.png",
+      "original_sha256": "471806793666cc6e683d24d662c75e201ee9e3b8676e58486e29f7517a46e639",
+      "prompt": "tools/prompts/rpg_v4_npc-a.txt",
+      "prompt_sha256": "8384416900def6f4bc083d60b8d6fafad87d72be3ab479e3832ef368438308bf",
+      "sprite": {
+        "src": "assets/world/npc-gyeonghong.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-general",
+      "kind": "npc",
+      "name": "군대 앞 지휘관",
+      "approved_sha256": "ec5941552f26f8264deb72272d22e9947913f945f1fecc0c9005027c38e56336",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-general-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-general.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-assassin",
+      "kind": "npc",
+      "name": "비수를 든 자객",
+      "approved_sha256": "993573dcd9a5f4a6eb3f750299794345a5f7332509ea85f36726b6ecfda36a36",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-assassin-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-assassin.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-yoyeon",
+      "kind": "npc",
+      "name": "심요연",
+      "approved_sha256": "5f4f469708157b03a623b81987d175bfcd1b2030d72d739a32d7eb08e178c430",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-yoyeon-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-yoyeon.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-neungpa",
+      "kind": "npc",
+      "name": "백능파",
+      "approved_sha256": "44094b18a4a125ae7ec7b85bd220a83aabc5c337c8110bdfd8966176e28069bf",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-neungpa-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-neungpa.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-old-monk",
+      "kind": "npc",
+      "name": "남악의 늙은 스님",
+      "approved_sha256": "3f7d769477a2d4b4904184e555160f8d04f7072a86645b7c179b6a74add4f0db",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-old-monk-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-old-monk.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-messenger",
+      "kind": "npc",
+      "name": "소식을 전한 사람",
+      "approved_sha256": "da139a6dffe0df8e4fe4cf8cc90e627c425fb8b89b42f81b83afe6a9cfa2c932",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-messenger-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-messenger.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "npc-chae",
+      "kind": "npc",
+      "name": "진채봉",
+      "approved_sha256": "1221c0628ae8aeb7d8248c7107ea36e68a51ce20265b988cc7dc54e5de3c2101",
+      "candidate": "assets/raw/rpg-art-v4/candidates/npc-chae-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/npc-b-v1.png",
+      "original_sha256": "b81776ce991025afc430ba40d9605e0dbd5a09648e542273d189ad83be180f59",
+      "prompt": "tools/prompts/rpg_v4_npc-b.txt",
+      "prompt_sha256": "b685d1b408ad8840b109a318a249014574fa3182fda9d022bdf72c355e681d1a",
+      "sprite": {
+        "src": "assets/world/npc-chae.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-peach",
+      "kind": "prop",
+      "name": "복숭아꽃",
+      "approved_sha256": "5a69e513f9b7becb5f5eb46ef9d4a081d76eaade8fe462ce7c3cea29c8c92541",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-peach-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-peach.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-path",
+      "kind": "prop",
+      "name": "길 표지",
+      "approved_sha256": "8f8c06c7daf64ae78fd32ec7a28a069e48308d712eadf060895c6b9ca097eacf",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-path-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-path.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-gate",
+      "kind": "prop",
+      "name": "출입구",
+      "approved_sha256": "7d2c3e2e2f50ac94fd908ea73a2cd5b0d4912cc7bf54251d0816952ac05f2616",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-gate-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-gate.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-window",
+      "kind": "prop",
+      "name": "창가",
+      "approved_sha256": "ee76ddbc258424d7c759dae603c047d3dc88fc4234c2623b85c0574e45b0d091",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-window-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-window.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-willow",
+      "kind": "prop",
+      "name": "버들",
+      "approved_sha256": "5a9c0af79bb1885e67569f61a5ce965e773e8645c174ef612a690419c2012419",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-willow-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-willow.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-crane",
+      "kind": "prop",
+      "name": "학",
+      "approved_sha256": "78dc26fd9c70e57e64f9c2396388773457ee064bb5be7e93b8c09315edc2bc07",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-crane-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-crane.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-lantern",
+      "kind": "prop",
+      "name": "석등",
+      "approved_sha256": "acfe224a5d91f57e1df598df39d980b9c2279541fec1ffedbcd4ed2db128104b",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-lantern-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-lantern.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    },
+    {
+      "key": "prop-pool",
+      "kind": "prop",
+      "name": "물길",
+      "approved_sha256": "6ad439500d6017d732fa33cc73ebf8c32304bbe397dcc4881b284b8c52f84731",
+      "candidate": "assets/raw/rpg-art-v4/candidates/prop-pool-v3.webp",
+      "original": "assets/raw/rpg-art-v4/originals/props-v1.png",
+      "original_sha256": "c3ba3a603c732f782fb063bfe605b64ea14d9bbb373d4dbfdc52acee18f3e37f",
+      "prompt": "tools/prompts/rpg_v4_props.txt",
+      "prompt_sha256": "5217f6f44729c3395fc218958ac2d41f70361360daa10574b4a3d559d07f2ff8",
+      "sprite": {
+        "src": "assets/world/prop-pool.webp",
+        "width": 32,
+        "height": 32,
+        "frames": 1,
+        "rows": 1
+      }
+    }
+  ],
+  "reviews": {
+    "maps-review-v1.png": {
+      "path": "assets/raw/rpg-art-v4/review/maps-review-v1.png",
+      "sha256": "299426f6ba7f3ea37d733af3a41ba48e7825684690fd4c81914782594c495d5f"
+    },
+    "sprites-review-v1.png": {
+      "path": "assets/raw/rpg-art-v4/review/sprites-review-v1.png",
+      "sha256": "de3f45e9b4f4705225b5136aadafc638a8a525b62f72cf764424dfdb2bb874f8"
+    },
+    "bridge-fairies-review-v1.png": {
+      "path": "assets/raw/rpg-art-v4/review/bridge-fairies-review-v1.png",
+      "sha256": "54ce9a6f2e0d9d3bce3f4b105897d851c5d8cb3d360e4858c04b162fc1e54de2"
+    }
+  }
+}

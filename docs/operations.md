@@ -60,7 +60,7 @@ python tools/check_assets.py
 
 | 검사 | 범위 |
 | --- | --- |
-| check-assets | 승인 자산 161개, 세 화면 크기의 실제 접근·정수배·동작 재생·외부 요청 없음 |
+| check-assets | 승인 자산 204개, 세 화면 크기의 실제 접근·정수배·동작 재생·외부 요청 없음 |
 | check-bgm | 18곡의 파일·출처·음량 -20 LUFS ±2·봉우리 -0.5 dBTP 아래 |
 | check-content | 로딩 관찰 회귀, 출처·소리·파일 열기, 학생 세 판의 전체 흐름·오답·재접속·잠금·해석·실제 PNG |
 | check-data | 실제 데이터 구조·글 총량·근거·자산 이름·교과서 대조 |
@@ -108,7 +108,7 @@ cd tests; node check-bgm.mjs
 python tools/make_prompts.py                                    # tools/prompts/*.txt, tools/manifest_*.tsv
 powershell -ExecutionPolicy Bypass -File tools/genqueue.ps1 -Manifest tools/manifest_phase2.tsv -Parallel 3 -Only sc_bridge
 python tools/process_assets.py sc_bridge                        # 말 시트는 python tools/process_sprites.py horse_walk
-python tools/check_assets.py                                    # 승인 제품 161개의 경로·크기·32색·무손실·해시
+python tools/check_assets.py                                    # 승인 제품 204개의 경로·크기·32색·무손실·해시
 python tools/make_review.py                                     # design/review/ 모아 보기
 ```
 

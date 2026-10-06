@@ -162,6 +162,13 @@
         "person": "fairy_chae",
         "sprite": "npc-fairy-green"
       },
+      { "id": "bridge-fairy-scarlet", "x": 4, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-scarlet" },
+      { "id": "bridge-fairy-ivory", "x": 5, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-ivory" },
+      { "id": "bridge-fairy-pink", "x": 6, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-pink" },
+      { "id": "bridge-fairy-violet", "x": 7, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-violet" },
+      { "id": "bridge-fairy-gold", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-gold" },
+      { "id": "bridge-fairy-navy", "x": 6, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-navy" },
+      { "id": "bridge-fairy-aqua", "x": 5, "y": 2, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-aqua" },
       {
         "id": "bridge-flower",
         "x": 5,
@@ -169,6 +176,8 @@
         "kind": "item",
         "solid": true,
         "label": "복숭아꽃",
+        "verb": "건네기",
+        "sprite": "prop-peach",
         "visibleAt": [
           "c1-bridge:bridge-flower"
         ],
@@ -181,6 +190,7 @@
         "kind": "exit",
         "solid": true,
         "label": "선방으로 돌아가는 길",
+        "sprite": "prop-path",
         "visibleAt": [
           "c1-bridge:bridge-home"
         ],
@@ -344,6 +354,7 @@
         "kind": "scenery",
         "solid": true,
         "label": "창가",
+        "sprite": "prop-window",
         "visibleAt": [
           "c1-cell:cell-window",
           "c1-cell:cell-sit"
@@ -356,7 +367,8 @@
         "y": 5,
         "kind": "scenery",
         "solid": true,
-        "label": "방석에 앉기",
+        "label": "방석",
+        "verb": "앉기",
         "visibleAt": [
           "c1-cell:cell-window",
           "c1-cell:cell-sit"
@@ -370,7 +382,7 @@
         "y": 4,
         "kind": "scenery",
         "solid": true,
-        "label": "경전 놓인 자리",
+        "label": "경전",
         "visibleAt": [
           "c1-cell:cell-window",
           "c1-cell:cell-sit"
@@ -413,6 +425,7 @@
         "kind": "exit",
         "solid": true,
         "label": "저승으로 향하는 출입구",
+        "sprite": "prop-gate",
         "visibleAt": [
           "c1-exile:exile-leave"
         ],
@@ -438,6 +451,7 @@
         "kind": "scenery",
         "solid": true,
         "label": "선방의 창가",
+        "sprite": "prop-window",
         "visibleAt": [
           "c3-awake:awake-window"
         ],
@@ -450,6 +464,7 @@
         "kind": "scenery",
         "solid": true,
         "label": "닫힌 출입구",
+        "sprite": "prop-gate",
         "visibleAt": [
           "c3-awake:awake-door"
         ],
@@ -612,7 +627,8 @@
         "y": 3,
         "kind": "scenery",
         "solid": true,
-        "label": "버들 아래에서 누각 살피기",
+        "label": "누각에 닿은 버들",
+        "sprite": "prop-willow",
         "visibleAt": [
           "e01-huayin:huayin-look"
         ],
@@ -624,7 +640,8 @@
         "y": 4,
         "kind": "item",
         "solid": true,
-        "label": "붓 놓인 자리",
+        "label": "붓과 종이",
+        "verb": "시 쓰기",
         "visibleAt": [
           "e01-huayin:huayin-write"
         ],
@@ -652,6 +669,7 @@
         "kind": "item",
         "solid": true,
         "label": "유모가 건넨 답시",
+        "verb": "받기",
         "visibleAt": [
           "e01-huayin:huayin-reply"
         ],
@@ -665,6 +683,7 @@
         "kind": "exit",
         "solid": true,
         "label": "과거 길",
+        "sprite": "prop-path",
         "visibleAt": [
           "e01-huayin:huayin-leave"
         ],
@@ -689,22 +708,22 @@
     "height": 10,
     "tile": 32,
     "walk": [
-      [0,0,0,0,0,0,0,0,0,0,0,0],
-      [0,1,1,0,0,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,0,1,1,1,1,1,1,0],
-      [0,1,1,1,0,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,0,0,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0]
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0],
+      [0,0,0,0,0,1,1,0,0,0,0,0]
     ],
     "art": "map-bridge",
     "objects": [
-      { "id": "namjeon-ridge", "x": 2, "y": 3, "kind": "scenery", "solid": true, "label": "산등성이의 좁은 길", "visibleAt": ["l-namjeon:namjeon-climb"], "action": "namjeon-climb" },
-      { "id": "namjeon-dosa", "x": 9, "y": 2, "kind": "npc", "solid": true, "label": "남전산 도인", "visibleAt": ["l-namjeon:namjeon-learn"], "action": "namjeon-learn", "person": "dosa" },
-      { "id": "namjeon-instruments", "x": 8, "y": 7, "kind": "item", "solid": true, "label": "거문고와 백옥 퉁소", "visibleAt": ["l-namjeon:namjeon-receive"], "action": "namjeon-receive", "sprite": "prop-chest" }
+      { "id": "namjeon-ridge", "x": 4, "y": 6, "kind": "scenery", "solid": true, "label": "산등성이의 좁은 길", "sprite": "prop-path", "visibleAt": ["l-namjeon:namjeon-climb"], "action": "namjeon-climb" },
+      { "id": "namjeon-dosa", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "남전산 도인", "sprite": "npc-hermit", "visibleAt": ["l-namjeon:namjeon-learn"], "action": "namjeon-learn", "person": "dosa" },
+      { "id": "namjeon-instruments", "x": 7, "y": 4, "kind": "item", "solid": true, "label": "거문고와 백옥 퉁소", "verb": "받기", "visibleAt": ["l-namjeon:namjeon-receive"], "action": "namjeon-receive", "sprite": "prop-chest" }
     ]
   },
   {
@@ -724,11 +743,11 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-tianjin",
     "objects": [
-      { "id": "tianjin-guests", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "시회에 모인 자리", "visibleAt": ["e02-tianjin:tianjin-enter"], "action": "tianjin-enter", "sprite": "prop-stool" },
-      { "id": "tianjin-brush", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "시전과 붓", "visibleAt": ["e02-tianjin:tianjin-write"], "action": "tianjin-write", "sprite": "prop-table" },
-      { "id": "tianjin-seomwol", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "계섬월", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-listen", "person": "seomwol" },
+      { "id": "tianjin-guests", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "시를 겨루는 선비들", "visibleAt": ["e02-tianjin:tianjin-enter"], "action": "tianjin-enter", "sprite": "prop-stool" },
+      { "id": "tianjin-brush", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "시전과 붓", "verb": "시 쓰기", "visibleAt": ["e02-tianjin:tianjin-write"], "action": "tianjin-write", "sprite": "prop-table" },
+      { "id": "tianjin-seomwol", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "계섬월", "sprite": "npc-singer", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-listen", "person": "seomwol" },
       { "id": "tianjin-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "술잔 곁 구슬 흔적 · 선택", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-pearl", "sprite": "prop-stool" }
     ]
   },
@@ -749,11 +768,11 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-jeong-house",
     "objects": [
-      { "id": "geomungo-clothes", "x": 2, "y": 6, "kind": "item", "solid": true, "label": "여도사 차림", "visibleAt": ["e03-geomungo:geomungo-dress"], "action": "geomungo-dress", "sprite": "prop-chest" },
-      { "id": "geomungo-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "거문고 자리", "visibleAt": ["e03-geomungo:geomungo-play"], "action": "geomungo-play", "sprite": "prop-table" },
-      { "id": "geomungo-listener", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "발 너머 소저", "visibleAt": ["e03-geomungo:geomungo-response"], "action": "geomungo-response", "person": "gyeongpae" },
+      { "id": "geomungo-clothes", "x": 2, "y": 6, "kind": "item", "solid": true, "label": "여도사 차림", "verb": "갈아입기", "visibleAt": ["e03-geomungo:geomungo-dress"], "action": "geomungo-dress", "sprite": "prop-chest" },
+      { "id": "geomungo-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "거문고", "verb": "타기", "visibleAt": ["e03-geomungo:geomungo-play"], "action": "geomungo-play", "sprite": "prop-table" },
+      { "id": "geomungo-listener", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "발 너머 소저", "sprite": "npc-noble-lady", "visibleAt": ["e03-geomungo:geomungo-response"], "action": "geomungo-response", "person": "gyeongpae" },
       { "id": "geomungo-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "창가의 구슬 흔적 · 선택", "visibleAt": [], "action": "geomungo-pearl", "sprite": "prop-cushion" }
     ]
   },
@@ -774,9 +793,9 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-grey",
+    "art": "map-exam",
     "objects": [
-      { "id": "exam-seat", "x": 5, "y": 4, "kind": "scenery", "solid": true, "label": "시험 자리와 붓", "visibleAt": ["e04-exam:exam-write"], "action": "exam-write", "sprite": "prop-table" },
+      { "id": "exam-seat", "x": 5, "y": 4, "kind": "scenery", "solid": true, "label": "시험장의 책상과 붓", "verb": "글 쓰기", "visibleAt": ["e04-exam:exam-write"], "action": "exam-write", "sprite": "prop-table" },
       { "id": "exam-list", "x": 9, "y": 2, "kind": "scenery", "solid": true, "label": "합격자 발표", "visibleAt": ["e04-exam:exam-result"], "action": "exam-result", "sprite": "prop-wall-grey" }
     ]
   },
@@ -797,7 +816,7 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-hallim",
     "objects": [
       { "id": "hallim-desk", "x": 7, "y": 3, "kind": "scenery", "solid": true, "label": "한림원의 새 자리", "visibleAt": [], "action": null, "sprite": "prop-table" }
     ]
@@ -809,21 +828,21 @@
     "tile": 32,
     "walk": [
       [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,0,0,0,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,0,0,0,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0]
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0]
     ],
     "art": "map-huayin",
     "objects": [
-      { "id": "chunun-fairy", "x": 9, "y": 2, "kind": "npc", "solid": true, "label": "흰 옷의 낯선 이", "visibleAt": ["e05-chunun:chunun-fairy"], "action": "chunun-fairy", "person": "chunun" },
-      { "id": "chunun-ghost", "x": 2, "y": 3, "kind": "npc", "solid": true, "label": "장여랑이라 하는 이", "visibleAt": ["e05-chunun:chunun-ghost"], "action": "chunun-ghost", "person": "chunun" },
-      { "id": "chunun-talisman", "x": 8, "y": 7, "kind": "item", "solid": true, "label": "귀신을 쫓는다는 부적", "visibleAt": ["e05-chunun:chunun-talisman"], "action": "chunun-talisman", "sprite": "prop-table" }
+      { "id": "chunun-fairy", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "흰 옷의 낯선 이", "sprite": "npc-white-robe", "visibleAt": ["e05-chunun:chunun-fairy"], "action": "chunun-fairy", "person": "chunun" },
+      { "id": "chunun-ghost", "x": 2, "y": 3, "kind": "npc", "solid": true, "label": "장여랑이라 하는 이", "sprite": "npc-white-robe", "visibleAt": ["e05-chunun:chunun-ghost"], "action": "chunun-ghost", "person": "chunun" },
+      { "id": "chunun-talisman", "x": 6, "y": 5, "kind": "item", "solid": true, "label": "귀신을 쫓는다는 부적", "verb": "몸에 지니기", "visibleAt": ["e05-chunun:chunun-talisman"], "action": "chunun-talisman", "sprite": "prop-table" }
     ]
   },
   {
@@ -843,10 +862,10 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-chunun-room",
     "objects": [
       { "id": "chunun-screen", "x": 5, "y": 3, "kind": "scenery", "solid": true, "label": "걷힌 병풍", "visibleAt": ["e05-chunun:chunun-reveal"], "action": null, "sprite": "prop-wall-red" },
-      { "id": "chunun-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "가춘운", "visibleAt": ["e05-chunun:chunun-reveal"], "action": "chunun-reveal", "person": "chunun" },
+      { "id": "chunun-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "가춘운", "sprite": "npc-white-robe", "visibleAt": ["e05-chunun:chunun-reveal"], "action": "chunun-reveal", "person": "chunun" },
       { "id": "chunun-pearl", "x": 2, "y": 7, "kind": "pearl", "solid": true, "label": "잎 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "chunun-pearl", "sprite": "prop-cushion" }
     ]
   },
@@ -859,19 +878,19 @@
       [0,0,0,0,0,0,0,0,0,0,0,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,0,0,1,1,1,1,1,0],
-      [0,1,1,1,0,0,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,0,0,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,0],
+      [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "map-bridge",
+    "art": "map-hebei",
     "objects": [
       { "id": "hebei-edict", "x": 2, "y": 2, "kind": "item", "solid": true, "label": "황제의 조서", "visibleAt": ["l-hebei:hebei-edict"], "action": "hebei-edict", "sprite": "prop-table" },
-      { "id": "hebei-token", "x": 6, "y": 5, "kind": "item", "solid": true, "label": "사신의 부절", "visibleAt": ["l-hebei:hebei-token"], "action": "hebei-token", "sprite": "prop-chest" },
-      { "id": "hebei-king", "x": 9, "y": 2, "kind": "npc", "solid": true, "label": "연왕", "visibleAt": ["l-hebei:hebei-persuade"], "action": "hebei-persuade", "person": "yeonwang" }
+      { "id": "hebei-token", "x": 6, "y": 5, "kind": "item", "solid": true, "label": "사신의 부절", "verb": "내보이기", "visibleAt": ["l-hebei:hebei-token"], "action": "hebei-token", "sprite": "prop-chest" },
+      { "id": "hebei-king", "x": 9, "y": 2, "kind": "npc", "solid": true, "label": "연왕", "sprite": "npc-yeonwang", "visibleAt": ["l-hebei:hebei-persuade"], "action": "hebei-persuade", "person": "yeonwang" }
     ]
   },
   {
@@ -881,20 +900,20 @@
     "tile": 32,
     "walk": [
       [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,0,0,1,1,1,1,0,0,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,0,0,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,0,0,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0]
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0]
     ],
     "art": "map-huayin",
     "objects": [
-      { "id": "gyeonghong-horse", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "함께 달릴 말", "visibleAt": ["e06-gyeonghong:gyeonghong-road"], "action": "gyeonghong-road", "sprite": "prop-stool" },
-      { "id": "gyeonghong-boy", "x": 9, "y": 4, "kind": "npc", "solid": true, "label": "적생", "visibleAt": ["e06-gyeonghong:gyeonghong-companion"], "action": "gyeonghong-companion", "person": "gyeonghong" }
+      { "id": "gyeonghong-horse", "x": 2, "y": 4, "kind": "scenery", "solid": true, "label": "함께 달릴 말", "visibleAt": ["e06-gyeonghong:gyeonghong-road"], "action": "gyeonghong-road", "sprite": "prop-stool" },
+      { "id": "gyeonghong-boy", "x": 9, "y": 4, "kind": "npc", "solid": true, "label": "적생", "sprite": "npc-jeoksaeng", "visibleAt": ["e06-gyeonghong:gyeonghong-companion"], "action": "gyeonghong-companion", "person": "gyeonghong" }
     ]
   },
   {
@@ -914,10 +933,10 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-gyeonghong-room",
     "objects": [
       { "id": "gyeonghong-seat", "x": 4, "y": 3, "kind": "scenery", "solid": true, "label": "밤사이 바뀐 자리", "visibleAt": ["e06-gyeonghong:gyeonghong-discover"], "action": "gyeonghong-discover", "sprite": "prop-cushion" },
-      { "id": "gyeonghong-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "적경홍", "visibleAt": ["e06-gyeonghong:gyeonghong-reveal"], "action": "gyeonghong-reveal", "person": "gyeonghong" },
+      { "id": "gyeonghong-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "적경홍", "sprite": "npc-gyeonghong", "visibleAt": ["e06-gyeonghong:gyeonghong-reveal"], "action": "gyeonghong-reveal", "person": "gyeonghong" },
       { "id": "gyeonghong-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "거울 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "gyeonghong-pearl", "sprite": "prop-stool" }
     ]
   },
@@ -928,22 +947,22 @@
     "tile": 32,
     "walk": [
       [0,0,0,0,0,0,0,0,0,0,0,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,1,1,1,1,1,1,1,1,1,1,0],
-      [0,0,0,0,0,0,0,0,0,0,0,0]
+      [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0]
     ],
     "art": "map-chwimi",
     "objects": [
-      { "id": "tungso-night", "x": 2, "y": 6, "kind": "scenery", "solid": true, "label": "한림원의 밤 뜰", "visibleAt": ["e07-tungso:tungso-night"], "action": "tungso-night" },
-      { "id": "tungso-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "백옥 퉁소", "visibleAt": ["e07-tungso:tungso-play"], "action": "tungso-play", "sprite": "prop-table" },
-      { "id": "tungso-crane", "x": 9, "y": 2, "kind": "scenery", "solid": true, "label": "가락에 내려온 학", "visibleAt": ["e07-tungso:tungso-crane"], "action": "tungso-crane" },
-      { "id": "tungso-message", "x": 8, "y": 7, "kind": "scenery", "solid": true, "label": "궁중에서 전해 온 이야기", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-message", "sprite": "prop-chest" },
+      { "id": "tungso-night", "x": 2, "y": 6, "kind": "scenery", "solid": true, "label": "한림원의 밤 뜰", "sprite": "prop-lantern", "visibleAt": ["e07-tungso:tungso-night"], "action": "tungso-night" },
+      { "id": "tungso-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "백옥 퉁소", "verb": "불기", "visibleAt": ["e07-tungso:tungso-play"], "action": "tungso-play", "sprite": "prop-table" },
+      { "id": "tungso-crane", "x": 9, "y": 2, "kind": "scenery", "solid": true, "label": "가락에 내려온 학", "sprite": "prop-crane", "visibleAt": ["e07-tungso:tungso-crane"], "action": "tungso-crane" },
+      { "id": "tungso-message", "x": 8, "y": 6, "kind": "scenery", "solid": true, "label": "궁중에서 전해 온 이야기", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-message", "sprite": "prop-chest" },
       { "id": "tungso-pearl", "x": 2, "y": 2, "kind": "pearl", "solid": true, "label": "달빛 속 구슬 흔적 · 선택", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-pearl", "sprite": "prop-cushion" }
     ]
   },
@@ -964,11 +983,11 @@
       [0,1,1,1,1,1,1,1,1,1,1,0],
       [0,0,0,0,0,0,0,0,0,0,0,0]
     ],
-    "art": "prop-floor-wood",
+    "art": "map-bongnae",
     "objects": [
       { "id": "bongnae-fan", "x": 2, "y": 3, "kind": "item", "solid": true, "label": "궁중의 부채와 비단", "visibleAt": ["l-bongnae:bongnae-fan"], "action": "bongnae-fan", "sprite": "prop-table" },
-      { "id": "bongnae-brush", "x": 6, "y": 5, "kind": "item", "solid": true, "label": "시를 쓰는 붓", "visibleAt": ["l-bongnae:bongnae-write"], "action": "bongnae-write", "sprite": "prop-stool" },
-      { "id": "bongnae-reply", "x": 9, "y": 3, "kind": "item", "solid": true, "label": "돌아온 답시와 문방", "visibleAt": ["l-bongnae:bongnae-reply"], "action": "bongnae-reply", "sprite": "prop-chest" }
+      { "id": "bongnae-brush", "x": 6, "y": 5, "kind": "item", "solid": true, "label": "궁녀의 부채", "verb": "시 써 주기", "visibleAt": ["l-bongnae:bongnae-write"], "action": "bongnae-write", "sprite": "prop-stool" },
+      { "id": "bongnae-reply", "x": 9, "y": 3, "kind": "item", "solid": true, "label": "돌아온 답시", "verb": "읽기", "visibleAt": ["l-bongnae:bongnae-reply"], "action": "bongnae-reply", "sprite": "prop-chest" }
     ]
   },
   {
@@ -977,16 +996,16 @@
     "height": 10,
     "tile": 32,
     "walk": [
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-      [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+      [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,1,1,1,1,1,1,1,1,1,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0]
     ],
     "art": "map-chwimi",
     "objects": [
@@ -1010,6 +1029,7 @@
         "kind": "scenery",
         "solid": true,
         "label": "옛 궁터와 무덤이 보이는 높은 대",
+        "sprite": "prop-lantern",
         "visibleAt": [
           "c3-feast:feast-overlook"
         ],
@@ -1021,7 +1041,7 @@
         "y": 4,
         "kind": "scenery",
         "solid": true,
-        "label": "함께 뜻을 나누던 자리",
+        "label": "뜻을 함께한 이들",
         "visibleAt": [
           "c3-feast:feast-vow"
         ],
@@ -1035,6 +1055,7 @@
         "kind": "scenery",
         "solid": true,
         "label": "돌길의 지팡이 소리",
+        "sprite": "prop-path",
         "visibleAt": [
           "c3-monk:monk-hear"
         ],
@@ -1073,71 +1094,71 @@
   {
     "id": "map-wonsu", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-grey",
+    "art": "map-wonsu",
     "objects": [
       { "id": "wonsu-prison", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "옥문", "visibleAt": ["e08-wonsu:wonsu-prison"], "action": "wonsu-prison", "sprite": "prop-wall-grey" },
       { "id": "wonsu-summons", "x": 5, "y": 2, "kind": "item", "solid": true, "label": "조정의 부름", "visibleAt": ["e08-wonsu:wonsu-summons"], "action": "wonsu-summons", "sprite": "prop-table" },
-      { "id": "wonsu-command", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "군대 앞 지휘관", "visibleAt": ["e08-wonsu:wonsu-command"], "action": "wonsu-command" },
+      { "id": "wonsu-command", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "군대 앞 지휘관", "sprite": "npc-general", "visibleAt": ["e08-wonsu:wonsu-command"], "action": "wonsu-command" },
       { "id": "wonsu-victory", "x": 8, "y": 6, "kind": "scenery", "solid": true, "label": "위교의 전황", "visibleAt": ["e08-wonsu:wonsu-victory"], "action": "wonsu-victory", "sprite": "prop-wall-red" },
-      { "id": "wonsu-appointment", "x": 3, "y": 6, "kind": "item", "solid": true, "label": "대원수의 검과 교지", "visibleAt": ["e08-wonsu:wonsu-appointment"], "action": "wonsu-appointment", "sprite": "prop-chest" }
+      { "id": "wonsu-appointment", "x": 3, "y": 6, "kind": "item", "solid": true, "label": "대원수의 검과 교지", "verb": "받기", "visibleAt": ["e08-wonsu:wonsu-appointment"], "action": "wonsu-appointment", "sprite": "prop-chest" }
     ]
   },
   {
     "id": "map-yoyeon", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-grey",
+    "art": "map-yoyeon",
     "objects": [
       { "id": "yoyeon-night", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "밤 진영", "visibleAt": ["e09-yoyeon:yoyeon-night"], "action": "yoyeon-night", "sprite": "prop-wall-grey" },
-      { "id": "yoyeon-arrive", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "비수를 든 자객", "visibleAt": ["e09-yoyeon:yoyeon-arrive"], "action": "yoyeon-arrive", "person": "yoyeon" },
-      { "id": "yoyeon-choice", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "칼을 내려놓으려는 자객", "visibleAt": ["e09-yoyeon:yoyeon-choice"], "action": "yoyeon-choice" },
-      { "id": "yoyeon-speak", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "심요연", "visibleAt": ["e09-yoyeon:yoyeon-speak"], "action": "yoyeon-speak", "person": "yoyeon" },
-      { "id": "yoyeon-warning", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "심요연", "visibleAt": ["e09-yoyeon:yoyeon-warning"], "action": "yoyeon-warning", "person": "yoyeon" },
+      { "id": "yoyeon-arrive", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "비수를 든 자객", "sprite": "npc-assassin", "visibleAt": ["e09-yoyeon:yoyeon-arrive"], "action": "yoyeon-arrive", "person": "yoyeon" },
+      { "id": "yoyeon-choice", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "칼을 내려놓으려는 자객", "sprite": "npc-assassin", "visibleAt": ["e09-yoyeon:yoyeon-choice"], "action": "yoyeon-choice" },
+      { "id": "yoyeon-speak", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-speak"], "action": "yoyeon-speak", "person": "yoyeon" },
+      { "id": "yoyeon-warning", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-warning"], "action": "yoyeon-warning", "person": "yoyeon" },
       { "id": "yoyeon-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "촛대 아래 구슬 흔적 · 선택", "visibleAt": ["e09-yoyeon:yoyeon-speak","e09-yoyeon:yoyeon-warning"], "action": "yoyeon-pearl", "sprite": "prop-stool" }
     ]
   },
   {
     "id": "map-bansagok", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-grey",
+    "art": "map-bansagok",
     "objects": [
       { "id": "neungpa-water", "x": 4, "y": 3, "kind": "scenery", "solid": true, "label": "반사곡의 물", "visibleAt": ["e10-neungpa:neungpa-water"], "action": "neungpa-water", "sprite": "prop-floor-grey" },
-      { "id": "neungpa-enter", "x": 8, "y": 6, "kind": "exit", "solid": true, "label": "백룡담으로 이어지는 물길", "visibleAt": ["e10-neungpa:neungpa-enter"], "action": "neungpa-enter" }
+      { "id": "neungpa-enter", "x": 8, "y": 6, "kind": "exit", "solid": true, "label": "백룡담으로 이어지는 물길", "sprite": "prop-pool", "visibleAt": ["e10-neungpa:neungpa-enter"], "action": "neungpa-enter" }
     ]
   },
   {
     "id": "map-baekryong", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-grey",
+    "art": "map-baekryong",
     "objects": [
-      { "id": "neungpa-meet", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "백능파", "visibleAt": ["e10-neungpa:neungpa-meet"], "action": "neungpa-meet", "person": "neungpa" },
-      { "id": "neungpa-defeat", "x": 3, "y": 2, "kind": "scenery", "solid": true, "label": "남해 태자가 물러난 자리", "visibleAt": ["e10-neungpa:neungpa-defeat"], "action": "neungpa-defeat", "sprite": "prop-wall-red" },
-      { "id": "neungpa-share", "x": 7, "y": 5, "kind": "item", "solid": true, "label": "군사들에게 나눌 물", "visibleAt": ["e10-neungpa:neungpa-share"], "action": "neungpa-share", "sprite": "prop-table" },
-      { "id": "neungpa-monk", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "남악의 늙은 스님", "visibleAt": ["e10-neungpa:neungpa-monk"], "action": "neungpa-monk" },
+      { "id": "neungpa-meet", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "백능파", "sprite": "npc-neungpa", "visibleAt": ["e10-neungpa:neungpa-meet"], "action": "neungpa-meet", "person": "neungpa" },
+      { "id": "neungpa-defeat", "x": 3, "y": 2, "kind": "scenery", "solid": true, "label": "남해 태자가 물러난 물가", "visibleAt": ["e10-neungpa:neungpa-defeat"], "action": "neungpa-defeat", "sprite": "prop-wall-red" },
+      { "id": "neungpa-share", "x": 7, "y": 5, "kind": "item", "solid": true, "label": "군사들에게 나눌 물", "verb": "나눠 주기", "visibleAt": ["e10-neungpa:neungpa-share"], "action": "neungpa-share", "sprite": "prop-table" },
+      { "id": "neungpa-monk", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "남악의 늙은 스님", "sprite": "npc-old-monk", "visibleAt": ["e10-neungpa:neungpa-monk"], "action": "neungpa-monk" },
       { "id": "neungpa-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "물밑 구슬 흔적 · 선택", "visibleAt": ["e10-neungpa:neungpa-defeat","e10-neungpa:neungpa-share","e10-neungpa:neungpa-monk"], "action": "neungpa-pearl", "sprite": "prop-cushion" }
     ]
   },
   {
     "id": "map-seungsang", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-wood",
+    "art": "map-seungsang",
     "objects": [
       { "id": "seungsang-return", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "도성으로 돌아온 군대", "visibleAt": ["e11-seungsang:seungsang-return"], "action": "seungsang-return", "sprite": "prop-wall-red" },
-      { "id": "seungsang-edict", "x": 6, "y": 2, "kind": "item", "solid": true, "label": "대승상 교지", "visibleAt": ["e11-seungsang:seungsang-edict"], "action": "seungsang-edict", "sprite": "prop-table" },
+      { "id": "seungsang-edict", "x": 6, "y": 2, "kind": "item", "solid": true, "label": "대승상 교지", "verb": "받기", "visibleAt": ["e11-seungsang:seungsang-edict"], "action": "seungsang-edict", "sprite": "prop-table" },
       { "id": "seungsang-portrait", "x": 9, "y": 4, "kind": "scenery", "solid": true, "label": "기린각의 초상", "visibleAt": ["e11-seungsang:seungsang-portrait"], "action": "seungsang-portrait", "sprite": "prop-wall-grey" },
-      { "id": "seungsang-news", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "경패의 소식을 전한 사람", "visibleAt": ["e11-seungsang:seungsang-news"], "action": "seungsang-news" }
+      { "id": "seungsang-news", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "경패의 소식을 전한 사람", "sprite": "npc-messenger", "visibleAt": ["e11-seungsang:seungsang-news"], "action": "seungsang-news" }
     ]
   },
   {
     "id": "map-honrye", "width": 12, "height": 10, "tile": 32,
     "walk": [[0,0,0,0,0,0,0,0,0,0,0,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,1,1,0],[0,0,0,0,0,0,0,0,0,0,0,0]],
-    "art": "prop-floor-wood",
+    "art": "map-honrye",
     "objects": [
-      { "id": "honrye-ceremony", "x": 5, "y": 2, "kind": "scenery", "solid": true, "label": "정해진 혼례 자리", "visibleAt": ["e12-honrye:honrye-ceremony"], "action": "honrye-ceremony", "sprite": "prop-wall-red" },
-      { "id": "honrye-robes", "x": 2, "y": 5, "kind": "item", "solid": true, "label": "기린 도포와 옥대", "visibleAt": ["e12-honrye:honrye-robes"], "action": "honrye-robes", "sprite": "prop-chest" },
-      { "id": "honrye-poems", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "진채봉", "visibleAt": ["e12-honrye:honrye-poems"], "action": "honrye-poems", "person": "chae" },
+      { "id": "honrye-ceremony", "x": 5, "y": 2, "kind": "scenery", "solid": true, "label": "혼례청", "visibleAt": ["e12-honrye:honrye-ceremony"], "action": "honrye-ceremony", "sprite": "prop-wall-red" },
+      { "id": "honrye-robes", "x": 2, "y": 5, "kind": "item", "solid": true, "label": "기린 도포와 옥대", "verb": "갖춰 입기", "visibleAt": ["e12-honrye:honrye-robes"], "action": "honrye-robes", "sprite": "prop-chest" },
+      { "id": "honrye-poems", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "진채봉", "sprite": "npc-chae", "visibleAt": ["e12-honrye:honrye-poems"], "action": "honrye-poems", "person": "chae" },
       { "id": "honrye-reveal", "x": 8, "y": 6, "kind": "scenery", "solid": true, "label": "죽었다던 이의 소식", "visibleAt": ["e12-honrye:honrye-reveal"], "action": "honrye-reveal", "sprite": "prop-wall-red" },
-      { "id": "honrye-gyeongpae", "x": 8, "y": 6, "kind": "npc", "solid": true, "label": "정경패", "visibleAt": ["e12-honrye:honrye-gyeongpae"], "action": "honrye-gyeongpae", "person": "gyeongpae" },
-      { "id": "honrye-joke", "x": 4, "y": 7, "kind": "npc", "solid": true, "label": "정경패", "visibleAt": ["e12-honrye:honrye-joke"], "action": "honrye-joke", "person": "gyeongpae" }
+      { "id": "honrye-gyeongpae", "x": 8, "y": 6, "kind": "npc", "solid": true, "label": "정경패", "sprite": "npc-noble-lady", "visibleAt": ["e12-honrye:honrye-gyeongpae"], "action": "honrye-gyeongpae", "person": "gyeongpae" },
+      { "id": "honrye-joke", "x": 4, "y": 7, "kind": "npc", "solid": true, "label": "정경패", "sprite": "npc-noble-lady", "visibleAt": ["e12-honrye:honrye-joke"], "action": "honrye-joke", "person": "gyeongpae" }
     ]
   }
 ];

@@ -12,6 +12,9 @@ const ids = ['c3-feast', 'c3-monk', 'c3-staff', 'c3-awake'];
 const fixture = JSON.parse(JSON.stringify(box.window.GUUN));
 fixture.scenes = fixture.scenes.filter(scene => ids.includes(scene.id));
 fixture.experiences = fixture.experiences.filter(experience => ids.includes(experience.scene));
+fixture.challenges = (fixture.challenges || []).filter(c => fixture.experiences.some(e => e.scene === c.scene));
+// 임무 창은 제품 자료의 새 시작에서 검사한다. 부분 시험 자료에는 넣지 않는다.
+if (fixture.notes) delete fixture.notes.mission;
 fixture.maps = fixture.maps.filter(map => fixture.experiences.some(experience =>
   experience.map === map.id || experience.beats.some(beat => beat.map === map.id)));
 for (const map of fixture.maps) {

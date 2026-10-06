@@ -254,7 +254,7 @@
     "scene": "l-namjeon",
     "map": "map-namjeon",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "namjeon-climb", "trigger": { "kind": "inspect", "target": "namjeon-ridge" }, "lines": [0], "effects": [], "appearance": "walk-yang-scholar" },
       { "id": "namjeon-learn", "trigger": { "kind": "talk", "target": "namjeon-dosa" }, "lines": [1], "effects": [], "appearance": "walk-yang-scholar" },
@@ -270,7 +270,7 @@
     "scene": "e02-tianjin",
     "map": "map-tianjin",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "tianjin-enter", "trigger": { "kind": "inspect", "target": "tianjin-guests" }, "lines": [0], "effects": [], "appearance": "walk-yang-scholar" },
       { "id": "tianjin-write", "trigger": { "kind": "use", "target": "tianjin-brush" }, "lines": [1,2], "effects": [
@@ -290,7 +290,7 @@
     "scene": "e03-geomungo",
     "map": "map-jeong-house",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "geomungo-dress", "trigger": { "kind": "use", "target": "geomungo-clothes" }, "lines": [0,1], "effects": [{ "kind": "item", "id": "it-yeogwan" }], "appearance": "walk-yang-disguise" },
       { "id": "geomungo-play", "trigger": { "kind": "use", "target": "geomungo-instrument" }, "lines": [2,3,4], "effects": [{ "kind": "story", "id": "e03-geomungo:performance" }], "appearance": "walk-yang-disguise" },
@@ -307,11 +307,11 @@
     "scene": "e04-exam",
     "map": "map-exam",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "exam-write", "trigger": { "kind": "use", "target": "exam-seat" }, "lines": [0,1,2], "effects": [{ "kind": "story", "id": "e04-exam:essay" }], "appearance": "walk-yang-scholar" },
       { "id": "exam-result", "trigger": { "kind": "inspect", "target": "exam-list" }, "lines": [3,4], "effects": [{ "kind": "story", "id": "e04-exam:pass" }], "appearance": "walk-yang-scholar" },
-      { "id": "exam-hallim", "trigger": { "kind": "continue", "target": null }, "lines": [5], "effects": [{ "kind": "story", "id": "e04-exam:hallim" }], "map": "map-hallim", "spawn": { "x": 2, "y": 7, "facing": "up" }, "appearance": "walk-yang-chancellor" }
+      { "id": "exam-hallim", "trigger": { "kind": "continue", "target": null }, "lines": [5], "effects": [{ "kind": "story", "id": "e04-exam:hallim" }], "map": "map-hallim", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
     ],
     "optional": []
   },
@@ -319,7 +319,7 @@
     "scene": "e05-chunun",
     "map": "map-chunun-garden",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "chunun-fairy", "trigger": { "kind": "talk", "target": "chunun-fairy" }, "lines": [0,1], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "chunun-ghost", "trigger": { "kind": "talk", "target": "chunun-ghost" }, "lines": [2,3], "effects": [], "appearance": "walk-yang-chancellor" },
@@ -327,7 +327,7 @@
       { "id": "chunun-reveal", "trigger": { "kind": "talk", "target": "chunun-revealed" }, "lines": [6,7], "effects": [
         { "kind": "bond", "id": "chunun" },
         { "kind": "story", "id": "e05-chunun:reveal" }
-      ], "map": "map-chunun-room", "spawn": { "x": 2, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
+      ], "map": "map-chunun-room", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
       { "id": "chunun-pearl", "trigger": { "kind": "inspect", "target": "chunun-pearl" }, "lines": [6], "effects": [{ "kind": "pearl", "id": "chunun" }], "appearance": "walk-yang-chancellor" }
@@ -337,7 +337,7 @@
     "scene": "l-hebei",
     "map": "map-hebei",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "hebei-edict", "trigger": { "kind": "inspect", "target": "hebei-edict" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "hebei-token", "trigger": { "kind": "use", "target": "hebei-token" }, "lines": [1], "effects": [{ "kind": "item", "id": "it-bujeol" }], "appearance": "walk-yang-chancellor" },
@@ -349,11 +349,11 @@
     "scene": "e06-gyeonghong",
     "map": "map-gyeonghong-road",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "gyeonghong-road", "trigger": { "kind": "inspect", "target": "gyeonghong-horse" }, "lines": [0], "effects": [{ "kind": "item", "id": "it-cheonrima" }], "appearance": "walk-yang-chancellor" },
       { "id": "gyeonghong-companion", "trigger": { "kind": "talk", "target": "gyeonghong-boy" }, "lines": [1,2], "effects": [], "appearance": "walk-yang-chancellor" },
-      { "id": "gyeonghong-discover", "trigger": { "kind": "inspect", "target": "gyeonghong-seat" }, "lines": [3,4], "effects": [], "map": "map-gyeonghong-room", "spawn": { "x": 2, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
+      { "id": "gyeonghong-discover", "trigger": { "kind": "inspect", "target": "gyeonghong-seat" }, "lines": [3,4], "effects": [], "map": "map-gyeonghong-room", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
       { "id": "gyeonghong-reveal", "trigger": { "kind": "talk", "target": "gyeonghong-revealed" }, "lines": [5,6], "effects": [
         { "kind": "bond", "id": "gyeonghong" },
         { "kind": "story", "id": "e06-gyeonghong:reveal" }
@@ -368,7 +368,7 @@
     "scene": "e07-tungso",
     "map": "map-tungso",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "tungso-night", "trigger": { "kind": "inspect", "target": "tungso-night" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "tungso-play", "trigger": { "kind": "use", "target": "tungso-instrument" }, "lines": [1,2,3], "effects": [{ "kind": "story", "id": "e07-tungso:performance" }], "appearance": "walk-yang-chancellor" },
@@ -386,7 +386,7 @@
     "scene": "l-bongnae",
     "map": "map-bongnae",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "bongnae-fan", "trigger": { "kind": "inspect", "target": "bongnae-fan" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "bongnae-write", "trigger": { "kind": "use", "target": "bongnae-brush" }, "lines": [1], "effects": [{ "kind": "story", "id": "l-bongnae:poem" }], "appearance": "walk-yang-chancellor" },
@@ -401,7 +401,7 @@
     "scene": "e08-wonsu",
     "map": "map-wonsu",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "wonsu-prison", "trigger": { "kind": "inspect", "target": "wonsu-prison" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "wonsu-summons", "trigger": { "kind": "inspect", "target": "wonsu-summons" }, "lines": [1], "effects": [], "appearance": "walk-yang-chancellor" },
@@ -418,7 +418,7 @@
     "scene": "e09-yoyeon",
     "map": "map-yoyeon",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "yoyeon-night", "trigger": { "kind": "inspect", "target": "yoyeon-night" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "yoyeon-arrive", "trigger": { "kind": "talk", "target": "yoyeon-arrive" }, "lines": [1,2], "effects": [], "appearance": "walk-yang-chancellor" },
@@ -437,15 +437,15 @@
     "scene": "e10-neungpa",
     "map": "map-bansagok",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "neungpa-water", "trigger": { "kind": "inspect", "target": "neungpa-water" }, "lines": [0], "effects": [{ "kind": "story", "id": "e10-neungpa:warning-heeded" }], "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-enter", "trigger": { "kind": "exit", "target": "neungpa-enter" }, "lines": [1], "effects": [], "appearance": "walk-yang-chancellor" },
-      { "id": "neungpa-meet", "trigger": { "kind": "talk", "target": "neungpa-meet" }, "lines": [2], "effects": [{ "kind": "bond", "id": "neungpa" }], "map": "map-baekryong", "spawn": { "x": 1, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
+      { "id": "neungpa-meet", "trigger": { "kind": "talk", "target": "neungpa-meet" }, "lines": [2], "effects": [{ "kind": "bond", "id": "neungpa" }], "map": "map-baekryong", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-defeat", "trigger": { "kind": "inspect", "target": "neungpa-defeat" }, "lines": [3], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-share", "trigger": { "kind": "use", "target": "neungpa-share" }, "lines": [4], "effects": [{ "kind": "item", "id": "it-mulbyeong" }], "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-monk", "trigger": { "kind": "talk", "target": "neungpa-monk" }, "lines": [5,6], "effects": [], "appearance": "walk-yang-chancellor" },
-      { "id": "neungpa-return", "trigger": { "kind": "continue", "target": null }, "lines": [7], "effects": [{ "kind": "story", "id": "e10-neungpa:return" }], "map": "map-yoyeon", "spawn": { "x": 1, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
+      { "id": "neungpa-return", "trigger": { "kind": "continue", "target": null }, "lines": [7], "effects": [{ "kind": "story", "id": "e10-neungpa:return" }], "map": "map-yoyeon", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
       { "id": "neungpa-pearl", "trigger": { "kind": "inspect", "target": "neungpa-pearl" }, "lines": [2], "effects": [{ "kind": "pearl", "id": "neungpa" }], "appearance": "walk-yang-chancellor" }
@@ -455,7 +455,7 @@
     "scene": "e11-seungsang",
     "map": "map-seungsang",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "seungsang-return", "trigger": { "kind": "inspect", "target": "seungsang-return" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "seungsang-edict", "trigger": { "kind": "use", "target": "seungsang-edict" }, "lines": [1,2,3], "effects": [
@@ -471,7 +471,7 @@
     "scene": "e12-honrye",
     "map": "map-honrye",
     "actor": "yang",
-    "spawn": { "x": 1, "y": 8, "facing": "up" },
+    "spawn": { "x": 5, "y": 8, "facing": "up" },
     "beats": [
       { "id": "honrye-ceremony", "trigger": { "kind": "inspect", "target": "honrye-ceremony" }, "lines": [0], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "honrye-robes", "trigger": { "kind": "use", "target": "honrye-robes" }, "lines": [1], "effects": [{ "kind": "item", "id": "it-girinpo" }], "appearance": "walk-yang-chancellor" },

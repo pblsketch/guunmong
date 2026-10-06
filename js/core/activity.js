@@ -40,7 +40,7 @@
     const el = h('section.activity', { dataset: { actId: act.id }, 'aria-label': act.title || '읽기 활동' });
     if (!scored) el.classList.add('unscored');
     el.appendChild(h('div.act-head',
-      h('span.act-kind', scored ? '읽기 활동' : '읽기 활동 · 채점하지 않아요'),
+      h('span.act-kind', scored ? '읽기 활동' : '읽기 활동 · 정해진 답이 없어요'),
       act.title ? h('h3', act.title) : null,
       act.prompt ? h('p.prompt', T.inline(act.prompt)) : null));
 
@@ -147,7 +147,7 @@
     function onCheck() {
       if (solved || !canAct() || act.slots.some((s) => filled[s.id] == null)) return;
       if (!scored) {
-        return finish(true, '골랐어요. 채점하지 않는 활동이에요.');
+        return finish(true, '골랐어요. 왜 그렇게 골랐는지 떠올려 보세요.');
       }
       if (!pendingCheck) {
         const previousTries = tries;

@@ -64,11 +64,10 @@ async function capture(p, name) {
   if (layout.speech && layout.advance) assert.ok(layout.advance.top >= layout.speech.bottom, '대화·진행 겹침');
   if (layout.required) {
     assert.ok(layout.required.box.width > 0 && layout.required.box.height > 0);
-    if (layout.required.kind === 'npc') {
-      assert.equal(layout.required.outline, 'none', 'NPC 사각 테두리 제거');
-      assert.equal(layout.required.marker, '"!"', '필수 NPC의 작은 느낌표 유지');
-      assert.notEqual(layout.required.markerDisplay, 'none', '필수 NPC 표시 숨김 금지');
-    } else assert.notEqual(layout.required.outline, 'none', '물건과 출구의 필수 표시 유지');
+    // 2026-10-06 사용자 지적: 인물뿐 아니라 물건·출구도 사각 테두리 없이 작은 느낌표로 다음 대상을 알린다.
+    assert.equal(layout.required.outline, 'none', '필수 대상 사각 테두리 제거(' + layout.required.kind + ')');
+    assert.equal(layout.required.marker, '"!"', '필수 대상의 작은 느낌표 유지(' + layout.required.kind + ')');
+    assert.notEqual(layout.required.markerDisplay, 'none', '필수 대상 표시 숨김 금지');
     if (layout.required.inCamera && !layout.speech) assert.equal(layout.required.visible, true, '카메라 안 필수 대상 실제 hit: ' + JSON.stringify(layout.required));
     assert.equal(await p.locator('[data-world-target]').count() > 0, true, '화면 밖 대상의 목록 경로 유지');
   }

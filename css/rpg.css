@@ -26,10 +26,11 @@ body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh 
 .world-sprite, .world-object { position: absolute; image-rendering: pixelated; background-repeat: no-repeat; }
 .world-object { margin: 0; padding: 0; border: 0; background-color: transparent; color: #201810; cursor: pointer; }
 .world-object > .world-sprite { top: 0; left: 0; }
-.world-object:focus-visible, .world-object.required { outline: 3px solid #fff3a5; outline-offset: 2px; }
-.world-object[data-kind="npc"], .world-object[data-kind="npc"]:focus-visible { outline: none; }
-.world-object[data-kind="npc"].required::after { content: "!"; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); color: #ffe182; font: 900 22px/1 var(--pixel); text-shadow: -1px -1px 0 #302718, 1px -1px 0 #302718, -1px 1px 0 #302718, 1px 1px 0 #302718; pointer-events: none; }
-.world-object[data-kind="npc"]:focus-visible > :is(.world-sprite, img) { filter: drop-shadow(0 0 3px #fff3a5); }
+.world-decor { pointer-events: none; cursor: default; }
+/* 인물·물건 모두 사각 테두리 없이 다음 대상은 작은 느낌표, 키보드 초점은 그림의 빛으로 알린다. */
+.world-object, .world-object:focus-visible { outline: none; }
+.world-object.required::after { content: "!"; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); color: #ffe182; font: 900 22px/1 var(--pixel); text-shadow: -1px -1px 0 #302718, 1px -1px 0 #302718, -1px 1px 0 #302718, 1px 1px 0 #302718; pointer-events: none; }
+.world-object:focus-visible > :is(.world-sprite, img, .world-marker) { filter: drop-shadow(0 0 3px #fff3a5) drop-shadow(0 0 2px #fff3a5); }
 .world-marker { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-width: 32px; min-height: 32px; padding: 2px; background: #f9ecd0; border: 2px solid #665442; font: 10px/1.1 sans-serif; }
 .world-heading, .world-goal { position: absolute; z-index: 12; left: 50%; transform: translateX(-50%); width: min(76vw, 620px); margin: 0; padding: 5px 10px; border-radius: 5px; background: rgba(28, 27, 23, .82); color: #fff8e7; text-align: center; text-shadow: 1px 1px #000; pointer-events: none; }
 .world-heading { top: max(52px, env(safe-area-inset-top)); width: auto; max-width: 70vw; font-family: var(--pixel); font-size: clamp(15px, 2.5vw, 20px); white-space: nowrap; }
@@ -67,7 +68,7 @@ body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
 .world-target-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: min(38dvh, 280px); padding: 6px 0 8px; overflow: auto; }
 .world-speech { position: absolute; z-index: 25; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 16px), 760px); pointer-events: auto; }
 .world-speech:empty { display: none; }
-.world-dialogue { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; width: 100%; max-height: min(48dvh, 390px); margin: 0; padding: 10px; overflow: auto; overscroll-behavior: contain; border: 4px solid #665442; border-radius: 8px; background: rgba(249,236,208,.98); color: #2b2320; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
+.world-dialogue { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; width: 100%; max-width: none; max-height: min(48dvh, 390px); margin: 0; padding: 10px; overflow: auto; overscroll-behavior: contain; border: 4px solid #665442; border-radius: 8px; background: rgba(249,236,208,.98); color: #2b2320; box-shadow: 0 6px 22px rgba(0,0,0,.5); }
 .world-dialogue .dialogue-portrait { position: static; align-self: start; width: auto; height: auto; min-height: 0; overflow: visible; border: 0; background: transparent; }
 .world-dialogue .stage-portrait { position: static; width: auto; height: auto; min-height: 0; }
 .world-dialogue .dialogue-portrait:has(.stage-portrait:empty) { display: none; }
@@ -103,8 +104,72 @@ body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
 .big .world-controls { font-size: 15px; }
 .big .world-dialogue { grid-template-columns: 1fr; max-height: 58dvh; }
 .big .world-dialogue .stage-portrait { display: inline-block; }
+/* 위기 도전: 필드 위의 게임 안 책 창. 긴 단서도 창 안에서 스크롤한다. */
+.world-challenge { position: absolute; z-index: 30; inset: 0; display: grid; place-items: center; padding: max(56px, calc(env(safe-area-inset-top) + 48px)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); background: rgba(16, 14, 12, .55); pointer-events: auto; }
+.challenge-book { display: grid; gap: 8px; width: min(100%, 640px); max-height: 100%; overflow: auto; overscroll-behavior: contain; padding: 14px 16px; border: 4px solid #665442; border-radius: 8px; background: #f9ecd0; color: #2b2320; box-shadow: 0 8px 28px rgba(0,0,0,.55); }
+.challenge-title { margin: 0; font-family: var(--pixel); font-size: 20px; }
+.challenge-intro { margin: 0; line-height: 1.6; }
+.challenge-body { display: grid; gap: 8px; }
+.challenge-options, .challenge-clues { display: grid; gap: 6px; }
+.challenge-option, .challenge-clue, .challenge-spot { min-height: 46px; padding: 8px 10px; text-align: left; white-space: normal; line-height: 1.45; }
+.challenge-clue.open { background: #fff7e3; border-style: dashed; cursor: default; }
+.challenge-question p { margin: 4px 0; }
+.challenge-spots { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; }
+.challenge-spot.checked { display: grid; gap: 2px; background: #eadcbd; color: #4a3d30; }
+.challenge-spot.checked span { font-size: .9em; }
+.challenge-tries { display: flex; align-items: center; gap: 6px; margin: 0; }
+.challenge-lamp { width: 12px; height: 16px; border-radius: 50% 50% 40% 40%; background: #8a7a68; }
+.challenge-lamp.lit { background: #f2b33d; box-shadow: 0 0 8px #f2b33d; }
+.challenge-round { margin: 0; color: #5b4a3c; }
+.challenge-pads { display: grid; grid-template-columns: repeat(5, minmax(48px, 1fr)); gap: 8px; }
+.challenge-pad { min-height: 64px; font-family: var(--pixel); font-size: 22px; }
+.challenge-pad.lit { background: #f2d36b; box-shadow: 0 0 0 3px #b8860b inset, 0 0 14px #f2d36b; }
+.challenge-feedback { min-height: 1.5em; margin: 0; line-height: 1.55; }
+.challenge-feedback[data-tone="fail"] { color: #7c231b; font-weight: 700; }
+.challenge-feedback[data-tone="ok"] { color: #24522f; font-weight: 700; }
+.challenge-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.challenge-actions .btn { min-height: 44px; }
+.challenge-note { flex: 1 1 100%; font-size: 14px; color: #4a3d30; }
+.challenge-note summary { cursor: pointer; min-height: 32px; }
+.choice-tray { display: grid; gap: 6px; grid-column: 1 / -1; padding: 0; background: transparent; }
+.world-dialogue .choice-tray .btn.choice { width: 100%; min-width: 0; min-height: 44px; text-align: left; white-space: normal; }
+.play:has(.world-challenge) .revisit-bar { visibility: hidden; }
+/* 임무 창과 이야기 지도 */
+.mission-lead { margin: 0 0 8px; line-height: 1.65; }
+.mission-goals { margin: 0 0 8px; padding-left: 1.4em; line-height: 1.6; }
+.mission-goals li + li { margin-top: 4px; }
+.mission-why { margin: 0; padding: 8px 10px; border-left: 4px solid #a8432f; background: #f3e4c4; line-height: 1.6; }
+.mission-sheet .actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.story-now p { margin: 0 0 6px; line-height: 1.55; }
+.story-bar { height: 10px; border: 2px solid #665442; border-radius: 6px; background: #eadcbd; overflow: hidden; }
+.story-bar span { display: block; height: 100%; background: #a8432f; }
+.story-mission { margin: 10px 0; }
+.story-mission summary { cursor: pointer; min-height: 36px; font-weight: 700; }
+.toc-title .frame { margin-left: 6px; padding: 1px 6px; border-radius: 4px; font-size: .78em; background: #eadcbd; color: #3d3226; }
+.toc-title .frame[data-frame="dream"] { background: #d9d2f0; color: #2f2550; }
+.toc-title .frame[data-frame="wake"] { background: #f0dccf; color: #5a2a1a; }
+.game-shell .topbar .where { cursor: pointer; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.big .challenge-book { font-size: 19px; }
+/* 가로 휴대폰: 대화창을 화면 아래 띠로 낮추고 다음 단추를 오른쪽에 둔다. 필드 인물이 가려지지 않게 높이를 줄인다. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .world-speech, .field-cutscene .stage-speech { width: min(calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)), 880px); }
+  .world-dialogue { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; max-height: min(46dvh, 220px); padding: 8px 12px; }
+  .world-dialogue .stage-speech { font-size: 17px; line-height: 1.55; }
+  .world-dialogue .tray { grid-column: 3; grid-row: 1; align-self: end; width: auto; margin: 0; }
+  .world-dialogue .tray .btn { min-width: 120px; min-height: 48px; }
+  .world-dialogue:has(.stage-portrait:empty) .stage-speech { grid-column: 1 / 3; }
+  .big .world-dialogue { grid-template-columns: auto minmax(0, 1fr) auto; max-height: 62dvh; }
+  .big .world-dialogue .stage-speech { font-size: 19px; }
+  .game-shell[data-mode="world"] .play > .tray, .game-shell[data-mode="cinematic"] .play > .tray { width: min(calc(100% - 24px), 520px); }
+  .world-challenge { padding-top: max(52px, calc(env(safe-area-inset-top) + 44px)); }
+  .challenge-book { width: min(100%, 820px); padding: 10px 14px; }
+  .challenge-options, .challenge-clues { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .world-dialogue .choice-tray { grid-column: 1 / -1; grid-row: auto; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
 @media (max-width: 560px) {
-  .game-shell .topbar .where small { display: none; }
+  .game-shell .topbar .where small { font-size: 11px; }
+  .game-shell .topbar .where small .where-name { display: none; }
   .game-shell .topbar .tools { gap: 2px; }
   .world-heading { top: max(48px, env(safe-area-inset-top)); }
   .world-goal { top: max(78px, calc(env(safe-area-inset-top) + 30px)); width: calc(100% - 16px); }

@@ -53,6 +53,7 @@ EXPECT += [(e["product"].removeprefix("assets/"), (e["cell"][0] * e["frames"], e
 import topdown_approved as topdown
 import rpg_npc_approved as npcs
 import rpg_disguise_approved as disguise
+import rpg_v4_approved as v4
 TOPDOWN = topdown.load()
 for entry in TOPDOWN["entries"] + TOPDOWN["derived"]:
     s = entry["sprite"]
@@ -62,6 +63,10 @@ NPCS = npcs.load()
 EXPECT.append(('world/walk-yang-disguise.webp', (160,128), True))
 for entry in NPCS['entries']:
     EXPECT.append((entry['sprite']['src'].removeprefix('assets/'), (32, 32), True))
+V4 = v4.load()
+for entry in V4['entries']:
+    s = entry['sprite']
+    EXPECT.append((s['src'].removeprefix('assets/'), (s['width'], s['height']), entry['kind'] != 'map'))
 
 
 def main():
@@ -98,6 +103,7 @@ def main():
         topdown.verify(TOPDOWN, "--topdown-provenance" in sys.argv[1:])
         npcs.verify(NPCS, "--topdown-provenance" in sys.argv[1:])
         disguise.check("--topdown-provenance" in sys.argv[1:])
+        v4.verify(V4, "--topdown-provenance" in sys.argv[1:])
     except (ValueError, OSError, KeyError) as error:
         bad.append("topdown " + str(error))
         print("  !", bad[-1])

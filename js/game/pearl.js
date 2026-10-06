@@ -43,7 +43,7 @@
       if (!ctx.alive() || ctx.readonly || S().pearls[sc.meet]) return;
       if (!collect(ctx, sc)) return;
       G.audio.pearl(); found();
-      G.ui.toast('구슬을 찾았어요. 점수로 치지 않아요.');
+      G.ui.toast('구슬을 찾았어요.');
     };
     inspect.onclick = () => {
       if (!ctx.alive()) return;

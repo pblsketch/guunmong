@@ -69,7 +69,7 @@
 
   const openBags = new Map();
   D.open = function (tab, ctx) {
-    if (tab && !D.can(tab)) { ui.toast(S().awake ? '꿈에서 깨어나 말판과 집은 사라졌어요.' : '아직 볼 수 없어요.'); return false; }
+    if (tab && !D.can(tab)) { ui.toast(S().awake ? '꿈에서 깨어나니 꿈속의 집과 물건은 사라졌어요.' : '아직 볼 수 없어요.'); return false; }
     let curTab = tab || D.tabs()[0], box;
     ui.sheet(() => {
       const body = h('div.bag-body');

@@ -18,7 +18,9 @@ async function identityBoundary(p,current,s){
  if(current.beat!==expected.reveal)return null;
  assert.ok(s.rpg.scenes[current.id].actions.some(action=>action.id===expected.prior),current.id+' 정체 서술 행동 선행');
  assert.match(await p.locator('[data-world-target="'+expected.object+'"]').textContent(),new RegExp(expected.name));
- assert.equal(await p.locator('[data-object="'+expected.object+'"].world-person img').count(),1,current.id+' 공개 뒤 실제 초상');
+ // 2026-10-06 승인 전신 그림(v4): 공개 뒤에는 그 인물의 승인 전신 그림이 실제로 표시돼야 한다.
+ const body=await p.locator('[data-object="'+expected.object+'"]').evaluate(el=>{const o=G.data.maps.flatMap(m=>m.objects).find(v=>v.id===el.dataset.object),s=G.data.sprites[o.sprite];return{src:s?.src,shown:getComputedStyle(el.querySelector('.world-sprite')).backgroundImage,pending:el.dataset.artPending||null};});
+ assert.ok(body.src&&body.shown.includes(body.src)&&!body.pending,current.id+' 공개 뒤 승인 전신 그림');
  return expected.name;
 }
 async function route(width,height,big){

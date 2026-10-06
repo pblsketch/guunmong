@@ -1,6 +1,6 @@
 // 인물(이름·얼굴 그림). 형식은 js/data/README.md 3절.
 // 얼굴 그림: assets/pt/<face>.webp, 표정은 assets/pt/<face>_<mood>.webp (기획서 §17-3, 96×96).
-// 얼굴이 없는 인물은 noFace: true — 장면 글에서 say나 {호칭|id}로 쓰지 않고 이름만 이야기 글에 쓴다.
+// 얼굴이 없는 인물은 noFace: true. 장면 글에서 say나 {호칭|id}로 쓰지 않고 이름만 이야기 글에 쓴다.
 (window.GUUN = window.GUUN || {}).people = {
   // 연화봉(현실)
   seongjin: { name: '성진', face: 'seongjin', moods: ['troubled', 'awake'] },
