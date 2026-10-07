@@ -9,7 +9,7 @@
   const run = () => S().rpg?.run;
   const writer = (r = run()) => G.save.canWrite(r);
   const options = ctx => ({ run: ctx.run, readonly: ctx.readonly, by: S().teacher ? 'teacher' : 'student' });
-  const isDone = id => G.experience.legacyDone(S(), id) || S().rpg?.scenes?.[id]?.status === 'done';
+  const isDone = id => G.experience.finished(S(), id);
   const sheets = new Set();
   let lastField = null;
   function rememberField() {
@@ -231,20 +231,34 @@
     return opened;
   };
 
-  // ───────── 임무: 왜 이 꿈을 끝까지 살아야 하는지(notes.mission)
+  // ───────── 임무: 학생의 역할·할 일·끝까지 살아야 하는 까닭(notes.mission.cards)
+  // 새로 시작하면 돌다리 그림 위에서 카드 세 장을 한 장씩 넘긴다. 마지막 카드의 단추가 시작이다. 기록을 쓰지 않는다.
   function missionBlock(m) {
     return h('div.mission', { dataset: { mission: '' } },
-      h('p.mission-lead', m.lead || ''),
-      h('ol.mission-goals', (m.goals || []).map(g => h('li', g))),
-      m.why ? h('p.mission-why', m.why) : null);
+      h('ol.mission-goals', (m.cards || []).map(c => h('li', h('b', c.head), ' ', c.body))));
   }
   app.mission = function (opt = {}) {
     const m = (G.data.notes || {}).mission;
     if (!m) return Promise.resolve(null);
-    const r = run();
-    return sheet(close => h('div', h('h3', m.title || '이번 임무'), missionBlock(m),
-      h('div.actions', h('button.btn.primary', { type: 'button', dataset: { mission: opt.start ? 'start' : 'close' }, on: { click: () => { G.audio.tap(); close(true); } } },
-        opt.start ? (m.start || '시작 ▶') : '닫기'))), [], { cls: 'mission-sheet', dismiss: !opt.start }).then(v => (r === run() ? v : null));
+    const r = run(), cards = m.cards || [];
+    if (!opt.start) return sheet(close => h('div', h('h3', m.title || '이번 임무'), missionBlock(m),
+      h('div.actions', h('button.btn.primary', { type: 'button', dataset: { mission: 'close' }, on: { click: () => { G.audio.tap(); close(true); } } }, '닫기'))), [], { cls: 'mission-sheet', dismiss: true }).then(v => (r === run() ? v : null));
+    return sheet(close => {
+      let at = 0;
+      const box = h('div.mission-card', { role: 'group', 'aria-roledescription': '임무 카드', 'aria-live': 'polite' });
+      const draw = () => {
+        const c = cards[at] || {}, last = at >= cards.length - 1;
+        const button = h('button.btn.primary', { type: 'button', dataset: { mission: last ? 'start' : 'next' }, on: { click: () => {
+          G.audio.tap(); if (last) close(true); else { at++; draw(); }
+        } } }, last ? (m.start || '시작 ▶') : (m.next || '다음 ▶'));
+        box.replaceChildren(
+          h('p.mission-step', cards.map((_, i) => h('span' + (i === at ? '.on' : ''), { 'aria-hidden': 'true' })), h('span.sr', (at + 1) + '/' + cards.length)),
+          h('h3.mission-head', c.head || ''), h('p.mission-body', c.body || ''), h('div.actions', button));
+        button.focus({ preventScroll: true });
+      };
+      draw();
+      return box;
+    }, [], { cls: 'mission-sheet.mission-start', dismiss: false }).then(v => (r === run() ? v : null));
   };
   // 이야기 속 위치: 본편 목록에서 몇 번째인지, 꿈 사건 몇 번째인지
   app.position = function (id) {
@@ -348,7 +362,6 @@
         tray.replaceChildren(retry); tray.classList.remove('empty'); retry.focus({ preventScroll: true });
         return false;
       },
-      finishEvent() { return null; },
       finishExperience() {
         if (!ctx.alive()) return { ok: false, reason: 'stale', record: null };
         if (ctx.committed) return { ok: true, reason: null, record: S().rpg.scenes[sc.id] };
@@ -367,15 +380,15 @@
       tray(content) { if (!ctx.alive()) return; tray.replaceChildren(); if (content) G.util.append(tray, [content]); tray.classList.toggle('empty', !content); },
       next(label = '다음 ▶', o = {}) {
         return new Promise((resolve) => {
-          const b = h('button.btn.' + (o.cls || 'primary'), { type: 'button', disabled: !ctx.canProceed(), dataset: { act: 'next' } }, label);
+          const b = h('button.btn.' + (o.cls || 'primary'), { type: 'button', disabled: !ctx.canProceed(), dataset: { act: 'next' } }, label), shownAt = performance.now();
           let settled = false;
           const finish = value => {
             if (settled) return;
             settled = true; abort.signal.removeEventListener('abort', cancelled); b.removeEventListener('click', clicked); resolve(value);
           };
           const cancelled = () => finish(false);
-          const clicked = () => {
-            if (!ctx.canProceed() || document.querySelector('.sheet-back, .fold-ov')) return;
+          const clicked = (e) => {
+            if (G.util.staleTap(e, shownAt) || !ctx.canProceed() || document.querySelector('.sheet-back, .fold-ov')) return;
             G.audio.page(); ctx.tray(null); finish(true);
           };
           if (!ctx.alive() || abort.signal.aborted) { resolve(false); return; }
@@ -566,8 +579,7 @@
       const e = G.experience.find(G.data, sc.id);
       const actionIds = new Set((rec?.actions || []).map(action => action.id));
       const performed = !!e && e.beats.every(beat => actionIds.has(beat.id));
-      const legacy = isDone(sc.id) && !performed;
-      const status = rec?.status === 'auto' ? '자동 안내' : performed ? '완료' : legacy ? '이전 기록' : rec ? '진행' : '미시작';
+      const status = rec?.status === 'auto' ? '자동 안내' : performed ? '완료' : rec ? '진행' : '미시작';
       const lines = (rec?.actions || []).flatMap(a => [...(e?.beats || []), ...(e?.optional || [])].find(b => b.id === a.id)?.lines || []);
       const clue = [...new Set(lines)].map(i => sc.lines[i]).map(l => typeof l === 'string' ? l : l.text || l.gloss || '').join(' · ');
       return { id: sc.id, title: sc.title, kind: 'event', status, firstLabel: status, gradeLabel: '없음', clue, help: rec?.hint || null, helpLabel: rec?.hint === 'teacher' ? '도움 사용(선생님용)' : rec?.hint ? '도움 사용' : '없음' };

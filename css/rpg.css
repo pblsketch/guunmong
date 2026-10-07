@@ -10,6 +10,40 @@ html:has(.game-shell), body:has(.game-shell), body:has(.game-shell) #app { width
 .game-shell .topbar .where small { color: #eadfc7; }
 .game-shell .topbar .icon-btn { width: 40px; height: 40px; }
 .game-shell .save-access, .game-shell .revisit-bar { position: absolute; z-index: 45; top: 54px; left: 50%; width: min(94%, 620px); transform: translateX(-50%); pointer-events: auto; }
+/* 소원 띠: 꿈 장면의 위 막대 바로 아래 얇은 띠. 숫자 없이 막대와 인연 칸(● ○)만 보인다.
+   띠 높이(--band-h, hud.js가 잰다)만큼 위쪽 안내·창을 내려 대사·단추·조작 영역을 가리지 않는다. 필드 입력은 띠를 지나간다(인연 칸 단추만 받는다). */
+.game-shell .topbar .wish-band { position: absolute; left: 0; right: 0; top: 100%; z-index: 1; box-sizing: border-box; min-height: var(--band-h, 0px); display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 2px max(6px, env(safe-area-inset-right)) 3px max(6px, env(safe-area-inset-left)); background: rgba(24, 26, 23, .8); color: #fff8e7; font-size: 11px; line-height: 1.15; overflow: hidden; pointer-events: none; }
+.wish-band .band-wishes { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.wish-band .band-wish { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 34px; padding: 1px 3px; border-radius: 4px; }
+.wish-band .band-name { font-family: var(--pixel); white-space: nowrap; }
+.wish-band .band-bar, .wish-list .band-bar { display: block; box-sizing: border-box; width: 100%; min-width: 30px; height: 7px; border: 1px solid #c9b48a; border-radius: 3px; background: rgba(255, 248, 231, .14); overflow: hidden; }
+.wish-band .band-bar.unknown { border-style: dashed; background: transparent; }
+.wish-band .band-fill, .wish-list .band-fill { display: block; width: calc(var(--level, 0) * 100%); height: 100%; background: #e2b04f; transition: width .45s ease-out; }
+.wish-band .band-secret { display: none; position: absolute; top: 1px; right: 0; width: 5px; height: 5px; background: #ef9a82; transform: rotate(45deg); }
+.wish-band .band-wish.secret .band-secret { display: block; }
+.wish-band .band-bonds { display: flex; align-items: center; gap: 6px; min-height: 22px; max-width: 100%; margin: 0; padding: 1px 7px; border: 1px solid rgba(255, 248, 231, .45); border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; pointer-events: auto; }
+.wish-band .band-bonds:focus-visible { outline: 2px solid #ffe08a; outline-offset: 1px; }
+.wish-band .band-slots { display: flex; gap: 3px; }
+.wish-band .band-slot { box-sizing: border-box; width: 8px; height: 8px; border: 1.5px solid #fff8e7; border-radius: 50%; }
+.wish-band .band-slot.met { background: #fff8e7; }
+.wish-band .glow { box-shadow: 0 0 0 1px #ffe08a, 0 0 8px 2px rgba(255, 224, 138, .75); transition: box-shadow .2s; }
+.wish-band .band-wish.emptied { opacity: .45; transition: opacity .4s; }
+.wish-band .band-names { display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.wish-band .band-names:empty { display: none; }
+.wish-band .band-names-head { opacity: .85; }
+.wish-band .band-gone-name { overflow: hidden; text-overflow: ellipsis; font-family: var(--pixel); opacity: 0; transition: opacity .3s; }
+.wish-band .band-gone-name.shown { opacity: 1; }
+.wish-band .band-gone-name.gone { opacity: 0; }
+.wish-band[data-collapse="names"] .band-wishes, .wish-band[data-collapse="leaving"] .band-wishes { display: none; }
+.wish-band[data-collapse="leaving"] { opacity: 0; transition: opacity .55s; }
+.big .wish-band { font-size: 13px; }
+.wish-list .wl-level { display: block; max-width: 160px; margin-top: 3px; }
+.wish-list .band-bar { border-color: var(--ink-3); background: #fff; }
+.wish-list .wl-secret { position: absolute; right: 30px; top: 8px; width: 7px; height: 7px; background: var(--seal); transform: rotate(45deg); }
+@media (prefers-reduced-motion: reduce) { .wish-band .band-fill, .wish-list .band-fill, .wish-band .band-wish, .wish-band .glow, .wish-band .band-gone-name, .wish-band[data-collapse] { transition: none; } }
+.play:has(> .topbar .wish-band) :is(.world-heading, .world-goal, .world-guide, .world-challenge) { margin-top: var(--band-h, 28px); }
+.game-shell .play:has(> .topbar .wish-band) > :is(.save-access, .revisit-bar) { margin-top: var(--band-h, 28px); }
+.game-shell[data-mode="window"] > .play:has(> .topbar .wish-band) > .main { margin-top: calc(var(--band-h, 28px) + 6px); }
 
 .game-shell[data-mode="window"] .main { position: relative; z-index: 3; align-self: stretch; min-height: 0; width: min(92vw, 760px); margin: 8px auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 10px solid #6b4a2a; border-image: url('../assets/ui/btn_frame.webp') 8 / 8px / 0 repeat; background: rgba(239, 227, 198, .97); box-shadow: 0 12px 36px rgba(0,0,0,.45); pointer-events: auto; }
 .game-shell[data-mode="window"] .main-inner { max-width: 720px; padding: 14px 16px 8px; }
@@ -27,6 +61,29 @@ body:has(.game-shell) .sheet { width: min(94vw, 760px); max-height: calc(100dvh 
 .world-object { margin: 0; padding: 0; border: 0; background-color: transparent; color: #201810; cursor: pointer; }
 .world-object > .world-sprite { top: 0; left: 0; }
 .world-decor { pointer-events: none; cursor: default; }
+.world-guide { position: absolute; z-index: 12; left: 50%; transform: translateX(-50%); top: max(98px, calc(env(safe-area-inset-top) + 92px)); width: min(calc(100% - 16px), 620px); margin: 0; padding: 7px 10px; border-left: 4px solid #e2b04f; border-radius: 5px; background: rgba(28, 27, 23, .86); color: #fff8e7; font-size: clamp(13px, 2vw, 15px); line-height: 1.5; text-shadow: 1px 1px #000; pointer-events: none; }
+.world-guide b { color: #ffe08a; font-weight: 700; }
+.world-guide[hidden], .world-screen:has(.world-speech:not(:empty)) .world-guide { display: none; }
+.world-screen[data-touch="true"] .world-guide { top: max(92px, calc(env(safe-area-inset-top) + 86px)); }
+/* 선생님용 다시 읽기: 다시 읽기 띠(위 54px부터) 아래로 내린다. */
+.play:has(.revisit-bar) .world-guide { top: 126px; }
+/* 구슬 흔적의 반짝임: 십자 빛이 커졌다 작아진다. 찾은 뒤에는 작게 멈춘다. */
+.world-pearl .world-glint { position: absolute; left: 50%; top: 55%; width: 44%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, #fff 0 18%, rgba(255, 236, 248, .95) 30%, rgba(255, 214, 236, .45) 50%, rgba(255, 214, 236, 0) 72%); animation: world-glint 1.6s ease-in-out infinite; pointer-events: none; }
+.world-pearl .world-glint::before, .world-pearl .world-glint::after { content: ""; position: absolute; left: 50%; top: 50%; background: #fff; border-radius: 1px; transform: translate(-50%, -50%); box-shadow: 0 0 4px #ffe3f2; }
+.world-pearl .world-glint::before { width: 2px; height: 170%; }
+.world-pearl .world-glint::after { width: 170%; height: 2px; }
+.world-pearl.found .world-glint { width: 22%; opacity: .55; animation: none; }
+/* 다른 장소로 가는 길: 비석 그림 대신 땅 위에서 숨 쉬듯 빛나는 자리와 그 위로 흐르는 빛 세 점 */
+.world-exit { background: none; border: 0; }
+.world-exit-glow { position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 170, .95) 0 22%, rgba(255, 214, 120, .55) 45%, rgba(255, 214, 120, 0) 72%); animation: world-exit-breathe 1.8s ease-in-out infinite; pointer-events: none; }
+.world-exit-glow i { position: absolute; left: 50%; width: 18%; aspect-ratio: 1; margin-left: -9%; border-radius: 50%; background: #fff6d6; box-shadow: 0 0 6px #ffd98a; opacity: 0; animation: world-exit-rise 1.8s ease-in infinite; }
+.world-exit-glow i:nth-child(2) { animation-delay: .6s; }
+.world-exit-glow i:nth-child(3) { animation-delay: 1.2s; }
+@keyframes world-exit-breathe { 0%, 100% { transform: scale(.82); opacity: .75; } 50% { transform: scale(1.08); opacity: 1; } }
+@keyframes world-exit-rise { 0% { top: 70%; opacity: 0; } 30% { opacity: 1; } 100% { top: 5%; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .world-exit-glow, .world-exit-glow i { animation: none; } .world-exit-glow i { opacity: .8; top: 40%; } }
+@keyframes world-glint { 0%, 100% { opacity: .35; transform: translate(-50%, -50%) scale(.6) rotate(0deg); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(45deg); } }
+@media (prefers-reduced-motion: reduce) { .world-pearl .world-glint { animation: none; opacity: .9; } }
 /* 인물·물건 모두 사각 테두리 없이 다음 대상은 작은 느낌표, 키보드 초점은 그림의 빛으로 알린다. */
 .world-object, .world-object:focus-visible { outline: none; }
 .world-object.required::after { content: "!"; position: absolute; left: 50%; bottom: calc(100% + 2px); transform: translateX(-50%); color: #ffe182; font: 900 22px/1 var(--pixel); text-shadow: -1px -1px 0 #302718, 1px -1px 0 #302718, -1px 1px 0 #302718, 1px 1px 0 #302718; pointer-events: none; }
@@ -63,6 +120,8 @@ body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
 .world-tools { position: absolute; z-index: 17; right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-width: calc(100% - 16px); border: 2px solid #665442; border-radius: 6px; background: rgba(249,236,208,.96); color: #342b23; pointer-events: auto; }
 .world-tools summary { cursor: pointer; min-height: 44px; padding: 10px; }
 .world-tools-panel { width: min(330px, calc(100vw - 20px)); max-height: 60dvh; padding: 0 10px 10px; overflow: auto; overscroll-behavior: contain; }
+/* 조작 도구는 화면에서 숨긴다(두 손 조작·행동 단추·느낌표로 충분). 키보드 Tab으로 닿거나 열었을 때만 보여 화면 낭독기·키보드 사용자의 대상 목록 길을 남긴다. */
+.world-tools:not([open]):not(:focus-within) { width: 1px; height: 1px; min-height: 0; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; opacity: 0; }
 .world-targets, .world-controls { margin: 0; }
 .world-controls { font-size: 12px; line-height: 1.45; }
 .world-target-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: min(38dvh, 280px); padding: 6px 0 8px; overflow: auto; }
@@ -131,20 +190,48 @@ body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
 .challenge-actions .btn { min-height: 44px; }
 .challenge-note { flex: 1 1 100%; font-size: 14px; color: #4a3d30; }
 .challenge-note summary { cursor: pointer; min-height: 32px; }
+.world-dialogue .challenge-note { grid-column: 1 / -1; grid-row: auto; padding: 0 4px; }
 .choice-tray { display: grid; gap: 6px; grid-column: 1 / -1; padding: 0; background: transparent; }
 .world-dialogue .choice-tray .btn.choice { width: 100%; min-width: 0; min-height: 44px; text-align: left; white-space: normal; }
 .play:has(.world-challenge) .revisit-bar { visibility: hidden; }
+/* 첫 판가름 뒤 바뀐 시작 안내, 미리 표시한 곳, 고르기 전 방향 미리 보기와 처음 고른 길 표시 */
+.challenge-after { margin: 0; padding: 6px 10px; border-left: 4px solid #8a6a3c; background: #f1e2bf; color: #3b2f25; line-height: 1.5; }
+.challenge-spot.warned { border-style: dashed; background: #e6d6b3; color: #3b2f25; }
+.btn:has(> .choice-label) { flex-wrap: wrap; justify-content: flex-start; row-gap: 2px; }
+.choice-label { flex: 1 1 100%; }
+.choice-preview { font-size: .88em; font-weight: 700; color: #4a3d30; }
+.choice-first { padding: 0 6px; border: 1px solid #7c4a1b; border-radius: 4px; font-size: .85em; color: #6a3b10; background: #fff4dc; }
 /* 임무 창과 이야기 지도 */
 .mission-lead { margin: 0 0 8px; line-height: 1.65; }
 .mission-goals { margin: 0 0 8px; padding-left: 1.4em; line-height: 1.6; }
 .mission-goals li + li { margin-top: 4px; }
 .mission-why { margin: 0; padding: 8px 10px; border-left: 4px solid #a8432f; background: #f3e4c4; line-height: 1.6; }
 .mission-sheet .actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+/* 새로 시작의 임무 카드: 돌다리 그림이 비치는 어두운 막 위에 한 장씩. 역할 → 할 일 → 까닭 */
+.sheet-back:has(.mission-start) { align-items: center; background: rgba(12, 14, 18, .62); }
+body:has(.game-shell) .sheet.mission-start { width: min(92vw, 520px); }
+.mission-card { display: grid; gap: 10px; padding: 6px 4px 2px; }
+.mission-step { display: flex; gap: 6px; margin: 0; }
+.mission-step > span[aria-hidden] { width: 22px; height: 6px; border-radius: 3px; background: #c9b68e; }
+.mission-step > span.on { background: #a8432f; }
+.mission-head { margin: 0; font-size: clamp(22px, 5.4vw, 28px); line-height: 1.3; color: #3a2a1c; }
+.mission-body { margin: 0; font-size: clamp(16px, 4.2vw, 18px); line-height: 1.7; }
+.mission-card .actions { display: flex; justify-content: flex-end; margin-top: 4px; }
+.mission-goals li b { display: block; }
 .story-now p { margin: 0 0 6px; line-height: 1.55; }
 .story-bar { height: 10px; border: 2px solid #665442; border-radius: 6px; background: #eadcbd; overflow: hidden; }
 .story-bar span { display: block; height: 100%; background: #a8432f; }
 .story-mission { margin: 10px 0; }
 .story-mission summary { cursor: pointer; min-height: 36px; font-weight: 700; }
+/* 결과 마지막 장(.jp-/.result-): 숨긴 소원·가장 찼던 소원 → 빈 선방 막대(숫자 없음)·되짚기·꿈에서 만난 인연 */
+.result-recap p { margin: 0 0 4px; line-height: 1.6; }
+.result-bonds p { margin: 0; overflow-wrap: anywhere; }
+.peak-rows { display: grid; gap: 6px; margin-top: 4px; }
+.peak-row { display: grid; grid-template-columns: minmax(4.5em, auto) 1fr auto 1fr; align-items: center; gap: 8px; }
+.peak-name { font-weight: 700; }
+.peak-track { position: relative; display: block; height: 14px; border: 2px solid #5b4a3c; background: #e6dac0; overflow: hidden; }
+.peak-fill { display: block; height: 100%; background: #b07828; }
+.peak-arrow { color: #5b4a3c; }
 .toc-title .frame { margin-left: 6px; padding: 1px 6px; border-radius: 4px; font-size: .78em; background: #eadcbd; color: #3d3226; }
 .toc-title .frame[data-frame="dream"] { background: #d9d2f0; color: #2f2550; }
 .toc-title .frame[data-frame="wake"] { background: #f0dccf; color: #5a2a1a; }
@@ -156,7 +243,8 @@ body.big .world-screen[data-touch="true"] .world-interact { font-size: 20px; }
   .world-speech, .field-cutscene .stage-speech { width: min(calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)), 880px); }
   .world-dialogue { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; max-height: min(46dvh, 220px); padding: 8px 12px; }
   .world-dialogue .stage-speech { font-size: 17px; line-height: 1.55; }
-  .world-dialogue .tray { grid-column: 3; grid-row: 1; align-self: end; width: auto; margin: 0; }
+  /* 긴 노트가 대화창을 넘쳐도 다음 단추는 보이는 영역의 오른쪽 아래에 붙어 있다. */
+  .world-dialogue .tray { grid-column: 3; grid-row: 1; align-self: end; width: auto; margin: 0; position: sticky; bottom: 0; }
   .world-dialogue .tray .btn { min-width: 120px; min-height: 48px; }
   .world-dialogue:has(.stage-portrait:empty) .stage-speech { grid-column: 1 / 3; }
   .big .world-dialogue { grid-template-columns: auto minmax(0, 1fr) auto; max-height: 62dvh; }

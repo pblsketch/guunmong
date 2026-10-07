@@ -49,7 +49,8 @@
         let timer;
         const cleanup = () => { clearTimeout(timer); ctx.signal.removeEventListener('abort', abort); stage.el.removeEventListener('click', advance); stage.dialogue.removeEventListener('click', advance); stage.dialogue.removeEventListener('keydown', key); };
         const end = (value) => { cleanup(); resolve(value); };
-        const advance = () => { if (ctx.alive() && ctx.canProceed() && !document.querySelector('.sheet-back, .fold-ov')) end(true); };
+        const shownAt = performance.now();
+        const advance = (e) => { if (G.util.staleTap(e, shownAt)) return; if (ctx.alive() && ctx.canProceed() && !document.querySelector('.sheet-back, .fold-ov')) end(true); };
         const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advance(); } };
         const abort = () => end(false);
         const next = h('button.btn.primary', { type: 'button', disabled: !ctx.canProceed(), dataset: { act: 'next' }, on: { click: advance } }, '다음 ▶');

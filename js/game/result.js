@@ -11,6 +11,11 @@
   const D = G.dream;
   const app = G.app;
 
+  const UI = () => G.data.notes?.ui || {};
+  const RUI = () => UI().result || {};
+  const wishName = (id) => (G.data.wishes || []).find((w) => w.id === id)?.name || id;
+  // 막대 정도는 숫자 대신 소원 띠의 낱말(비어 있음…가득 참)로 읽어 준다.
+  const levelWord = (level) => (UI().band?.levels || [])[Math.round(Math.max(0, Math.min(1, level)) * 4)] || '';
   const dateOf = (t) => { const d = new Date(t || Date.now()); return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; };
   const plain = (s) => T.plain(s || '');
 
@@ -21,6 +26,7 @@
     const fin = it.changed || it.first || null;
     const ev = (id) => app.interpEvidence ? app.interpEvidence(id) : {};
     const opt = (id) => (app.interpText ? app.interpText(id) : '');
+    const rec = G.play?.recap ? G.play.recap(st, G.data) : {};
     const lines = {
       name: st.name || '',
       date: dateOf(st.finishedAt),
@@ -37,6 +43,14 @@
       pearls: (G.data.bonds || []).filter((bond) => st.pearls?.[bond.id]).map((bond) => bond.name),
       help: app.ledgerRows().filter((row) => row.help).map((row) => row.title + ' · ' + row.helpLabel),
       revised: !!it.revised,
+      // 결정 0022: 숨긴 소원, 소원마다 가장 찼던 정도(→ 빈 선방), 되짚기 요약(5장 첫머리 1~3번 줄). 장부에는 넣지 않는다.
+      secretWish: rec.secretWish ? wishName(rec.secretWish) : (RUI().noSecret || '고르지 않음'),
+      peak: app.wishes().filter((wish) => typeof wish.peakLevel === 'number').map((wish) => {
+        const level = Math.max(0, Math.min(1, wish.peakLevel));
+        return { id: wish.id, name: wish.name, level, word: levelWord(level) };
+      }),
+      recap: G.play?.recapLines ? G.play.recapLines(st, G.data).filter((line) => line !== I.recap?.ask) : [],
+      bonds: (G.data.bonds || []).filter((bond) => (st.bonds || []).includes(bond.id)).map((bond) => bond.name),
     };
     if (it.revised && it.first && it.changed) {
       // 조사는 해석 글(「」 안)의 마지막 글자로 고르고, 근거 구절은 뒤에 따로 적는다(두 꼴을 함께 찍지 않음)
@@ -53,6 +67,17 @@
     return h('figure.dream-trace-card', { dataset: { traceImage: part.image } },
       sprite ? G.util.pixImg(sprite.src, { alt: part.label, cls: 'dream-trace-img' }) : null,
       h('figcaption', part.label));
+  }
+
+  // 가장 찼던 정도의 막대와, 깨어나 비어 버린 선방의 막대. 숫자는 쓰지 않고 낭독은 소원 띠의 낱말로 한다.
+  function peakRow(row) {
+    const pattern = UI().band?.wish || '{wish} {level}';
+    const label = G.play.fill(pattern, { wish: row.name, level: row.word }) + ' → ' + G.play.fill(pattern, { wish: row.name, level: levelWord(0) });
+    return h('div.peak-row', { role: 'img', 'aria-label': label, dataset: { peak: row.id } },
+      h('b.peak-name', row.name),
+      h('span.peak-track', h('span.peak-fill', { style: { width: (row.level * 100) + '%' } })),
+      h('span.peak-arrow', '→'),
+      h('span.peak-track.peak-empty'));
   }
 
   function pageEl(ctx) {
@@ -77,7 +102,11 @@
       h('div.jp-block', h('h4', '나의 해석'), h('p.jp-interp', L.interp)),
       h('div.jp-block', h('h4', '근거 구절'), h('p.jp-ev', L.evidence || '없음')),
       h('div.jp-block.jp-trace', h('h4', it.revised ? '고친 흔적' : '고친 흔적 없음'), h('p', L.revision || '없음')),
-      h('div.jp-keep', h('section', h('h4', '성진의 소원'), h('ul.result-wishes', L.wishes.map((w) => h('li', h('b', w.name), w.evidence ? h('span.small', ' · ' + w.evidence) : null)))), D.pearlKeep()),
+      h('div.jp-keep', h('section', h('h4', '성진의 소원'), h('ul.result-wishes', L.wishes.map((w) => h('li', h('b', w.name), w.evidence ? h('span.small', ' · ' + w.evidence) : null)))), D.pearlKeep(),
+        h('section.result-bonds', h('h4', RUI().bonds || '꿈에서 만난 인연'), h('p', L.bonds.length ? L.bonds.join(' · ') : '없음'))),
+      h('div.jp-block.result-secret', h('h4', RUI().secretWish || '숨긴 소원'), h('p', L.secretWish)),
+      h('div.jp-block.result-peak', h('h4', RUI().peak || '가장 찼던 소원 → 빈 선방'), h('div.peak-rows', L.peak.map(peakRow))),
+      h('div.jp-block.result-recap', h('h4', RUI().recap || '육관대사의 되짚기'), L.recap.map((line) => h('p', line))),
       h('div.jp-block.jp-help', h('h4', '도움 안내'), h('p', L.help.length ? L.help.join(' / ') : '도움 없이 마쳤어요.')),
       h('p.small.muted', '해석에는 하나뿐인 정답이 없어요. 친구의 해석과 근거를 견주어 보세요.'));
   }
@@ -162,6 +191,19 @@
     }
     return out;
   }
+  // PNG의 막대 한 줄: 이름, 가장 찼던 정도(채운 칸), 화살표, 빈 선방(빈 칸). 숫자는 그리지 않는다.
+  const PEAK_FILL = '#b07828', BAR_W = 220, BAR_H = 22;
+  function peakBars(g, row, px, y, serif) {
+    const top = y - BAR_H + 4, trackX = px + 190, emptyX = trackX + BAR_W + 48;
+    g.textAlign = 'left'; g.fillStyle = '#2b2320'; g.font = `24px ${serif}`; g.fillText(row.name, px + 40, y);
+    for (const x of [trackX, emptyX]) {
+      g.fillStyle = '#e6dac0'; g.fillRect(x, top, BAR_W, BAR_H);
+      g.strokeStyle = '#5b4a3c'; g.lineWidth = 2; g.strokeRect(x, top, BAR_W, BAR_H);
+    }
+    const fill = Math.round(row.level * (BAR_W - 6));
+    if (fill > 0) { g.fillStyle = PEAK_FILL; g.fillRect(trackX + 3, top + 3, fill, BAR_H - 6); }
+    g.fillStyle = '#5b4a3c'; g.textAlign = 'center'; g.fillText('→', trackX + BAR_W + 24, y); g.textAlign = 'left';
+  }
   app.renderPage = function (model) {
     const L = model || app.lastPage();
     const W = 900, c = document.createElement('canvas');
@@ -179,8 +221,12 @@
       [L.revised ? '고친 흔적' : '고친 흔적 없음', L.revision || '없음', '#5b4a3c'],
       ['소원', L.wishes.map((w) => w.name + (w.evidence ? ' · ' + w.evidence : '')).join('\n'), '#5b4a3c'],
       ['구슬', L.pearls.length ? L.pearls.join(' · ') : '찾은 구슬 없음', '#5b4a3c'],
+      [RUI().bonds || '꿈에서 만난 인연', L.bonds.length ? L.bonds.join(' · ') : '없음', '#5b4a3c'],
+      [RUI().secretWish || '숨긴 소원', L.secretWish, '#34508f'],
+      [RUI().peak || '가장 찼던 소원 → 빈 선방', null, '#2b2320'],
+      [RUI().recap || '육관대사의 되짚기', L.recap.join('\n') || '없음', '#2b2320'],
       ['도움 안내', L.help.length ? L.help.join('\n') : '도움 없이 마쳤어요.', '#5b4a3c'],
-    ].map(([k, v, col]) => ({ k, col, lines: wrap(g0, v, inner) }));
+    ].map(([k, v, col]) => (v === null ? { k, col, bars: L.peak, lines: L.peak.map(() => '') } : { k, col, lines: wrap(g0, v, inner) }));
     let H = 650;
     for (const b of blocks) H += 52 + b.lines.length * 40 + 18;
     H += 90;
@@ -215,7 +261,8 @@
       g.fillStyle = '#1f7a74'; g.font = `400 24px ${pixel}`; g.fillText(b.k, px + 20, y);
       y += 40;
       g.fillStyle = b.col; g.font = `26px ${serif}`;
-      for (const ln of b.lines) { g.fillText(ln, px + 40, y); y += 40; }
+      if (b.bars) for (const row of b.bars) { peakBars(g, row, px, y, serif); y += 40; }
+      else for (const ln of b.lines) { g.fillText(ln, px + 40, y); y += 40; }
       y += 30;
     }
     g.fillStyle = '#6a5a47'; g.font = `18px ${serif}`; g.textAlign = 'right';

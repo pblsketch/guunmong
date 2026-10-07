@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { harness, ROOT, ready, start, target, dialogue, state } from './rpg-harness.mjs';
+import { harness, ROOT, ready, start, target, dialogue, state, secretWish } from './rpg-harness.mjs';
 
 const h = await harness();
 const context = await h.browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -20,6 +20,7 @@ try {
         const button = page.locator('[data-word="' + id + '"]');
         if (!await button.isDisabled()) await button.click();
       }
+      await secretWish(page);
       await page.locator('#tray [data-act="next"]').click(); continue;
     }
     if (await page.locator('[data-act="next"]').count()) { await page.locator('[data-act="next"]').first().click(); await page.waitForTimeout(40); continue; }

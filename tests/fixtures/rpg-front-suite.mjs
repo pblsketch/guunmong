@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {harness,ROOT,start,target,dialogue,state} from './rpg-harness.mjs';
+import {harness,ROOT,start,target,dialogue,state,secretWish} from './rpg-harness.mjs';
 const h=await harness(),observations=[];let passed=0;
 async function identityBoundary(p,current,s){
  const cases={
@@ -48,6 +48,7 @@ async function route(width,height,big){
   if(await p.locator('[data-dialogue]').count()){await dialogue(p);continue;}
   if(current.kind==='wish'){
    const answers=await p.evaluate(()=>G.app.current().data.answers);for(const id of answers){const b=p.locator('[data-word="'+id+'"]');if(!await b.isDisabled())await b.click();}
+   await secretWish(p);
    await p.locator('#tray [data-act="next"]').click();continue;
   }
   if(await p.locator('[data-act="next"]').count()){await p.locator('[data-act="next"]').first().click();await p.waitForTimeout(40);continue;}
@@ -63,7 +64,7 @@ async function route(width,height,big){
  assert.ok(steps<180,'진행 막힘');assert.equal(seen.size,15);assert.deepEqual([...outfits],['exam-write','exam-result','exam-hallim']);const s=await state(p);
  assert.equal(s.done['l-bongnae'],true);for(const id of ['it-yangryu','it-geomungo','it-tungso','it-sijeon','it-yeogwan','it-bujeol','it-cheonrima'])assert.ok(s.items.includes(id),id+' 실제 수령');
  assert.equal(new Set(s.items).size,s.items.length);assert.equal(new Set(s.bonds).size,s.bonds.length);assert.equal(s.journal.revealed?.misaek,undefined);
- assert.deepEqual(s.events,{});assert.deepEqual(s.res,{gong:0,fame:0,wealth:0});assert.equal(s.best,0);assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.equal(await p.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false);
+ for(const k of ['abil','res','best','events'])assert.equal(Object.hasOwn(s,k),false,k+' 옛 필드 없음');assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.equal(await p.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false);
  await p.screenshot({path:path.join(ROOT,'tests/shots/front-end-'+width+'x'+height+'-'+(big?'big':'normal')+'.png'),fullPage:true});observations.push({width,height,big,seen:[...seen],outfits:[...outfits],items:s.items,bonds:s.bonds});passed++;console.log('PASS 앞15 실제 학생 입력 '+width+'x'+height+' '+(big?'큰 글자':'일반')+' · 의상/악기/시전/인연/미색/무성장');await p.context().close();
 }
 try{for(const [width,height] of [[390,844],[844,390],[1280,844]])for(const big of [false,true])await route(width,height,big);assert.deepEqual(h.errors,[]);console.log('앞부분 대표 '+passed+' 경로 통과 (본편 전체 완주 아님)');}

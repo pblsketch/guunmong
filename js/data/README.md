@@ -1,4 +1,4 @@
-# 내용 데이터 형식 약속 v2
+# 내용 데이터 형식 약속
 
 내용 데이터의 유일한 형식 기준이다. 파일은 script로 읽고 `window.GUUN` 아래 값을 둔다.
 데이터에 함수나 getter를 넣지 않는다. 새 플레이는 이동·대화·관찰·물건 상호작용이며 사건·결말·벼슬·집 단계는 고정이다. 구판 준비·윤목·수치는 호환 보존용이다.
@@ -11,7 +11,6 @@
 | people.js | people | 인물·얼굴·표정 |
 | chapters.js | chapters | 장 안내·지난 이야기·기본 곡·설정 카드 |
 | scenes.js | scenes | 모든 진행 단위, 원작 차례 |
-| board.js | board | 구판 장소·벼슬 칸의 호환 보존 자료 |
 | wishes.js | wishes | 다섯 소원 |
 | bonds.js | bonds | 인연 카드 |
 | house.js | house | 이야기 조건에 따른 생활 공간·구판 장식 자리 보존 |
@@ -27,6 +26,8 @@
 `js/core/data.js`의 FILES가 위 파일을 읽는다. 모든 진행 단위는 scenes에, 승인된 동작·아이콘 메타는 sprites에 둔다.
 
 본편은 `optional`이 없는 28단위이며 `c1-bridge`부터 시작한다. `cut-josin`만 `optional:true`로 보존한다. 결과의 선택형 비교 읽기에서만 읽으며 본편 목록·목차·진행 저장에 넣지 않는다. 다른 장면에 optional을 붙이면 데이터 오류다. 옛 `pos:cut-josin` 기록은 현재 본편의 재개 위치로 이어 간다.
+
+scenes의 `guide`는 140자 이하 문자열이며 앞 장면과 이번 장면을 잇는 '이야기 길잡이'다. 월드 장면에서 그 장면의 첫 행동을 하기 전까지 위쪽에 보이고 누름을 가로채지 않는다. 장 안내의 지난 이야기처럼 안내 글로 보아 이야기 총량에서 뺀다. 숨은 정체·미래 사건·이본마다 다른 세부를 쓰지 않는다.
 
 `notes.mission`은 `{title,lead,goals[],why,start}`이며 새로 시작할 때 돌다리 위 임무 창과 이야기 지도(목차)에 보인다. 기록을 쓰지 않는다. 미래 사건·숨은 정체·인연 개수를 쓰지 않는다.
 
@@ -123,20 +124,20 @@ story는 해당 행동의 원작 단계 id인 scene:stage 문자열이다. 소�
   img: 'sc_huayin', bgm: 'spring', lines: [{ say: 'yang', text: '새로 쓴 대사' }],
   gradeText: { shine: '평판 상', fine: '평판 중', near: '평판 하' },
   items: [{ id: 'it-yangryu', name: '양류사 시전', img: 'item_yangryu', desc: '설명', fills: [], slot: 'in' }],
-  square: 'sq-huayin', meet: 'chae',
+  meet: 'chae',
   pearl: { x: 30, y: 40, r: 7, trace: 'fiction', hint: '흔적' },
   remeet: [{ bond: 'chae', story: '다시 만난 사연' }],
 }
 ```
 
-새 체험은 scenes.lines/items/meet와 experiences를 소비한다. 예시의 preview/clues/core/gradeText/square 및 준비 설명은 남아 있는 구판 데이터의 호환 형식이며 새 성장 계산에 사용하지 않는다. clues가 남아 있으면 예고에 있는 낱말인지, core가 남아 있으면 기존 능력 enum인지 검사한다.
+새 체험은 scenes.lines/items/meet와 experiences를 소비한다. 예시의 preview/clues/core/gradeText 및 준비 설명은 남아 있는 구판 데이터의 호환 형식이며 새 성장 계산에 사용하지 않는다. clues가 남아 있으면 예고에 있는 낱말인지, core가 남아 있으면 기존 능력 enum인지 검사한다.
 능력 id: munjang(문장), eumak(음악), muye(무예), jiryak(지략).
 사건 순서의 core는 문장, 문장, 음악, 문장, 지략, 지략, 음악, 무예·지략, 무예, 지략, 무예·지략, 문장이다.
 11·12번만 원작 검증 뒤 조정할 수 있다. 처음 만나는 번호는 1,2,3,5,6,7,9,10이다.
 여덟 곳에 서로 다른 meet와 구슬 객체 하나씩 둔다. pearl의 좌표·반지름은 백분율이다.
 trace가 canon이면 canon 근거 글도 둔다. 원작 구슬 근거는 정경패와 난양공주뿐이다.
 물건은 `{id,name,img,desc,fills:[],slot}`이다. slot은 in/yard/any다. 없는 사건도 items:[]를 둔다.
-재회는 `remeet:[{bond,story}]` 배열로 쓴다. app.remeets는 이전 단일 객체도 읽지만 새 데이터는 배열로 통일한다. 구판 자원 보상은 G.sim.reward에서 계산하던 값이며 데이터에 복제하지 않는다. 현재 실행 HTML은 sim을 로드하지 않고 새 행동에는 자원 보상을 계산하지 않는다.
+재회는 `remeet:[{bond,story}]` 배열로 쓴다. app.remeets는 이전 단일 객체도 읽지만 새 데이터는 배열로 통일한다.
 인연 이름·aliases 뒤에 여인을 소유 대상으로 쓰는 등급 문구는 금지다.
 grade-object는 이름·목적격 조사 뒤의 얻/차지/맞이/데려를 검사한다.
 그 사이에 아내로·자신의 것으로 같은 소유 보어, 집으로·내 곁으로 같은 방향 표현,
@@ -144,7 +145,7 @@ grade-object는 이름·목적격 조사 뒤의 얻/차지/맞이/데려를 검�
 이름만으로 차단하지 않으며, 다른 절에서 시·곡조·평판을 대상으로 쓴 동사까지 이어 잡지 않는다.
 구판 등급 글도 가춘운·적경홍의 속임수를 간파하는 내용으로 바꾸지 않는다. 현행은 정해진 공개 서술을 읽은 뒤 실명·초상을 보여 주며 등급별 결과를 만들지 않는다.
 
-새 사건의 완료는 ctx.finishExperience로 필수 행동·done·다음 pos를 함께 저장한다. 옛 부분 준비는 turns/rolls를 보존하고 체험 입구에서 재개하며 새 행동으로 만들지 않는다. 직접 다시 보기는 readonly다.
+새 사건의 완료는 ctx.finishExperience로 필수 행동·done·다음 pos를 함께 저장한다. 직접 다시 보기는 readonly다.
 
 ## 컷신 cut / waking
 
@@ -173,7 +174,7 @@ waking은 같은 timeline에 pause:'staff'를 정확히 한 번 둔다.
 
 ## 이음 link / 소원 wish
 
-link: `{ id: 'l-namjeon'|'l-hebei'|'l-bongnae', ch: '2', kind: 'link', title, img?, bgm?, lines, square, bonus: { abil: { eumak: 2 }, items: [물건] } }`.
+link: `{ id: 'l-namjeon'|'l-hebei'|'l-bongnae', ch: '2', kind: 'link', title, img?, bgm?, lines, bonus: { abil: { eumak: 2 }, items: [물건] } }`.
 준비·등급은 없다. bonus.abil의 남전산 음악 덤 2는 구판 자료 호환값으로만 보존한다.
 bonus.abil은 구판 호환 값이다. 새 이음은 물건 수령의 행동 사실만 일회 저장하며 능력 덤을 적용하지 않는다.
 
@@ -185,17 +186,13 @@ answers에는 정답 낱말 id 다섯을 둔다. 독백의 다른 바람을 오�
 
 ## 말판·소원·인연·집
 
-- board(구판 보존, 현행 말판 UI 없음): `[{ id: 'sq-…', name, kind: 'office'|'place', scene, x, y, start?, outfit?, fills? }]`.
-  출발 칸만 scene:null이다. outfit은 gwan/jang/sang. 사건과 이음 모두 칸을 지난다.
-  떨어지는 칸은 없다. fills는 대원수의 chuljang.chul과 승상의 chuljang.ip만 둔다.
-  꿈의 사건 12개+이음 3개는 14개 장면 칸을 쓴다. e04-exam과 e05-chunun은 sq-hallim을 공유하며 칸의 scene은 e04-exam이다.
-  같은 칸을 잇는 두 사건 사이에는 추가 걷기가 없다. 전체 말판은 수주현 출발과 취미궁을 더해 16칸이다.
+- 구판 말판(board.js·장면의 square)은 2026-10-07에 지웠다. 현행 화면은 말판을 읽지 않는다.
 - wishes: `[{ id, name, hanja?, evidence, parts?, dreamHidden? }]`.
   출장입상·공명은 저장된 원작 단계, 부귀·풍류는 원작 물건 수령 사실에서 계산한다. 옛 능력·재화·최고값은 입력이 아니며 미색은 꿈 내내 숨긴다.
-  G.app.wishes()는 `{ id, name, fill, hidden, half, filled, parts, sources }` 배열이다. fill은 0~1이고 숨긴 이름은 `?`다. parts는 `{id,name,filled}` 배열이다.
+  G.app.wishes()는 `{ id, name, fill, hidden, half, filled, parts, sources, level, canonFull, peakLevel, secret }` 배열이다. fill은 원작 바닥만의 0~1, level은 고른 말까지 더한 표시값/최대(0~1), peakLevel은 최고값/최대이며 미색은 둘 다 null이다. canonFull은 원작 바닥이 가득, secret은 숨긴 소원이다. 숨긴 이름은 `?`다. parts는 `{id,name,filled}` 배열이다. 막대 계산·되짚기는 G.play(js/core/play.js 머리말)다.
 - bonds: `[{ id, name, aliases?, face?, status, ability, story, place, fairy, fairyFace?, color? }]`.
   ability는 설명용 문자열이다. grade/grades/gradeText/shine/fine/near와 fills/wish/abil/res/reward는 금지다.
-  인연은 수치에 영향을 주지 않고 개수로 보이지 않는다.
+  인연은 소원 막대에 영향을 주지 않고, 띠의 여덟 칸(●○) 밖에서 수로 세지 않는다.
 - house: `{ stages: [{ id, name, from: 장면id, img, slots: [{ id, x, y, w, kind: 'in'|'yard' }] }], fiction? }`.
   stages에는 위에서 정의한 fromStory와 story도 사용할 수 있다. 현재는 이야기 조건으로 공간의 그림·설명을 표시하며 items를 칸에 자동 장식하지 않는다. slots는 구판 장식 좌표로 보존한다.
   새 체험은 재화나 물건 수를 꾸밈 입력으로 쓰지 않으며 직접 배치·효율은 없다.
@@ -207,9 +204,33 @@ journal: `{ id: 'j-match', title, prompt, memo, pairs: [{ id: 'j-…', event, ki
 드러난 소원 넷을 선택지로 쓰며 재사용 가능하다. 해석 짝과 마음 나란히 보기는 없다.
 bondLink는 어느 선택이든 미색을 드러낸다. 인연 잇기와 구슬은 채점하지 않는다.
 
-interp: `{ question, options: [{ id, text, fits? }], evidence: [{ id, text, from?, after? }], dialogue: [줄], lastWords: 줄 또는 [줄], ending: [줄] }`.
-options는 네 개, evidence는 열 개다. fits는 해석의 관련 근거 목록이며 채점 정답이 아니다. 근거 text는 실제 이야기 한 줄에 그대로 있어야 한다.
+interp: `{ question, options: [{ id, text, fits? }], evidence: [{ id, text, from?, after?, template? }], recap, dialogue: [줄], lastWords: 줄 또는 [줄], ending: [줄] }`.
+options는 네 개, evidence는 이야기에서 읽는 열 개와 틀 근거 E11 하나를 더한 열한 개다. fits는 해석의 관련 근거 목록이며 채점 정답이 아니다. fits의 id는 모두 evidence에 있어야 한다. 틀이 아닌 근거 text는 실제 이야기 한 줄에 그대로 있어야 한다.
 E1~E7은 1·3장, after:true인 E8~E10은 대사의 응답에 나온다. after 근거는 응답 뒤에만 보인다. 응답 전에 고르고 들은 뒤 한 번만 고친다.
+
+### 되짚기 틀과 E11
+
+틀 문장은 데이터 파일에 순수 문자열로 두고, 화면이 학생 기록(고른 말·첫 결과·숨긴 소원·가장 찼던 소원)으로 채운다. 자리 표시는 `{이름}`이고, 바뀌는 앞말에 조사가 붙으면 `{이름:을/를}`처럼 조사 한 쌍을 적는다. 화면은 채운 값에 G.util.josa로 고른 한 꼴만 붙인다(두 꼴을 함께 내지 않는다). 쓸 수 있는 조사 쌍은 을/를·이/가·은/는·와/과·으로/로다. 틀에 숫자를 쓰지 않으며, 허락되지 않은 자리 이름이나 남는 중괄호가 있으면 데이터 오류다.
+
+`evidence`의 `{ id:'E11', template:true, text, from }`는 '내가 꿈에서 고른 길'이다. text는 `{top:을/를}` 자리를 가진 틀이고, top은 학생이 가장 많이 고른 쪽의 이름이다. 소원 쪽이면 `recap.pickName`을 그 소원 이름으로 채운 값, 물러남이면 `recap.stayName`이다. 같은 횟수가 여럿이면(▲끼리 또는 ▲와 물러남) 모두 가운뎃점(·)으로 잇는다. E11은 i-own의 fits에 들어 있다. 학생의 선택 기록이 하나도 없으면 화면에 보이지 않는다. 틀 근거는 template:true로 표시하며, 이야기 줄에 있어야 한다는 검사에서 빠진다. 이야기 글 셈에는 가장 길게 채운 꼴(top에 네 소원 쪽 이름과 stayName을 모두 넣은 줄)로 든다. 지금 틀 근거는 E11 하나뿐이다.
+
+`interp.recap`은 5장 c5-dialogue 첫머리, 기존 대사 "사람의 세상을 겪어 보니 어떠했느냐?" 앞에서 육관대사가 하는 되짚기다. 아래 차례로 줄을 만든다.
+
+| 열쇠 | 자리 | 쓰임 |
+| --- | --- | --- |
+| chose | items | 1. 고른 말. items는 `item`을 채운 조각을 ", "로 이은 값. ▲를 한 번 이상 고른 소원을 wishes 차례로, 이어서 물러남을 한 번 이상 골랐으면 그것을 둔다. 0번인 쪽은 말하지 않는다 |
+| item | name, times | 조각 하나. name은 pickName 또는 stayName을 채운 값, times는 counts의 말 |
+| pickName | wish | 소원 쪽 이름. wish는 소원 이름(wishes.name) |
+| stayName | — | 물러남 쪽 이름 |
+| counts | — | 횟수를 숫자 없이 말하는 낱말 배열. 0기준 n번 칸이 n+1번이다. 길이는 소원을 움직이는 선택 자리 수 이상 |
+| none | — | 1의 대체 줄. 학생 기록이 하나도 없을 때 chose 대신 쓴다 |
+| teacher | — | 학생 기록도 있고 선생님 도움으로 넘긴 자리도 있을 때 chose 뒤에 더하는 줄 |
+| first | — | 2. 첫 결과. `[{challenge, ok, fail}]` 배열이며 challenge는 talk가 아닌 도전 id다. 차례대로, 첫 판가름이 성공이면 ok, 실패면 fail 문장을 쓴다. 판가름이 없으면 말하지 않는다. 지금은 ch-chunun-ghost와 ch-yoyeon-night |
+| wishLine | secret, peak | 3. 숨긴 소원과 가장 찼던 소원. secret은 숨긴 소원 이름, peak는 가장 찼던 소원 이름들을 ·로 이은 값(같은 값이 여럿이면 모두) |
+| peakOnly | peak | 3의 대체 줄. 숨긴 소원이 없을 때 |
+| ask | — | 4. 물음 "그 삶은 처음 바라던 삶과 같았느냐?". 답을 고르는 칸은 없고 이어서 기존 대사와 해석 고르기로 간다 |
+
+recap의 다른 열쇠는 쓰지 않는다. 되짚기 틀은 이야기 글 셈에 든다(아래 '검사와 이야기 글 셈').
 
 notes: `{ work, variants, discuss, teacher: { when, time, questions, extra, ledger }, ui }`.
 teacher.ledger의 구판 적중·등급 문구는 새 사건 행에서 사용하지 않는다. 새 행은 상태·살펴본 근거·도움을 보여 준다. discuss는 생각 나눔 질문 두 개의 문자열 배열이다.
@@ -222,28 +243,51 @@ ui
   grades: {shine,fine,near} → 표시 이름
   resources: {gong,fame,wealth} → 표시 이름
   fiction: {prep,score,comic,pearls,items} → {mark:'fiction',id,title,body,real}
-  result: {before,after,save} (zero·scoreNotice는 구판 호환 문구이며 새 결과에서 사용하지 않음)
+  result: {before,after,save,bonds,secretWish,noSecret,peak,recap} (zero·scoreNotice는 구판 호환 문구이며 새 결과에서 사용하지 않음)
   journal: {pearls,unfound,unscored}
+  secretWish: {title,prompt,hint,button,review,saved,teacher,retry}
+  band: {label,wish,levels[5],hidden,secret,bonds,bondCounts[9],separator}
+  choice: {up,down,stay,first}
+  collapse: {label,bonds}
   preview, prep, clue, grade, wishHidden, pearl, staff, teacherPeek, audioNotice: 문자열
 ```
 
+| 열쇠 | 쓰임 |
+| --- | --- |
+| result.bonds | 결과와 무너짐 뒤에 남는 '꿈에서 만난 인연' 제목. 수를 세는 말은 붙이지 않는다 |
+| result.secretWish, result.noSecret | 결과의 숨긴 소원 제목과, 고르지 않았을 때의 값 |
+| result.peak | 소원별 가장 찼던 정도에서 빈 선방으로 이어지는 막대 그림의 제목 |
+| result.recap | 결과의 되짚기 요약 제목 |
+| secretWish | 1장 소원 찾기 바로 뒤 숨긴 소원 고르기의 제목·물음·도움말·확인 단추, 다시 읽기에서 보이는 제목 |
+| band.label | 소원 띠의 화면 낭독 이름 |
+| band.wish | 소원 한 칸의 낭독 틀. `{wish}`는 소원 이름, `{level}`은 levels의 말 |
+| band.levels | 소원의 정도를 비어 있음→가득 참 차례 다섯 낱말로 말한다. levels[Math.round(표시값 ÷ 최대 × 4)]를 쓴다(최대가 4이면 표시값 그대로). 숫자를 쓰지 않는다 |
+| band.hidden | 미색 칸의 낭독 틀. `{wish}`는 미색의 이름이며 값은 말하지 않는다(예: 미색 알 수 없음). 눈에 보이는 칸은 꿈 내내 '?'다 |
+| band.secret | 숨긴 소원 칸에 붙는 작은 표식의 낭독 말 |
+| band.bonds, band.bondCounts | 인연 여덟 칸의 낭독 틀과 `{count}`에 넣을 말. bondCounts의 n번 칸이 찬 칸 n개다. 이 낭독 말 밖에서는 인연 수를 세지 않는다 |
+| band.separator | 낭독 조각을 잇는 말 |
+| choice.up, choice.down, choice.stay | 고르기 전 선택지 옆의 방향 표시. 소원 이름 뒤에 up/down을 붙이고(예: 공명▲ 풍류▼), 물러남에는 stay를 쓴다. 숫자를 쓰지 않는다 |
+| choice.first | 끝난 장면을 다시 읽을 때 학생이 처음 고른 선택지에 붙는 표시 |
+| collapse.label, collapse.bonds | 난간 타격 뒤 무너짐 연출의 낭독 말과, 이름이 나타났다 사라지는 자리의 제목 |
+
+ui의 새 문구에는 숫자를 쓰지 않는다. 인연은 띠의 낭독 말 밖에서 수로 세지 않는다.
+
 인연 카드의 등급별 갈림이나 수치 보상은 ui에도 넣지 않는다.
-구판 ui 수치 문구는 호환 보존용이다. 새 결과·장부에는 성장 점수·점수→0 연출을 넣지 않는다.
+소원 값은 학생 화면·결과·장부 어디에도 숫자로 쓰지 않는다. 깨어날 때의 무너짐은 막대가 비는 연출(collapse)로만 보인다.
 
-## 저장 v2와 규칙 API
+## 저장 v3와 규칙 API
 
-열쇠는 guunmong-v2 또는 guunmong-v2-fixture-<이름>. v1은 읽거나 지우지 않는다.
+열쇠는 guunmong-v3 또는 guunmong-v3-fixture-<이름>. v3가 없을 때 같은 이름의 v2에서 설정 넷만 읽고 진행·기록은 가져오지 않는다. v2·v1은 고치거나 지우지 않는다.
 fresh()의 열쇠:
 
 - 설정: music, sound, big, teacher. reset 뒤에도 유지한다. mode는 없다.
-- 진행: started, pos, step, reach, done, awake, awakeAt.
-- 구판 육성 보존: abil:{munjang,eumak,muye,jiryak}, res:{gong,fame,wealth}, best, events. 새 성장 계산에는 쓰지 않는다.
+- 진행: started, pos(null 또는 문자열), step, reach, done, awake, awakeAt.
 - 기록: items:[id], bonds:[id], pearls:{인연id:true}, seenFiction:{id:true}, ledger, wrong, journal, interp.
-- 기타: v:2, name, startedAt, finishedAt.
+- 체험: rpg:{v:1,run,cursor,scenes}.
+- 선택과 첫 판가름: play:{secretWish:null|소원id, choices:{자리id:{option}}, firsts:{도전id:{ok:true|false|null, clues?, tried?}}, peak:{chuljang,bugwi,pungryu,gongmyeong}}. ok:null은 search 첫 판의 판가름 전이며 tried에 헛짚은 곳이 쌓인다. peak는 0~4 정수이며 깨어남 저장과 함께 동결한다.
+- 기타: v:3, name, startedAt, finishedAt.
 
-구판 사건은 `events[id] = { turns: [행동id,행동id], rolls: [수,수], hits, grade, reward, peek, auto }`다.
-미완성 turns/rolls는 길이 0~1, grade/reward는 null이다. hits는 현재 적중 수이며 peek/auto는 boolean이다.
-reward는 {gong,fame,wealth}. 구판 장부에서 —로 보이던 auto 기록은 현행 장부의 자동 안내로 구분하며 실제 완료가 아니다. 뒤 채우기에서 덮어쓰지 않는다.
+옛 판의 abil·res·best·events는 v3에 없다. play 안은 데이터에 있는 자리·선택지·도전·곳 id와 위 자료형만 받는다.
 ledger는 a-wish·j-match만 받으며 `{first:true|false|null, help:null|'student'|'teacher', final}`이다.
 선생님 도움이 먼저면 first:null, final 뒤에는 불변이다. wrong은 `[{act,slot,picked,answer,note?}]`다.
 journal은 `{ wish?: {selected:[낱말id], wrong:수}, match?: {picks,tries,memoOpen}, bondLink?: 소원id, revealed?: {misaek:true} }`이다. match의 활동 진행은 G.activity.mount가 관리한다.
@@ -251,7 +295,7 @@ interp는 `{first:{option,evidence}, heard, changed:{option,evidence}|null, revi
 
 새 하위 저장은 rpg:{v:1,run,cursor,scenes}다. run은 1~128자의 영문·숫자·밑줄·하이픈 고유 문자열이다. rpg가 없는 옛 판만 writer 최초 이관에서 UUID를 만든다. 기존 rpg의 run이 무효하면 새 run을 만들지 않고 unavailable로 열람만 허용한다. fresh/load의 미이관 상태는 rpg:null이며 이 상태를 저장하지 않는다. 저장된 rpg:null은 잘못된 기존 rpg로 처리한다.
 
-cursor는 null 또는 {scene,map,x,y,facing}이고 scene은 pos, map은 현재 beat의 유효 지도와 일치해야 한다. solid·벽·범위 밖·다른 지도·다른 장면 위치는 안전 입구로 복구한다. scenes는 기존 id → {status,beat,actions,hint} 객체다. status는 active/done/auto, beat는 다음 필수 행동 id 또는 null, actions는 유일 {id,by:student|teacher} 배열, hint는 null/student/teacher다. actions의 필수 순서를 검증하며 무효 부가 필드만 기본화한다. 옛 완료는 actions:[]의 done, 옛 auto는 actions:[]의 auto로 보존할 수 있다. 구판 장부·해석·done·awake는 초기화하지 않는다.
+cursor는 null 또는 {scene,map,x,y,facing}이고 scene은 pos, map은 현재 beat의 유효 지도와 일치해야 한다. solid·벽·범위 밖·다른 지도·다른 장면 위치는 안전 입구로 복구한다. scenes는 기존 id → {status,beat,actions,hint} 객체다. status는 active/done/auto, beat는 다음 필수 행동 id 또는 null, actions는 유일 {id,by:student|teacher} 배열, hint는 null/student/teacher다. actions의 필수 순서를 검증하며 무효 부가 필드만 기본화한다. 행동 없는 auto는 actions:[]의 auto로 보존한다. done은 필수 행동이 모두 기록된 경우에만 유지하고, 행동이 없는 기록은 active로 읽는다. 장부·해석·awake는 초기화하지 않는다.
 
 읽기는 rpg 검증·복구 → 검증된 완료 정보로 pos 재개 판정 → 최종 pos의 cursor 검증 순서다. 옛 완료 근거도 없고 필수 actions도 빈 가짜 status:done으로 다음 장면을 열지 않는다. 있는 기록의 beat:null과 기록 자체가 없는 경우는 다르다. 전자는 마지막 단계 지도, 후자만 첫 단계 지도에서 시작한다.
 
@@ -281,10 +325,11 @@ app이 접근을 확인하고 pos를 바꿀 때는 같은 draft에서 rpg.cursor
 | experienceHelp(sceneId,who,options) | 도움 우선순위 유지. boolean |
 | fillBefore(scenes,targetId,options) | teacher writer만 앞선 미기록 장면에 auto 안내. 추가 id 배열 또는 false. 부분 준비·기존 기록 보존 |
 | ledgerTry(id,ok,options), ledgerHelp(id,who,options), ledgerDone(id,options), wrongNote(entry,options) | boolean. 두 활동의 첫 시도·teacher 도움·final과 첫 오답 보존 |
+| recordFirst(challengeId,input,options), chooseSecretWish(wishId,options) | {ok,reason,first} / {ok,reason,secretWish}. 도전의 첫 판가름(시회는 고른 말과 함께)과 숨긴 소원. 생각 선택 자리의 학생 행동은 applyExperience의 options.choice로 행동과 한 저장. 입력·거부 이유는 js/core/play.js 머리말 |
 
-실패한 저장은 이전 객체를 그대로 유지한다. 같은 run의 awake:true와 최초 awakeAt은 되돌리지 않으며 확인 초기화만 새 run을 만든다. 구판 abil/res/best/events, 마친 done, 활동 final·첫 시도와 해석 first/final을 일반 트랜잭션으로 바꿀 수 없다. 구판 prepare/finishEvent/peekEvent 래퍼는 false이며 새 화면은 호출하지 않는다.
+실패한 저장은 이전 객체를 그대로 유지한다. 같은 run의 awake:true와 최초 awakeAt은 되돌리지 않으며 확인 초기화만 새 run을 만든다. 마친 done, 활동 final·첫 시도와 해석 first/final, play의 choices·firsts·secretWish·peak를 일반 트랜잭션으로 바꿀 수 없다. play는 recordFirst·applyExperience({choice})·chooseSecretWish로만 기록한다.
 
-객체의 구조 동등 비교는 모든 안쪽 키집합·값·자료형을 검사하되 키 삽입 순서는 무시한다. actions와 구판 turns/rolls 등 배열은 길이·인덱스·순서를 지킨다. 따라서 뒤 auto가 먼저 이관된 뒤 현재 부분 사건을 추가할 수 있으며 기존 배열을 정렬하거나 비교 조건을 생략하지 않는다.
+객체의 구조 동등 비교는 모든 안쪽 키집합·값·자료형을 검사하되 키 삽입 순서는 무시한다. actions 등 배열은 길이·인덱스·순서를 지킨다. 따라서 뒤 auto가 먼저 이관된 뒤 현재 부분 사건을 추가할 수 있으며 기존 배열을 정렬하거나 비교 조건을 생략하지 않는다.
 
 ### 순수 계산 API
 
@@ -297,32 +342,72 @@ app이 접근을 확인하고 pos를 바꿀 때는 같은 draft에서 rpg.cursor
 | stage(data,sceneId,beatId) | {scene,map:지도객체,spawn,beat,actor,appearance} 또는 null. beatId:null이면 마지막 필수 단계의 지도 |
 | G.experience.find(data,sceneId), record(experience), next(experience,actions), cursor(data,sceneId,beat) | 정의 조회, 새 active 기록, 다음 필수 id 또는 null, 안전 cursor 또는 null |
 | normalize(state,data,newRun?) | rpg 또는 null 반환. 원래 state 불변, 기존 무효 run은 run:null로 열람만 허용 |
-| resume(state,data), locked(state,data,sceneId), legacyDone(state,id) | 안전 재개 id, 깨어남 잠금, 옛 실제 완료 판정 |
+| resume(state,data), locked(state,data,sceneId), finished(state,id) | 안전 재개 id, 깨어남 잠금, 완료 판정(done 또는 rpg 상태 done) |
 | validateAction(state,data,sceneId,actionId,options), apply(state,data,sceneId,actionId,options) | reason 또는 {ok,reason,record}. apply만 전달한 draft를 변경하며 DOM·저장소·app 호출 없음 |
-| facts(state,data), wishes(state,data) | 원작 story id 배열, 기존 표시 API 모양의 소원 배열. 인연·성장 수치 입력 없음 |
+| facts(state,data), wishes(state,data) | 원작 story id 배열, 소원 표시 배열(fill=원작분, level=표시값÷4, canonFull, peakLevel, secret). 선택분은 G.play에서, 인연은 입력 아님 |
 | storyIds | wonsu/seungsang/portrait의 고정 단계 id 객체 |
+| G.play.canon/choiceSum/values(state,data), sites/siteAt/challenge/after/first, recap/recapLines/e11(state,data), fill(template,values) | 소원 막대·선택 자리·첫 결과·5장 되짚기의 순수 계산. 형식은 js/core/play.js 머리말 |
 
 ## 위기 도전과 생각 선택
 
-challenges는 배열이며 항목은 {id,scene,beat,kind,...}다. id는 ch-로 시작하고 유일하다. scene/beat는 실제 experience의 필수 beat다. 한 beat에는 도전(talk 아닌 것) 하나와 생각 선택(talk) 하나까지 둘 수 있다. 도전 결과·실패·고른 말은 저장하지 않는다. 처음 수행할 때 도전을 풀어야 그 beat의 행동이 기록되며 다시 읽기에서는 기록 없이 해 볼 수 있다(결정 0019).
+challenges는 배열이며 항목은 {id,scene,beat,kind,...}다. id는 ch-로 시작하고 유일하다. scene/beat는 실제 experience의 필수 beat다. 한 beat에는 도전(talk 아닌 것) 하나와 생각 선택(talk) 하나까지 둘 수 있다. 같은 beat에 둘이 있으면 도전을 푼 뒤 생각 선택을 묻는다. 처음 수행할 때 도전을 풀어야 그 beat의 행동이 기록되며 다시 읽기에서는 기록 없이 해 볼 수 있다.
+
+모든 도전의 첫 판가름과, 소원을 움직이는 선택 자리에서 학생이 처음 고른 선택지는 기록되어 소원 막대·뒤 장면 변화·5장 되짚기에 쓰인다. 기록의 모양과 거부 조건은 저장 쪽 계약이 정하며 이 자료에는 기록 필드를 두지 않는다. 첫 결과는 막대를 움직이지 않고 채점·장부에도 들어가지 않는다.
 
 | kind | 필드 |
 | --- | --- |
-| talk | at(그 beat lines 배열의 0기준 위치. 이 줄을 보인 뒤 고른다), prompt, options[{id,label,reply:{say?,text}}] 둘 이상. 무엇을 골라도 다음 원작 대사로 이어진다 |
-| pick | title, intro, options[{id,label,reply}], answer, note. 틀린 선택지의 reply가 이야기 속 대가이고 그 선택지만 잠긴다 |
-| deduce | title, intro, clues[문자열 둘 이상], question, options[{id,label}], answer, fail, success, note. 단서를 모두 펼쳐야 질문이 열린다 |
-| search | title, intro, spots[{id,label,clue?}] 셋 이상, answer(clue 없음), tries(1 이상, 자리 수 미만), fail, success, note. 틀린 자리는 clue를 보이고 기회를 하나 쓴다. 기회가 다하면 fail 뒤 처음부터 다시 한다 |
+| talk | at(그 beat lines 배열의 0기준 위치. 이 줄을 보인 뒤 고른다), prompt, options[{id,label,reply:{say?,text},wish?,stay?}] 둘 이상, note?. 무엇을 골라도 다음 원작 대사로 이어진다. 게임이 꾸민 선택 자리이면 note에 그 사실을 적는다 |
+| pick | title, intro, options[{id,label,reply,wish?}], answer, note, music?. 틀린 선택지의 reply가 이야기 속 대가이고 그 선택지만 잠긴다 |
+| deduce | title, intro, clues[문자열 둘 이상], question, options[{id,label}], answer, fail, success, note, after?. 질문과 선택지는 처음부터 보이고 단서는 원할 때 펼친다. 틀리면 fail 뒤 아직 닫힌 단서 하나가 펼쳐진다 |
+| search | title, intro, spots[{id,label,clue?}] 셋 이상, answer(clue 없음), tries(1 이상, 자리 수 미만), fail, success, note, after?. 틀린 자리는 clue를 보이고 기회를 하나 쓴다. 기회가 다하면 fail 뒤 처음부터 다시 한다 |
 | sequence | title, intro, instrument(flute/zither), notes[{label,midi}] 3~7, rounds[[음 번호…] 길이 3 이상], fail, success, note. 들려준 가락을 빛과 소리로 함께 보인다 |
 
-note는 성공한 뒤 '원작과 게임'에만 보인다. 숨은 정체를 title·intro·선택지에 미리 쓰지 않는다. 점수·시간 제한·게임 오버·장부 필드를 두지 않는다.
+note는 성공한 뒤(생각 선택은 고른 뒤) '원작과 게임'에만 보인다. 숨은 정체를 title·intro·선택지에 미리 쓰지 않는다. 점수·시간 제한·게임 오버·장부 필드를 두지 않는다.
+
+### 소원 증감과 물러남
+
+선택지의 `wish`는 `[{ wish, step }]` 배열이며 그 선택지를 처음 골랐을 때 소원 막대가 움직이는 방향이다.
+
+- wish는 드러난 소원 넷 chuljang·bugwi·pungryu·gongmyeong만 쓴다. misaek은 값이 없고 꿈 내내 '?'이므로 어떤 선택도 움직이지 못한다. 그 밖의 id도 오류다.
+- step은 1(▲) 또는 -1(▼)뿐이다. 한 선택지 안에서 같은 소원을 두 번 적지 않는다. 배열은 비우지 않는다.
+- wish는 talk와 pick의 선택지에만 둔다. deduce·search·sequence의 첫 결과는 막대를 움직이지 않는다. 인연 카드·구슬(scene.pearl)·체험 효과에도 소원 증감을 두지 않는다.
+- 풍류(pungryu)는 시·음악에 관한 말로만 움직인다. pungryu가 든 선택지는 `music:true`로 표시한 자리에만 둔다. music은 true만 쓴다.
+- 여인 앞의 선택은 만남이 아니라 고른 말의 성격만 반영한다.
+- `stay:true`는 물러남(소원 그대로)이다. talk 자리에만 두며 wish와 함께 쓰지 않는다. 소원을 움직이는 talk 자리에는 물러남 선택지가 정확히 하나 있다. 정답이 있는 pick(시회)에는 물러남이 없다.
+- pick에서는 처음 누른 선택지의 wish만 반영한다. 그 뒤 다시 골라 정답에 닿아야 원작대로 진행한다.
+- 선생님용으로 고르거나 바로가기로 넘긴 자리, 깨어난 뒤, 다시 읽기의 선택은 막대를 움직이지 않는다.
+
+이번 묶음의 선택 자리는 아래뿐이다. ch-bridge-reply·ch-gyeonghong-reply는 소원을 움직이지 않으므로 wish·stay를 두지 않는다.
+
+| 자리 | 선택지 | 증감 |
+| --- | --- | --- |
+| ch-tianjin-poem(e02, music:true, 정답 heart) | boast / heart / mock | 부귀▲ 풍류▼ / 풍류▲ / 공명▲ 풍류▼ |
+| ch-yoyeon-reply(e09 yoyeon-arrive) | sword / call / calm | 공명▲ / 출장입상▲ / 물러남 |
+| ch-neungpa-order(e10 neungpa-share, at:0) | generals / reward / fallen | 출장입상▲ / 공명▲ / 물러남 |
+
+ch-neungpa-order는 반사곡의 물을 고른 뒤 물을 나눌 차례를 묻는 생각 선택이다. 무엇을 골라도 원작대로 군사들이 물을 마시며, 꾸민 장치라는 사실을 note에 적는다.
+
+### 뒤 장면 변화 after
+
+찾기(search)·추리(deduce) 도전은 `after: { from, spots?, clue?, text }`를 둘 수 있다. 앞 도전 from의 첫 판가름이 성공일 때만 이 도전의 시작 모습이 바뀐다. 첫 결과가 실패이거나 없으면(선생님 도움·바로가기·미판가름) 지금처럼 시작한다.
+
+- from은 talk가 아닌 다른 도전 id이며, 그 장면이 이 도전의 장면보다 원작 차례에서 앞서야 한다.
+- search는 spots만 쓴다. 이 도전의 spots에 있는 id이고 answer가 아니며 clue를 가진 자리다. 서로 다르고, 남는 자리가 둘 이상이어야 한다. 미리 표시한 자리는 clue를 펼친 채 보이고 누를 수 없으며 촛불을 쓰지 않고 헛짚은 곳에 넣지 않는다.
+- deduce는 clue만 쓴다. clues의 0기준 번호이며 그 단서를 펼친 채 시작한다. 미리 펼친 단서도 답할 때 펼쳐져 있던 단서 수에 센다.
+- text는 바뀐 시작과 함께 한 번 보이는 짧은 안내다. 이야기 글 셈에 든다.
+
+| 도전 | from | 변화 |
+| --- | --- | --- |
+| ch-bansagok-water | ch-yoyeon-night | spots stream·pool을 요연이 경계한 물로 미리 표시 |
+| ch-gyeonghong-who | ch-chunun-ghost | clue 1을 펼친 채 시작(답을 바로 주지 않는 단서) |
 
 ## 검사와 이야기 글 셈
 
-G.checkData(data=G.data,options={})는 경고 배열이며 기본 production은 기존 28단위·12사건·3이음·여덟 인연·열 근거와 모든 새 맵·체험을 검사한다. fixture는 구판 3사건 자료 전용이며 데이터 자신이 가진 fixture 값으로 기준을 낮추지 않는다.
+G.checkData(data=G.data,options={})는 경고 배열이며 기본 production은 기존 28단위·12사건·3이음·여덟 인연·근거 열하나(이야기 근거 열과 틀 근거 E11)·되짚기 틀과 모든 새 맵·체험·도전을 검사한다. 도전 검사는 위 '소원 증감과 물러남'·'뒤 장면 변화 after'의 규칙을 모두 본다. fixture는 구판 3사건 자료 전용이며 데이터 자신이 가진 fixture 값으로 기준을 낮추지 않는다.
 
 엔진 부품 시험은 호출자가 {profile:'world-opening'} 또는 {profile:'world-event'}를 명시한다. 전자는 c1-bridge/c1-cell/c3-awake, 후자는 e04-exam/e08-wonsu를 이 순서로 검사하며 대체 표시를 허용한다. 대표 콘텐츠의 rpg-opening은 c1-bridge/c1-cell/c1-wish/c1-exile/c1-rebirth/e01-huayin 여섯 단위, rpg-waking은 c3-feast/c3-monk/c3-staff/c3-awake 네 단위를 정확한 순서로 검사한다. 대표 콘텐츠는 승인된 자산 키만 사용하며 대체 표시는 허용하지 않는다. rpg-opening의 월드는 돌다리·선방·꾸짖음·첫 만남에, rpg-waking의 체험은 네 단위 모두에 필요하다. 두 대표 fixture는 같은 이름의 명시 프로필과 별도 저장 열쇠로 읽는다. 작은 시험의 맵·행동·보행·줄·효과 검증은 본편 전체 통과가 아니다. G.checkWorldData는 새 월드 계약, G.checkSprites는 그림 메타의 경고 배열이다. 로더는 missing/problems가 있으면 ok:false로 시작을 막는다.
 
-G.storyText(data)는 {texts,count}다. event/link/cut/waking/wish의 lines·narration, 1·3·5장 scene/interp의 lines·narration, timeline.lines, wish.monologue, 남아 있는 구판 gradeText, interp.dialogue/lastWords/ending을 센다. 기존 셈에서 제외한 종류에 월드가 있으면 참조한 본문 줄도 한 번 포함한다. refs는 새 글을 복사하지 않는다. challenges의 intro·fail·success·clues·spots.clue·options.reply도 센다. mark 카드·예고·노트·인연 카드·해석 선택지·근거·단추와 도전의 title·question·prompt·선택지 label·note는 제외한다. 강조·인물 링크 표식을 벗기고 가~힣만 세며 4,400 이하다. 실제 근거는 한 줄 안에 있어야 한다.
+G.storyText(data)는 {texts,count}다. event/link/cut/waking/wish의 lines·narration, 1·3·5장 scene/interp의 lines·narration, timeline.lines, wish.monologue, 남아 있는 구판 gradeText, interp.dialogue/lastWords/ending을 센다. 기존 셈에서 제외한 종류에 월드가 있으면 참조한 본문 줄도 한 번 포함한다. refs는 새 글을 복사하지 않는다. challenges의 intro·fail·success·clues·spots.clue·options.reply·after.text도 센다. interp.recap은 가장 길게 채운 줄로 센다. 드러난 소원 넷과 물러남을 모두 counts의 가장 긴 말로 고른 chose(와 teacher를 더한 쪽과 none 가운데 긴 것), first마다 ok·fail 가운데 긴 것, 가장 긴 소원 이름과 넷 모두를 넣은 wishLine(peakOnly보다 길면), ask를 더한다. 틀 근거(template:true, 지금 E11)도 같은 방식으로 가장 길게 채워 센다. mark 카드·예고·노트·인연 카드·해석 선택지·틀이 아닌 근거·단추·화면 문구(notes.ui)와 도전의 title·question·prompt·선택지 label·note는 제외한다. 강조·인물 링크 표식을 벗기고 가~힣만 세며 5,000 이하다. 틀이 아닌 실제 근거는 한 줄 안에 있어야 한다.
 
 ## 승인된 동작 그림과 아이콘
 
@@ -396,9 +481,9 @@ python tools/check_assets.py
 가공은 assets/raw/sim-v2/candidates96/에 후보를 쓰며 제품 파일을 자동 덮어쓰지 않는다. 그림을 바꿀 때는 다시 검토·승인한 파일만 제품 경로와 메타에 반영한다.
 생성 원본, 이전 32px 후보, 96px 후보와 검토판은 assets/raw/sim-v2/에 보존하되 git에 넣지 않는다. 이 준비·지팡이 묶음의 제품은 승인된 96px 동작이다. 현행 월드의 32px 걷기·정지 NPC는 별도 승인 묶음이며 준비 화면은 실행하지 않는다.
 
-## 현재 화면 접점과 구판 보존
+## 현재 화면 접점
 
-무대·컷신 공통 API와 새 저장 API는 현재 index/app/main에 연결돼 있다. 월드는 ctx.finishExperience로 완료하며 ctx.finishEvent의 육성 호출은 거부한다. prep/board/sim 파일은 보존하지만 실행 HTML에서 로드하지 않는다. event는 월드가 없는 옛 자료의 읽기 화면, hud는 현재 권한에 따른 꿈 보따리 단추를 제공한다. 아래 G.prep 항목은 구판 파일의 보존 접점이며 현행 화면에서 호출하지 않는다.
+무대·컷신 공통 API와 새 저장 API는 현재 index/app/main에 연결돼 있다. 월드는 ctx.finishExperience로 완료한다. 옛 판의 prep·board·sim 모듈은 0022에서 지웠다. event는 월드가 없는 옛 자료의 읽기 화면, hud는 꿈 보따리 단추와 소원 띠·무너짐을 맡는다.
 
 | API | 입력·반환·책임 |
 | --- | --- |
@@ -408,11 +493,8 @@ python tools/check_assets.py
 | stage.walk({from,to,duration,outfit}) | 양소유만 이동. from/to는 `{x,y}` 백분율, duration은 ms, outfit은 gwan/jang/sang 또는 기본. Promise<boolean> |
 | G.stage.play(ctx,scene,{lines?}) | 기본은 narration 다음 lines. 줄마다 진행 단추·대사창 입력을 기다리고 끝/취소 여부를 반환 |
 | G.cutscene.play(ctx,scene,{canSkip?,onPause?}) | timeline 실행. canSkip은 boolean 또는 함수. onPause(pause,stage)를 기다리며 취소·이탈 시 정리 |
-| G.prep.run(ctx,scene,turn) | turn은 0/1. 선택 즉시 G.save.prepare, 동작·윤목·상승 표시, 다음 단추까지 기다림 |
-| G.prep.labels(kind) | notes.ui 이름과 기본 이름을 합침 |
-| G.prep.icon(id,target=16) | 등록된 한 프레임 그림을 정수배 img로 반환하거나 null. 이름은 옆 글자로 유지 |
-| G.prep.wait(ctx,ms) | 이탈하면 false. 동작 줄이기 환경에서는 연출 대기를 줄임 |
-| G.hud.refresh() | 현재 월드의 꿈 보따리 단추를 권한에 맞춰 갱신. 구판 수치 HUD는 제거 |
+| G.hud.refresh() | 꿈 보따리 단추와 소원 띠를 현재 장면·권한에 맞춰 다시 그림. 띠는 2장~난간 타격 전, 깨어난 뒤에는 없음 |
+| G.hud.collapse(ctx) | 깨어남 저장 성공 뒤 소원 칸을 하나씩 비우고 만난 이의 이름을 하나씩 지우는 연출. Promise. 동작 줄이기면 한 번에 |
 
 준비 스프라이트와 컷신 스프라이트는 `--frames`·`--sheet-end`를 style.setProperty로 등록해야 한다. h의 style 객체에 커스텀 속성을 넣기만 하면 CSS 애니메이션에 전달되지 않는다.
 
@@ -422,11 +504,11 @@ python tools/check_assets.py
 - `readonly/revisit`인 화면은 지속 기록을 다시 쓰지 않는다. `autoAdvance`는 자동 안내를 현재 진행에서 지나가는 경우이며 최초 수행자·행동·구판 기록을 더하지 않고 다음 위치만 저장한다.
 - `ctx.run`은 화면 생성 때의 회차다. `ctx.alive()`는 현재 회차와 취소 여부를 확인하고 `ctx.canAct()`는 현재 접근·writer 권한도 확인한다. 비동기 대기 뒤 확인하고 signal의 abort 때 타이머·관찰자·애니메이션을 해제한다.
 - `ctx.step(name)`은 화면 data-step을 바꾸고 쓰기 가능한 현재 진행이면 저장한다. 새 사건 완료는 grade 단계가 아니라 필수 행동 뒤 ctx.finishExperience로 done과 다음 pos를 함께 확정한다.
-- 새 `ctx.finishExperience()`는 현재 run/readonly로 G.save.finishExperience를 호출하며 필수 완료·다음 pos를 한 번 저장한다. 구판 ctx.finishEvent의 육성 계산 호출은 새 플레이에서 제거한다.
+- 새 `ctx.finishExperience()`는 현재 run/readonly로 G.save.finishExperience를 호출하며 필수 완료·다음 pos를 한 번 저장한다.
 - `ctx.section(className)`은 본문 section, `ctx.tray(content)`는 아래 진행 자리다. `ctx.next(label,options)`는 클릭이면 true, 이탈이면 false인 Promise다.
 - `G.app.screens[kind](ctx,scene)`으로 화면을 등록한다. scene 알림은 화면과 도구를 연결한다. 월드는 구판 scene/chapter/between 훅을 실행하지 않으며 새 동작은 screens.world 또는 on으로 연결한다. 구판 훅으로 준비·말판을 되살리지 않는다.
 - `G.app.current()`는 `{scene,ch,kind,step,revisit,autoAdvance,data}`를 반환한다. 모든 열기 경로는 canOpen을 거친다.
-- `G.app.wake(ctx)`는 c3-staff의 현재 writer·run과 실제 타격 맥락을 확인하고 commitWake로 staff 행동·완료·awake·최초 awakeAt·선방 pos를 한 번 저장한다. 결과·일지·장부에 필요한 events·best·items 등의 기록을 삭제하거나 수치 0으로 덮지 않는다. 저장 성공 뒤 꿈 화면을 닫고 공간·옷·물건·사람·음악의 대비로 깨어남을 표현한다.
+- `G.app.wake(ctx)`는 c3-staff의 현재 writer·run과 실제 타격 맥락을 확인하고 commitWake로 staff 행동·완료·awake·최초 awakeAt·선방 pos를 한 번 저장한다. 결과·일지·장부에 필요한 items·play 등의 기록을 지우지 않는다. 저장 성공 뒤 소원 띠의 무너짐을 보이고 꿈 화면을 닫으며 공간·옷·물건·사람·음악의 대비로 깨어남을 표현한다.
 
 ### 꿈 밖 화면의 걸음
 
@@ -444,4 +526,4 @@ python tools/check_assets.py
 
 맞대기 지역 picks/tries/memoOpen은 저장된 스냅샷과 분리하고 현재 run·readonly·취소 신호를 persist와 장부 API에 전달한다. 부분 오답 저장 실패 뒤 재시도는 act/slot의 첫 오답을 중복 기록하지 않는다. 해석은 확인한 선택을 동결하며 저장 실패 때에도 같은 선택으로 재시도한다.
 
-app.ledgerRows의 사건 표시는 미시작/진행/완료/자동 안내/이전 기록이다. 옛 완료·등급을 새 actions로 만들지 않는다. app.lastPage의 dreamTrace와 이름·해석·근거·소원·구슬·도움 모델은 DOM과 900px PNG가 함께 사용한다. app.saveImage는 미저장 이름부터 저장한 뒤 클릭 시점 모델을 고정하며 그림·글꼴·Blob 대기 뒤 원래 run과 화면 생존을 확인한다. 저장 실패는 다운로드 중단, 이탈·초기화는 취소이며 외부 전송은 없다.
+app.ledgerRows의 사건 표시는 미시작/진행/완료/자동 안내다. 선택·첫 판가름·숨긴 소원은 장부에 넣지 않는다. app.lastPage의 dreamTrace와 이름·해석·근거·소원·구슬·도움 모델은 DOM과 900px PNG가 함께 사용한다. app.saveImage는 미저장 이름부터 저장한 뒤 클릭 시점 모델을 고정하며 그림·글꼴·Blob 대기 뒤 원래 run과 화면 생존을 확인한다. 저장 실패는 다운로드 중단, 이탈·초기화는 취소이며 외부 전송은 없다.

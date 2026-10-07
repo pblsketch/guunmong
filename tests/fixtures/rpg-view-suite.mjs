@@ -165,7 +165,7 @@ try {
       try {
         assert.equal(await p.locator('[data-direction]').count(), 4);
         assert.equal(await p.locator('[data-direction="down"]').isVisible(), false, '방향 패드는 평소 필드를 가리지 않는다');
-        await p.locator('.world-tools > summary').tap();
+        await p.locator('.world-tools > summary').focus(); await p.keyboard.press('Enter');
         await p.getByText('방향 버튼', { exact: true }).tap();
         const before = await state(p); await p.locator('[data-direction="down"]').tap(); await idle(p);
         assert.equal((await state(p)).rpg.cursor.y, before.rpg.cursor.y + 1); await p.waitForTimeout(300);

@@ -136,7 +136,8 @@
     const step = async (line) => {
       if (!stage.active()) return false;
       stage.show(line);
-      const next = () => { if (stage.active()) (opt.textOnly ? ctx.main : ctx.page).querySelector(opt.textOnly ? '[data-act="next"]' : '#tray [data-act="next"]')?.click(); };
+      const shownAt = performance.now();
+      const next = (e) => { if (G.util.staleTap(e, shownAt)) return; if (stage.active()) (opt.textOnly ? ctx.main : ctx.page).querySelector(opt.textOnly ? '[data-act="next"]' : '#tray [data-act="next"]')?.click(); };
       const key = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); next(); } };
       stage.dialogue.addEventListener('click', next);
       stage.dialogue.addEventListener('keydown', key);
@@ -153,7 +154,14 @@
           stage.show({ text: opt.choice.prompt, prompt: true });
           const picked = await G.challenge.choose({ ...ctx, allow: opt.choice.allow }, opt.choice, (tray) => stage.dialogue.closest('.stage-story').appendChild(tray));
           if (!picked || !stage.active()) return false;
-          if (!await step(picked.reply)) return false;
+          // onPick(선택지): 반응을 보이기 전에 부르는 쪽이 행동과 고른 말을 함께 저장한다. false면 멈춘다.
+          if (opt.choice.onPick && !opt.choice.onPick(picked)) return false;
+          // 꾸민 선택 자리의 note: 반응과 함께 대화창 안(다음 단추 앞)에 접힌 '원작과 게임'으로 보이고, 다음 줄로 넘어가면 걷는다.
+          const note = opt.choice.note ? G.challenge.note(opt.choice.note) : null;
+          if (note) { note.dataset.talkNote = opt.choice.id; stage.dialogue.closest('.stage-story').appendChild(note); }
+          const shown = await step(picked.reply);
+          note?.remove();
+          if (!shown) return false;
         }
       }
       return stage.active();

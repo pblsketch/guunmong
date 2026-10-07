@@ -303,7 +303,7 @@ try {
       evidence.push({ name: 'compatibility-click', injected, scope: '호환/지연 중복 click 주입 및 다음 실제 CDP tap 회귀' });
     }));
 
-    for (const reason of ['cancel', 'lostcapture', 'blur', 'visibility', 'rotation', 'settings', 'tools']) {
+    for (const reason of ['cancel', 'lostcapture', 'blur', 'visibility', 'rotation', 'settings']) {
       await test('stop-' + reason, () => pageCase('stop-' + reason, async (p, touch) => {
         const before = await cursor(p), direction = (await directions(p, 3))[0].direction;
         const origin = await drag(p, touch, direction); await moved(p, before);
@@ -322,7 +322,7 @@ try {
         else if (reason === 'visibility') await p.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange')); });
         else if (reason === 'rotation') await p.setViewportSize({ width: 844, height: 300 });
         else {
-          const selector = reason === 'settings' ? '[data-tool="settings"]' : '.world-tools > summary';
+          const selector = '[data-tool="settings"]';
           await hitPoint(p, selector); await p.locator(selector).click();
           if (reason === 'settings') await p.waitForSelector('.sheet');
           else assert.equal(await p.locator('.world-tools').evaluate(el => el.open), true);
@@ -331,7 +331,6 @@ try {
         if (reason !== 'cancel') { await touch.move(dragPoint(origin, direction)); await touch.up(); }
         await p.waitForTimeout(420); assert.deepEqual(await state(p), settled, '취소 뒤 오래된 touchmove/up 무시');
         if (reason === 'settings') { await p.keyboard.press('Escape'); await stopped(p); }
-        if (reason === 'tools') { await p.locator('.world-tools > summary').click(); await stopped(p); }
         if (reason === 'visibility') await p.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
         evidence.push({ stop: reason, source: ['blur', 'visibility'].includes(reason) ? '수명 이벤트 모의 회귀' : '실제 CDP touch/capture/viewport' });
       }));

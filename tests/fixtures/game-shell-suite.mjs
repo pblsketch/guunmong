@@ -35,13 +35,15 @@ try {
       assert.equal(await p.locator('.main-inner').evaluate(el=>el.children.length),0);
     });
     await test(width+' auxiliary menu within game viewport',async()=>{
+      const hidden=await p.locator('.world-tools').evaluate(el=>{const r=el.getBoundingClientRect();return r.width<=1&&r.height<=1&&getComputedStyle(el).opacity==='0';});
+      assert.equal(hidden,true,'조작 도구 단추는 평소 화면에 보이지 않음');
       await openTargets(p);
       const menu=await p.locator('.world-tools').boundingBox();
       assert.ok(menu.x>=0&&menu.y>=0&&menu.x+menu.width<=width&&menu.y+menu.height<=844);
       assert.equal(await p.locator('[data-world-target="bridge-fairy"]').isVisible(),true);
       const buttons=await p.locator('[data-world-target]').evaluateAll(els=>els.filter(el=>el.checkVisibility()).map(el=>el.getBoundingClientRect().toJSON()));
       assert.ok(buttons.length>0); assert.ok(buttons.every(r=>r.left>=menu.x&&r.right<=menu.x+menu.width));
-      await p.locator('.world-tools > summary').click();
+      await p.locator('.world-tools > summary').focus(); await p.keyboard.press('Enter');
       await p.waitForFunction(()=>document.activeElement===document.querySelector('[data-world]'));
     });
     await p.context().close();

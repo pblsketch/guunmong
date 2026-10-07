@@ -24,6 +24,12 @@
 .wish-found meter { display: block; width: 70px; }
 .wish-memo { padding: 12px; background: #f8efd7; border-left: 4px solid var(--fiction); }
 .wish-help { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.secret-wish { margin-top: 16px; padding: 12px 14px; background: #f8f0dc; border: 2px solid var(--ink-3); border-radius: 8px; }
+.secret-wish h3 { margin: 0 0 8px; }
+.secret-wish p { margin: 0 0 8px; }
+.secret-wish-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.secret-wish-option[aria-pressed="true"] { background: #d6e4c8; border-color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.secret-wish-chosen b { font-family: var(--pixel); font-size: 1.1em; }
 .wish.hidden .nm { display: inline-block; min-width: 1.6em; padding: 0 6px; background: var(--paper); color: var(--ink); letter-spacing: 0; }
 .journal-match, .bond-link, .journal-fairies { margin: 20px 0; }
 .journal-fairies .fairy-card { max-width: 130px; }

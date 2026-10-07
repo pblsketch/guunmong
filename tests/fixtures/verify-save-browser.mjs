@@ -16,7 +16,7 @@ d.scenes.splice(2, 0, { id: 'c3-staff', ch: '3', kind: 'waking', lines: ['지팡
 d.experiences.push({ scene: 'c3-staff', actor: 'yang', map: 'map-road', spawn: { x: 1, y: 1, facing: 'right' },
   beats: [{ id: 'strike', trigger: { kind: 'staff', target: null }, lines: [0], effects: [] }], optional: [] });
 fs.writeFileSync(file, '<!doctype html><meta charset="utf-8"><title>저장 권한 검사</title><p>격리된 core 저장 검사</p><script>window.G={data:' +
-  JSON.stringify(d) + '}</script>' + ['world', 'experience', 'save'].map((name) => '<script src="../../js/core/' + name + '.js"></script>').join('') +
+  JSON.stringify(d) + '}</script>' + ['world', 'experience', 'play', 'save'].map((name) => '<script src="../../js/core/' + name + '.js"></script>').join('') +
   '<script>G.save.load("t1-native")</script>');
 const server = http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
@@ -112,8 +112,8 @@ try {
       G.save.load('t1-review-native');
       const old = G.save.fresh(); delete old.rpg;
       old.started = true; old.pos = 'e04-exam';
-      old.events = { 'e04-exam': { turns: ['study'], rolls: [2], grade: null, auto: false },
-        'e08-wonsu': { turns: ['sword', 'study'], rolls: [1, 2], grade: 'fine', auto: true } };
+      // 뒤 장면은 선생님 바로가기의 auto 기록으로 남아 있다.
+      old.rpg = { v: 1, run: 'native-f1', cursor: null, scenes: { 'e08-wonsu': { status: 'auto', beat: null, actions: [], hint: 'teacher' } } };
       localStorage.setItem(G.save.key, JSON.stringify(old)); G.save.load();
       if (!await G.save.acquireWriter()) throw Error('writer unavailable');
       const run = G.save.state.rpg.run, options = { run, readonly: false, by: 'student' };
@@ -122,10 +122,10 @@ try {
       if (!G.save.applyExperience('e04-exam', 'leave', options).ok || !G.save.finishExperience('e04-exam', options).ok) throw Error('F3 failed');
       G.save.load();
       return { pos: G.save.state.pos, map: G.save.state.rpg.cursor.map, auto: G.save.state.rpg.scenes['e08-wonsu'].status,
-        actions: G.save.state.rpg.scenes['e08-wonsu'].actions, eventsPreserved: JSON.stringify(G.save.state.events) === JSON.stringify(old.events), run };
+        actions: G.save.state.rpg.scenes['e08-wonsu'].actions, hint: G.save.state.rpg.scenes['e08-wonsu'].hint, removed: ['abil', 'res', 'best', 'events'].filter(k => Object.hasOwn(G.save.state, k)), run };
     }, reviewData);
     assert.equal(migrated.pos, 'e08-wonsu'); assert.equal(migrated.map, 'map-after'); assert.equal(migrated.auto, 'auto');
-    assert.deepEqual(migrated.actions, []); assert.equal(migrated.eventsPreserved, true);
+    assert.deepEqual(migrated.actions, []); assert.equal(migrated.hint, 'teacher'); assert.deepEqual(migrated.removed, []);
     const reviewReader = await context.newPage(); await reviewReader.goto(url);
     const observed = await reviewReader.evaluate(async (data) => {
       G.data = data; G.save.load('t1-review-native');

@@ -264,7 +264,7 @@ try {
         assert.equal(await p.locator('.mark.orig').count(), 0);
         const after = await state(p);
         assert.equal(after.pearls[person], true);
-        for (const key of ['bonds', 'ledger', 'res', 'abil', 'events', 'best', 'items']) assert.deepEqual(after[key], before[key], key + ' 구슬 무관');
+        for (const key of ['bonds', 'ledger', 'items', 'play']) assert.deepEqual(after[key], before[key], key + ' 구슬 무관');
         assert.equal(await p.evaluate(() => G.app.wishes().find(w => w.id === 'misaek').hidden), true);
         assert.equal(after.rpg.scenes[id].beat, before.rpg.scenes[id].beat);
         assert.deepEqual(await p.evaluate(() => pearlMarkOptions.at(-1)), { run: after.rpg.run, readonly: false, peek: true, ...(trace === 'fiction' ? { showReal: true } : {}) });

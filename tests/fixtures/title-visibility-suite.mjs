@@ -35,7 +35,7 @@ try{
    await visiblePaper(p,p.locator('.game-menu-window'),'첫 화면');
    const logo=await visiblePaper(p,p.locator('.logo'),'제목');
    const start=p.getByRole('button',{name:'시작하기',exact:true});
-   const button=await visiblePaper(p,start,'시작하기',true);await start.tap();await p.waitForSelector('[data-world]');if (await p.evaluate(() => !!G.data.notes?.mission)) await p.locator('[data-mission="start"]').click();
+   const button=await visiblePaper(p,start,'시작하기',true);await start.tap();await p.waitForSelector('[data-world]');if (await p.evaluate(() => !!G.data.notes?.mission)) { await p.waitForSelector('[data-mission]'); while (await p.locator('[data-mission="next"]').count()) await p.locator('[data-mission="next"]').click(); await p.locator('[data-mission="start"]').click(); };
    await p.locator('[data-tool="home"]').click();await p.waitForSelector('.title-screen');
    const resume=p.getByRole('button',{name:'이어 하기',exact:true});const returned=await visiblePaper(p,resume,'이어 하기',true);
    for(const name of ['목차','설정']){await p.getByRole('button',{name,exact:true}).tap();await p.waitForSelector('.sheet');await p.keyboard.press('Escape');}

@@ -18,11 +18,13 @@
     let beatIndex = replay || ctx.reenact || !saved() ? 0 : experience.beats.findIndex(b => b.id === saved()?.beat);
     if (beatIndex < 0) beatIndex = experience.beats.length;
     let stage, cursor, actor, world, visible = [], scale = 1, frame = 0;
-    let busy = false, finished = false, disposed = false, route = [], raf = null, motion = null, generation = 0, selected = null;
+    let busy = false, finished = false, disposed = false, route = [], raf = null, motion = null, generation = 0, selected = null, autoExit = null;
     let joystickPointer = null, actionPointer = null, ignorePointerClick = false;
     const keys = new Map(), taps = [], objectArt = new Map(), mapListeners = [];
     const box = h('section.world-screen'), heading = h('h2.world-heading');
     const goal = h('p.world-goal', { dataset: { goal: '' } });
+    // 장면 길잡이: 앞 장면과 이번 장면을 잇는 안내. 이 장면의 첫 행동을 하기 전까지만 보이고 누름을 가로채지 않는다.
+    const guide = scene.guide ? h('p.world-guide', { role: 'note', dataset: { guide: '' } }, h('b', '이야기 길잡이 '), scene.guide) : null;
     const camera = h('div.world-camera'), actions = h('div.world-actions'), list = h('div.world-target-list');
     const actionName = h('span.world-action-name'), actionVerb = h('strong.world-action-verb');
     const actionButton = h('button.btn.primary.world-interact', { type: 'button', hidden: true }, actionName, actionVerb);
@@ -36,9 +38,9 @@
     const pad = h('div.world-pad', { role: 'group', 'aria-label': '이동 방향' });
     const controls = h('details.world-controls', h('summary', '조작 안내'), h('p', '왼쪽을 누른 채 끌면 걸어요. 가까이 가서 오른쪽 노란 단추로 말 걸기·살펴보기를 해요. 화면을 눌러 이동할 수도 있어요. PC는 방향키·WASD로 걷고 E·Enter·Space로 행동해요.'));
     const help = h('div.world-help');
-    const tools = h('details.world-tools', h('summary', '조작 도구'), h('div.world-tools-panel', targets, controls, h('details', h('summary', '방향 버튼'), pad), help));
+    const tools = h('details.world-tools', h('summary', '대상 목록·조작 안내'), h('div.world-tools-panel', targets, controls, h('details', h('summary', '방향 버튼'), pad), help));
     tools.addEventListener('toggle', () => { if (tools.open) { stop(); refresh(); } else if (!blocked()) world?.focus({ preventScroll: true }); });
-    box.append(heading, goal, camera, joystick, actions, speech, tools);
+    box.append(heading, goal, ...(guide ? [guide] : []), camera, joystick, actions, speech, tools);
     ctx.field.replaceChildren(box);
     let resolve;
     const result = new Promise(r => { resolve = r; });
@@ -51,7 +53,7 @@
     const spriteMeta = key => G.data.sprites?.[key] || null;
     const actorKey = () => stage.appearance || (stage.actor === 'seongjin' ? 'walk-seongjin' : 'walk-yang-scholar');
     function stop() {
-      generation++; route = []; keys.clear(); taps.length = 0;
+      generation++; route = []; autoExit = null; keys.clear(); taps.length = 0;
       resetJoystick();
       cancelAnimationFrame(raf); raf = null; motion = null; frame = 0;
       if (actor) pose(false);
@@ -126,14 +128,21 @@
       goal.textContent = b ? '지금 할 일 · ' + (target ? target.label + ': ' + verbOf(target, b) : verbs[b.trigger.kind]) : '이 장면의 필수 행동을 마쳤어요.';
       help.replaceChildren();
       box.dataset.finished = String(finished);
+      if (guide) guide.hidden = finished || busy || (!replay && !!saved()?.actions?.length);
+      // 선생님용 다시 읽기 띠는 큰 글자·좁은 화면에서 높이가 바뀌므로 실제 아래 끝에 맞춘다.
+      const bar = replay && guide && !guide.hidden && guide.offsetParent && ctx.page.querySelector('.revisit-bar');
+      if (bar) guide.style.top = Math.round(bar.getBoundingClientRect().bottom - guide.offsetParent.getBoundingClientRect().top + 6) + 'px';
       box.dataset.paused = String(blocked()); box.dataset.toolsOpen = String(tools.open);
       if (blocked()) resetActionPointer();
-      const action = nearby ? actionFor(nearby) : b?.trigger.target === null && b.trigger.kind !== 'staff' ? b : null;
+      // 다른 장소로 가는 길(exit)은 그 자리까지 되돌아가지 않아도 된다. 어디서든 단추를 누르면 인물이 길까지 걸어가 넘어간다.
+      const exitTarget = !nearby && b?.trigger.kind === 'exit' && target ? target : null;
+      const action = nearby ? actionFor(nearby) : exitTarget ? b : b?.trigger.target === null && b.trigger.kind !== 'staff' ? b : null;
+      const shown = nearby || exitTarget;
       actionButton.hidden = !action; actionButton.disabled = blocked(); actionHint.hidden = !!action || blocked();
       if (action) {
-        Object.assign(actionButton.dataset, { act: 'interact', target: nearby?.id || '', action: action.id });
-        actionName.textContent = nearby?.label || ''; actionVerb.textContent = verbOf(nearby, action);
-        actionButton.setAttribute('aria-label', (nearby ? nearby.label + ' · ' : '') + verbOf(nearby, action));
+        Object.assign(actionButton.dataset, { act: 'interact', target: shown?.id || '', action: action.id });
+        actionName.textContent = shown?.label || ''; actionVerb.textContent = verbOf(shown, action);
+        actionButton.setAttribute('aria-label', (shown ? shown.label + ' · ' : '') + verbOf(shown, action));
       } else {
         for (const key of ['act', 'target', 'action']) delete actionButton.dataset[key];
       }
@@ -176,14 +185,26 @@
         const next = route.shift(), dx = next.x - cursor.x, dy = next.y - cursor.y;
         facing = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
       }
-      if (facing) move(facing); else { pose(false); refresh(); }
+      if (facing) { move(facing); return; }
+      pose(false); refresh();
+      if (autoExit) {
+        const o = visible.find(v => v.id === autoExit); autoExit = null;
+        if (o && W.adjacent(cursor, o) && allowed(o)) interact(o);
+      }
     }
     function seek(o) {
       if (blocked() || !visible.includes(o)) return;
       stop(); selected = o.id; targets.open = false; tools.open = false;
       const path = W.path(stage.map, cursor, o, scene.id, localBeat());
-      if (!path) { G.ui.toast('그곳까지 닿을 수 있는 길이 없어요.'); refresh(); return; }
+      if (!path) { G.ui.toast('그곳까지 닿을 수 있는 길이 없어요.'); refresh(); return false; }
       route = path.slice(1); world.focus({ preventScroll: true }); advance(generation);
+      return true;
+    }
+    function goExit(o) {
+      if (blocked() || motion || !o || o.kind !== 'exit' || !allowed(o)) return false;
+      if (W.adjacent(cursor, o)) { interact(o); return true; }
+      if (seek(o)) { autoExit = o.id; if (!motion && !route.length) advance(generation); }
+      return true;
     }
     function mount() {
       if (!active()) return;
@@ -211,8 +232,24 @@
           world.appendChild(decor); continue;
         }
         const object = h('button.world-object' + (o.action === beat()?.id ? '.required' : ''), { type: 'button', 'aria-label': o.label, dataset: { object: o.id, kind: o.kind }, on: { click: () => {
-          if (!blocked() && !motion && W.adjacent(cursor, o) && allowed(o)) interact(o); else seek(o);
+          if (!blocked() && !motion && W.adjacent(cursor, o) && allowed(o)) interact(o); else if (o.kind === 'exit' && allowed(o)) goExit(o); else seek(o);
         } } });
+        // 구슬 흔적: 가구 그림 대신 반짝임을 그린다. 찾은 뒤에는 작게 멈춘 빛만 남는다.
+        if (o.kind === 'pearl') {
+          const found = !!saved()?.actions.some(a => a.id === o.action);
+          object.classList.add('world-pearl'); if (found) object.classList.add('found');
+          object.appendChild(h('span.world-glint', { 'aria-hidden': 'true' })); objectArt.set(o.id, { meta: null });
+          world.appendChild(object);
+          list.appendChild(h('button.btn.small', { type: 'button', dataset: { worldTarget: o.id }, on: { click: () => seek(o) } }, o.label));
+          continue;
+        }
+        // 길(exit)의 길 표시 그림(비석 모양) 대신 땅 위에 흐르는 빛과 화살표로 갈 곳을 보인다.
+        if (o.kind === 'exit' && o.sprite === 'prop-path') {
+          object.classList.add('world-exit'); object.appendChild(h('span.world-exit-glow', { 'aria-hidden': 'true' }, h('i'), h('i'), h('i')));
+          objectArt.set(o.id, { meta: null }); world.appendChild(object);
+          list.appendChild(h('button.btn.small', { type: 'button', dataset: { worldTarget: o.id }, on: { click: () => seek(o) } }, o.label + (o.action === beat()?.id ? ' · 다음 행동' : '')));
+          continue;
+        }
         const asset = spriteMeta(o.sprite), person = G.data.people?.[o.person];
         const body = asset && (o.kind !== 'npc' || !o.sprite.startsWith('prop-'));
         const portrait = !body && person?.face && !person.noFace && G.text.nameOf(o.person) === o.label;
@@ -245,30 +282,39 @@
       const fresh = !viewOnly() && !saved()?.actions.some(a => a.id === b.id);
       // 위기 도전: 처음 수행할 때와 다시 읽기에서 연다. 풀어야 행동이 기록되고(다시 읽기는 기록 없음), 물러나면 같은 자리에서 다시 시도한다.
       const trial = (fresh || replay) && G.challenge?.find(scene.id, b.id, 'play');
+      // 생각 선택 자리(결정 0022): 학생 기록이면 행동은 고른 순간 고른 말과 한 저장으로 남긴다. 고르기 전 새로 고침은 같은 질문으로 돌아온다.
+      const site = fresh && !ctx.readonly && G.play.siteAt(G.data, scene.id, b.id);
+      const together = !!site && G.play.recording(G.save.state, options().by);
       if (trial) {
         busy = true; refresh();
-        const solved = await G.challenge.play({ ...ctx, allow: permitted }, trial, box);
+        const solved = await G.challenge.play({ ...ctx, allow: permitted, options }, trial, box);
         if (!active()) return;
         busy = false;
         if (!solved) { refresh(); world?.focus({ preventScroll: true }); return; }
         if (blocked() || motion || o && (!visible.includes(o) || !W.adjacent(cursor, o))) { refresh(); return; }
       }
-      if (fresh) { const outcome = G.save.applyExperience(scene.id, b.id, options()); if (!outcome.ok) { ctx.fail(); return; } }
+      if (fresh && !together) { const outcome = G.save.applyExperience(scene.id, b.id, options()); if (!outcome.ok) { ctx.fail(); return; } }
       busy = true; refresh();
       const dialogueCtx = { ...ctx, main: speech, next(label = '다음 ▶') {
         return new Promise(r => {
           if (!active()) { r(false); return; }
-          const next = h('button.btn.primary', { type: 'button', dataset: { act: 'next' } }, label);
+          const next = h('button.btn.primary', { type: 'button', dataset: { act: 'next' } }, label), shownAt = performance.now();
           const tray = h('div.tray', next); speech.querySelector('[data-dialogue]').appendChild(tray);
           let settled = false;
           const end = ok => { if (settled) return; settled = true; ctx.signal.removeEventListener('abort', cancelled); tray.remove(); r(ok); };
           const cancelled = () => end(false); ctx.signal.addEventListener('abort', cancelled, { once: true });
-          next.addEventListener('click', () => { if (permitted() && !document.querySelector('.sheet-back, .fold-ov')) end(true); }); next.focus({ preventScroll: true });
+          next.addEventListener('click', e => { if (G.util.staleTap(e, shownAt)) return; if (permitted() && !document.querySelector('.sheet-back, .fold-ov')) end(true); }); next.focus({ preventScroll: true });
         });
       } };
       const label = o?.label, hideFace = !!o?.person && G.text.nameOf(o.person) !== label;
       const talk = (fresh || replay) && G.challenge?.find(scene.id, b.id, 'talk');
-      const choice = talk ? { ...talk, allow: () => permitted() && !document.querySelector('.sheet-back, .fold-ov') } : null;
+      const pickTogether = o => {
+        if (!permitted()) return false;
+        const outcome = G.save.applyExperience(scene.id, b.id, { ...options(), choice: o.id });
+        if (outcome.ok || outcome.reason === 'duplicate') return true;
+        ctx.fail(); return false;
+      };
+      const choice = talk ? { ...talk, allow: () => permitted() && !document.querySelector('.sheet-back, .fold-ov'), onPick: together && talk.id === site.id ? pickTogether : null } : null;
       const done = await G.stage.play(dialogueCtx, scene, { textOnly: true, label, hideFace, targetPerson: o?.person, lines: b.lines.map(i => scene.lines[i]), choice });
       if (!active() || !done) return;
       if (b.effects.some(effect => effect.kind === 'pearl') && !await G.pearl.explain({ ...dialogueCtx, readonly: !!viewOnly(), peek: true }, scene)) return;
@@ -345,7 +391,9 @@
     function activateNearby() {
       if (!actionButton.isConnected || actionButton.hidden || blocked()) return;
       stop(); const nearby = near();
-      if (nearby) interact(nearby); else if (beat()?.trigger.target === null) interact(null);
+      if (nearby) interact(nearby);
+      else if (beat()?.trigger.kind === 'exit') goExit(visible.find(o => o.id === beat().trigger.target));
+      else if (beat()?.trigger.target === null) interact(null);
     }
     actionButton.addEventListener('pointerdown', e => {
       if (e.button !== 0 || actionPointer || actionButton.hidden || blocked()) return;
@@ -366,7 +414,7 @@
       if (e.target !== world || e.ctrlKey || e.altKey || e.metaKey || blocked()) return;
       const facing = keyDirections[e.key];
       if (facing) { e.preventDefault(); if (!e.repeat) press(e.code || e.key, facing); }
-      else if (['Enter', ' ', 'e', 'E'].includes(e.key)) { e.preventDefault(); const o = near(); if (o) interact(o); else if (beat()?.trigger.target === null) interact(null); }
+      else if (['Enter', ' ', 'e', 'E'].includes(e.key)) { e.preventDefault(); const o = near(); if (o) interact(o); else if (beat()?.trigger.kind === 'exit') goExit(visible.find(v => v.id === beat().trigger.target)); else if (beat()?.trigger.target === null) interact(null); }
     };
     const keyup = e => { if (keys.delete(e.code || e.key)) e.preventDefault(); };
     for (const [facing, label, arrow] of [['up', '위로 걷기', '↑'], ['left', '왼쪽으로 걷기', '←'], ['down', '아래로 걷기', '↓'], ['right', '오른쪽으로 걷기', '→']]) {

@@ -9,6 +9,23 @@ const test=async(name,fn)=>{await fn();count++;console.log('PASS '+name);};
 const next=p=>p.locator('#tray [data-act="next"]').click();
 const resume=async p=>{await p.reload();await ready(p);await p.getByRole('button',{name:'이어 하기',exact:true}).click();await p.waitForSelector('[data-world]');};
 const finishBridge=async p=>{await target(p,'bridge-voice');await dialogue(p);await target(p,'bridge-exit');await dialogue(p);};
+// 숨긴 소원(명세 5·6·15절): 대표 도입 자료에서 실제 행동으로 소원 찾기까지 가서 실제 단추로 푼다.
+const at=(p,scene)=>p.waitForFunction(scene=>document.querySelector('.play')?.dataset.scene===scene,scene);
+async function toWishScene(p){
+  await start(p);
+  for(let i=0;i<40;i++){
+    const c=await p.evaluate(()=>{const el=document.querySelector('.play');return {id:el?.dataset.scene,kind:el?.dataset.kind,beat:el?.dataset.beat};});
+    if(c.kind==='wish')return;
+    if(await p.locator('[data-dialogue]').count()){await dialogue(p);continue;}
+    if(await p.locator('#tray [data-act="next"]').count()){await next(p);await p.waitForTimeout(40);continue;}
+    const beat=await p.evaluate(c=>G.experience.find(G.data,c.id)?.beats.find(b=>b.id===c.beat)||null,c);
+    assert.ok(beat?.trigger?.target,'소원 앞 실제 행동 '+JSON.stringify(c));await target(p,beat.trigger.target);await dialogue(p);
+  }
+  throw Error('소원 찾기에 닿지 못함');
+}
+const wishAnswers=p=>p.evaluate(()=>G.app.current().data.answers);
+const secretIds=p=>p.locator('[data-secret-wish]').evaluateAll(list=>list.map(b=>b.dataset.secretWish));
+const resumeAt=async(p,scene)=>{await p.reload();await ready(p);await p.getByRole('button',{name:'이어 하기',exact:true}).click();await at(p,scene);};
 async function compatibility(p, change) {
   // 이관·접근 회귀만 저장 자료를 준비한다. 학생 완주 증거에는 쓰지 않는다.
   const s=await state(p); change(s);
@@ -49,15 +66,6 @@ try {
     await target(p,'official');await dialogue(p);await next(p);const old=(await state(p)).items;
     await p.evaluate(()=>G.app.open('e04-exam'));await target(p,'paper');await dialogue(p);assert.deepEqual((await state(p)).items,old);
     await p.context().close();
-  });
-  await test('옛 v2·부분 준비·기존 완료의 보존과 안전 입구',async()=>{
-    const p=await h.page('world-event');await start(p);
-    const partial={turns:['study'],rolls:[2],hits:0,grade:null,reward:null,peek:false,auto:false};
-    await compatibility(p,s=>{delete s.rpg;s.events['e04-exam']=partial;s.items=['it-test-paper'];s.best=42;s.abil.munjang=8;});
-    let s=await state(p);assert.deepEqual(s.events['e04-exam'],partial);assert.equal(s.best,42);assert.equal(s.abil.munjang,8);assert.equal(s.rpg.cursor.x,2);
-    assert.deepEqual(s.rpg.scenes['e04-exam'].actions,[]);await target(p,'paper');await dialogue(p);assert.deepEqual((await state(p)).events['e04-exam'],partial);
-    await compatibility(p,s=>{s.done['e04-exam']=true;s.rpg.scenes['e04-exam'].status='done';s.rpg.scenes['e04-exam'].beat=null;s.rpg.scenes['e04-exam'].actions=[];s.pos='e04-exam';});
-    s=await state(p);assert.equal(s.pos,'e08-wonsu');assert.deepEqual(s.rpg.scenes['e04-exam'].actions,[]);await p.context().close();
   });
   await test('auto 순차 재생과 직접 읽기 분리·최초 수행자 보존',async()=>{
     const p=await h.page();await start(p);
@@ -171,6 +179,53 @@ try {
     assert.equal(await b.evaluate(()=>G.save.acquireWriter()),false);assert.equal(await b.evaluate(()=>G.save.access),'reader');
     await a.keyboard.press('Escape');assert.deepEqual(await state(a),before);
     assert.equal(await a.evaluate(()=>G.save.access),'writer');await a.context().close();
+  });
+  await test('숨긴 소원: 소원 찾기 확정 뒤에만·미색 없음·고르기 전 진행 불가·재접속 같은 자리·한 번만·다시 읽기는 고른 것만',async()=>{
+    const p=await h.page('rpg-opening');await toWishScene(p);
+    assert.equal(await p.locator('.secret-wish').count(),0,'소원 찾기 전에는 묻지 않음');
+    const answers=await wishAnswers(p);
+    for(const id of answers.slice(0,-1))await p.locator('[data-word="'+id+'"]').click();
+    assert.equal(await p.locator('.secret-wish').count(),0,'다 찾기 전에는 묻지 않음');
+    await p.locator('[data-word="'+answers.at(-1)+'"]').click();
+    assert.equal((await state(p)).ledger['a-wish'].final,true);
+    await p.waitForSelector('.secret-wish');
+    assert.match(await p.locator('.secret-wish').innerText(),/가장 먼저 이루고 싶은 것 하나/);
+    assert.deepEqual(await secretIds(p),['chuljang','bugwi','pungryu','gongmyeong'],'드러난 넷만, 미색 없음');
+    assert.equal(await p.locator('.secret-wish').getByText('미색').count(),0);
+    assert.equal(await p.locator('#tray [data-act="next"]').count(),0,'고르기 전 다음 없음');
+    assert.equal(await p.locator('[data-act="secret"]').isDisabled(),true,'고르기 전 확인 막힘');
+    assert.equal(await p.evaluate(()=>G.app.canOpen('c1-exile')),false,'다음 장면 열리지 않음');
+    // 고르기 전에 창을 닫았다 열면 같은 자리에서 다시 묻는다.
+    await p.locator('[data-secret-wish="pungryu"]').click();assert.equal((await state(p)).play.secretWish,null,'누르기만으로 저장하지 않음');
+    await resumeAt(p,'c1-wish');await p.waitForSelector('.secret-wish');
+    assert.deepEqual(await secretIds(p),['chuljang','bugwi','pungryu','gongmyeong']);assert.equal(await p.locator('#tray [data-act="next"]').count(),0);
+    let s=await state(p);assert.equal(s.pos,'c1-wish');assert.equal(s.done['c1-wish'],undefined);assert.equal(s.play.secretWish,null);
+    await p.locator('[data-secret-wish="bugwi"]').click();assert.equal(await p.locator('[data-secret-wish="bugwi"]').getAttribute('aria-pressed'),'true');
+    await p.evaluate(()=>{window.oldSecret=document.querySelector('[data-secret-wish="gongmyeong"]');window.oldConfirm=document.querySelector('[data-act="secret"]');});
+    await p.locator('[data-act="secret"]').click();
+    s=await state(p);assert.equal(s.play.secretWish,'bugwi');
+    assert.equal(await p.locator('[data-secret-wish]').count(),0,'정한 뒤에는 고른 것만');assert.match(await p.locator('.secret-wish').innerText(),/부귀/);
+    const before=await state(p);await p.evaluate(()=>{window.oldSecret.click();window.oldConfirm.click();});
+    assert.equal(await p.evaluate(r=>G.save.chooseSecretWish('pungryu',{run:r,readonly:false,by:'student'}).reason,before.rpg.run),'decided');assert.deepEqual(await state(p),before,'바꿀 수 없음');
+    await next(p);await at(p,'c1-exile');
+    assert.equal(await p.evaluate(()=>G.play.recap(G.save.state,G.data).secretWish),'bugwi');
+    const kept=await state(p);assert.equal(await p.evaluate(()=>G.app.open('c1-wish')),true);await at(p,'c1-wish');
+    assert.equal(await p.locator('.play').getAttribute('data-readonly'),'true');await p.waitForSelector('.secret-wish');
+    assert.equal(await p.locator('[data-secret-wish],[data-act="secret"]').count(),0,'다시 읽기는 고른 것만');
+    assert.match(await p.locator('.secret-wish').innerText(),/부귀/);for(const other of ['출장입상','풍류','공명'])assert.equal((await p.locator('.secret-wish').innerText()).includes(other),false);
+    assert.deepEqual(await state(p),kept);await p.context().close();
+  });
+  await test('숨긴 소원 선생님용: 기록 거부 뒤 막지 않고 진행·되짚기 없음',async()=>{
+    const p=await h.page('rpg-opening');await toWishScene(p);
+    await p.locator('[data-tool="settings"]').click();await p.locator('[data-set="teacher"]').click();await p.keyboard.press('Escape');
+    await p.locator('[data-teacher="fill"]').click();assert.equal((await state(p)).ledger['a-wish'].final,true);
+    await p.waitForSelector('.secret-wish');assert.deepEqual(await secretIds(p),['chuljang','bugwi','pungryu','gongmyeong']);
+    assert.equal(await p.locator('#tray [data-act="next"]').count(),0);
+    await p.locator('[data-secret-wish="pungryu"]').click();await p.locator('[data-act="secret"]').click();
+    await p.waitForSelector('#tray [data-act="next"]:not([disabled])');assert.equal((await state(p)).play.secretWish,null,'선생님용은 기록하지 않음');
+    await next(p);await at(p,'c1-exile');
+    assert.equal(await p.evaluate(()=>G.play.recap(G.save.state,G.data).secretWish),null,'되짚기는 고르지 않음');
+    await p.context().close();
   });
   assert.deepEqual(h.errors,[]);console.log('engine 계약 '+count+'개 통과 (이관 자료 검사는 완주 증거 아님)');
 } finally {await h.close();}

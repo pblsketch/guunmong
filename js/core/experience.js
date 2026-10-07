@@ -4,7 +4,8 @@
   const runValid = (v) => typeof v === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(v);
   const all = (e) => [...e.beats, ...(e.optional || [])];
   const find = (data, scene) => (data.experiences || []).find((e) => e.scene === scene);
-  const legacyDone = (state, id) => !state.events[id]?.auto && (state.done[id] === true || Boolean(state.events[id]?.grade));
+  // 마친 진행 단위: 체험 장면은 검증된 rpg 완료, 그 밖의 장면은 done 기록으로 판정한다.
+  const finished = (state, id) => state.done?.[id] === true || state.rpg?.scenes?.[id]?.status === 'done';
   const locked = (state, data, id) => {
     const scenes = data.scenes || [], boundary = scenes.findIndex((s) => s.id === 'c3-awake');
     const index = scenes.findIndex((s) => s.id === id);
@@ -27,8 +28,7 @@
     const validVersion = !old || old.v === 1;
     for (const e of data.experiences || []) {
       const value = validVersion && object(old?.scenes) ? old.scenes[e.scene] : null;
-      const legacy = legacyDone(state, e.scene), auto = state.events[e.scene]?.auto === true;
-      if (!object(value) && !legacy && !auto) continue;
+      if (!object(value)) continue;
       const rec = record(e);
       let valid = object(value) && Array.isArray(value.actions);
       if (valid) for (const action of value.actions) {
@@ -47,8 +47,8 @@
       }
       if (!valid) rec.actions = [];
       rec.beat = next(e, rec.actions);
-      rec.status = legacy || (rec.beat === null && value?.status === 'done') ? 'done' :
-        auto || (value?.status === 'auto' && rec.actions.length === 0) ? 'auto' : 'active';
+      rec.status = rec.beat === null && value.status === 'done' ? 'done' :
+        value.status === 'auto' && rec.actions.length === 0 ? 'auto' : 'active';
       if (rec.status !== 'active') rec.beat = null;
       rec.hint = ['student', 'teacher'].includes(value?.hint) ? value.hint : null;
       result.scenes[e.scene] = rec;
@@ -68,7 +68,7 @@
     if (!list.length) return state.pos;
     let index = Math.max(0, list.findIndex((s) => s.id === state.pos));
     if (state.awake) index = Math.max(index, list.findIndex((s) => s.id === 'c3-awake'));
-    while (index < list.length - 1 && (legacyDone(state, list[index].id) || state.rpg?.scenes?.[list[index].id]?.status === 'done')) index++;
+    while (index < list.length - 1 && finished(state, list[index].id)) index++;
     const staff = list.findIndex(s => s.id === 'c3-staff');
     if (!state.awake && (list[index].ch === '3' || !state.teacher && staff >= 0 && index >= staff)) {
       const feast = list.findIndex(s => s.id === 'c3-feast');
@@ -87,7 +87,7 @@
     const rec = state.rpg.scenes[sceneId];
     if (rec?.actions.some((a) => a.id === actionId)) return 'duplicate';
     const manualStaff = allowStaff && !state.awake && sceneId === 'c3-staff' && e.beats.length === 1 && b.trigger.kind === 'staff' && rec?.status === 'auto' && rec.actions.length === 0;
-    if (state.pos !== sceneId || legacyDone(state, sceneId) || (rec && rec.status !== 'active' && !manualStaff)) return 'blocked';
+    if (state.pos !== sceneId || state.done?.[sceneId] === true || (rec && rec.status !== 'active' && !manualStaff)) return 'blocked';
     const current = manualStaff ? b.id : rec ? rec.beat : e.beats[0]?.id;
     if (e.beats.includes(b) && b.id !== current) return 'blocked';
     if (b.trigger.kind === 'staff' && !allowStaff) return 'blocked';
@@ -133,11 +133,9 @@
         if (effect.kind === 'story') result.add(effect.id);
       }
     }
-    for (const [scene, ids] of [['e08-wonsu', [STORY.wonsu]], ['e11-seungsang', [STORY.seungsang, STORY.portrait]]]) {
-      if (legacyDone(state, scene)) for (const id of ids) result.add(id);
-    }
     return [...result];
   }
+  // 소원 표시. fill은 원작 바닥(0..1), level은 고른 말까지 더한 표시값(0..1)이다. 막대 계산은 G.play(js/core/play.js).
   function wishes(state, data) {
     const story = new Set(facts(state, data));
     const sources = {
@@ -146,13 +144,16 @@
       pungryu: ['it-geomungo', 'it-tungso'].filter((id) => state.items.includes(id)),
       gongmyeong: story.has(STORY.portrait) ? [STORY.portrait] : [],
     };
+    const P = G.play, canon = P.canon(state, data), value = P.values(state, data), peak = state.play?.peak || {};
     return (data.wishes || []).map((w) => {
       const hidden = w.id === 'misaek' && !state.journal?.revealed?.misaek;
-      const from = sources[w.id] || [];
-      const fill = w.id === 'misaek' ? (hidden ? 0 : 1) : from.length / (['chuljang', 'pungryu'].includes(w.id) ? 2 : 1);
+      const from = sources[w.id] || [], gauge = P.WISHES.includes(w.id);
+      const fill = w.id === 'misaek' ? (hidden ? 0 : 1) : gauge ? canon[w.id] / P.CANON_MAX : 0;
       return { id: w.id, name: hidden ? '?' : w.name, hidden, fill, filled: fill === 1,
-        half: fill === 0.5, sources: from, parts: (w.parts || []).map((p, i) => ({ ...p, filled: story.has([STORY.wonsu, STORY.seungsang][i]) })) };
+        half: fill === 0.5, sources: from, parts: (w.parts || []).map((p, i) => ({ ...p, filled: story.has([STORY.wonsu, STORY.seungsang][i]) })),
+        level: gauge ? value[w.id] / P.MAX : null, canonFull: gauge && canon[w.id] >= P.CANON_MAX,
+        peakLevel: gauge ? (peak[w.id] || 0) / P.MAX : null, secret: gauge && state.play?.secretWish === w.id };
     });
   }
-  G.experience = { runValid, find, record, next, cursor, normalize, resume, legacyDone, locked, validateAction, apply, facts, wishes, storyIds: STORY };
+  G.experience = { runValid, find, record, next, cursor, normalize, resume, finished, locked, validateAction, apply, facts, wishes, storyIds: STORY };
 })();

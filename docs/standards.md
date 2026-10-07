@@ -11,7 +11,7 @@
 
 - 게임은 빌드 없는 HTML·CSS·순수 JavaScript다. 런타임에 npm 패키지·CDN·외부 글꼴·분석 도구를 넣지 않는다.
 - file로 열어도 시작·저장·소리가 동작해야 한다. 데이터는 JSON fetch나 모듈 import가 아닌 script로 읽는다.
-- script 연결은 core(util/world/experience/save/data/audio/text/ui/activity) → app → stage/world 화면 → 독립 꿈 도구와 나머지 화면 → main 순서다. board/prep/sim은 실행 script 목록에서 제외하고 구판 파일·기록을 보존한다. 초기 평가에서 G.dream을 쓰는 파일은 그 공통 모듈 뒤에 둔다.
+- script 연결은 core(util/world/experience/play/save/data/audio/text/ui/activity) → app → stage/world 화면 → 독립 꿈 도구와 나머지 화면 → main 순서다. 옛 판의 board/prep/sim 모듈은 0022에서 지웠다. 초기 평가에서 G.dream을 쓰는 파일은 그 공통 모듈 뒤에 둔다.
 - core에서 app·dream·board·house를 호출하지 않는다. 화면은 screens·hook·on·toolbar에 연결한다. 새 화면 때문에 공통 진행을 우회하지 않는다.
 - 비동기 대기 뒤 ctx.alive를 확인하고, 취소 신호에서 타이머·관찰자·애니메이션을 정리한다.
 
@@ -20,8 +20,8 @@
 - 형식의 단일 기준은 js/data/README.md다. 새 필드를 먼저 명시하고 사용한다.
 - data 파일은 GUUN에 순수 값을 대입한다. 함수·getter·G 호출을 넣지 않는다. 새 파일은 loader·형식 표·검사 목록을 함께 갱신한다.
 - 실제 자료는 G.checkData 기본 검사로 28단위·12사건·3이음·모든 새 참조와 경로의 경고 0이어야 한다. 시험 자료는 tests/fixtures에만 두고 호출자가 프로필을 명시한다. fixture와 world-opening/world-event는 부품 시험이며, rpg-opening/rpg-waking은 각각 도입 6단위·깨어남 4단위의 순서·장면 종류·필수 행동을 검사하는 대표 콘텐츠다. 대표 콘텐츠에는 대체 그림을 허용하지 않는다. 대표 프로필 통과는 전체 자료 통과가 아니다. 실제 자료의 값으로 기준을 낮출 수 없다.
-- 진행 id는 cut-josin, c장-이름, e01~e12-이름, l-이음, r-result 체계를 따른다. 활동 장부 id는 a-wish/j-match다. v2 배포 뒤 id·저장 형식 변경에는 기존 기록의 재개 경로를 함께 검증한다.
-- 이야기 총량은 G.storyText 한 경로로 측정한다. 소원 장면의 서술을 빼거나 미노출 등급 문구를 제외하지 않는다. 근거 구절이 실제 이야기 줄에 있는지도 검사한다.
+- 진행 id는 cut-josin, c장-이름, e01~e12-이름, l-이음, r-result 체계를 따른다. 활동 장부 id는 a-wish/j-match다. v3 배포 뒤 id·저장 형식 변경에는 기존 기록의 재개 경로를 함께 검증한다.
+- 이야기 총량은 G.storyText 한 경로로 측정하며 5,000음절 이하다. 소원 장면의 서술, 도전 반응·뒤 장면 안내, 되짚기·E11 틀(가장 길게 채운 꼴)을 빼지 않는다. 근거 구절이 실제 이야기 줄에 있는지도 검사한다.
 - 풀이·대사·설명은 새로 쓴다. 교과서 본문과 15자 이상 겹치는 문장, 금지된 출판사·교사 자료 사이트 이름을 추적 파일·이력·커밋 글에 넣지 않는다.
 - 조사 두 꼴을 함께 쓰지 않는다. 바뀌는 앞말의 조사는 G.util.josa로 고른다. 얼굴 없는 인물은 say/호칭 링크로 그리지 않고, 표정은 등록된 값만 사용한다.
 - 原文 표시는 대조된 orig에만 허용한다. 대조 전 자료에 orig를 넣으면 실패다. 대조 반영 시 근거·데이터·검사 기준을 같은 변경에서 고친다.
@@ -51,7 +51,7 @@
 - readonly 화면과 reader/acquiring/unavailable 탭, 이전 run에서는 장부·행동·위치·물건·인연·구슬·해석·이름·설정을 메모리에서도 바꾸지 않는다. 자동 기록의 순차 재생에서 다음 위치만 옮기는 경우와 직접 다시 보기를 구분한다.
 - Web Locks 이름은 guunmong-write:<저장 열쇠>다. 배타 writer만 저장하며 지원/요청 실패는 unavailable이다. 타이머 임대·steal·별도 열쇠로 우회하지 않는다. 권한 이전·bfcache 복귀는 최신 저장을 읽고, reader의 storage 알림은 화면을 취소·재표시한다.
 - 모든 열기 경로는 canOpen을 거치며 깨어남 기록은 app.wake, 초기화는 확인 후 reset만 사용한다.
-- 새 플레이의 준비 두 턴·윤목·등급·성장 점수는 제거한다. 행동 순서·중복·일회성 효과·보행·위치 재개·rpg 자료형과 enum·부분 준비/옛 완료/auto 이관·저장 실패 보존·readonly·소유권/이전 run·지팡이 전후·해석 확정을 회귀 범위로 둔다. HTTP/file 실제 두 탭 검증은 유닛 모의와 구분한다. 확인 초기화만 새 run과 awake:false를 만들며 같은 run의 최초 awakeAt을 유지한다.
+- 소원 막대는 원작분이 바닥이고 학생이 고른 말만 그 위를 움직인다. 학생 화면에 소원 값을 숫자로 쓰지 않고, 첫 선택·첫 판가름·숨긴 소원은 불변이며 선생님용·바로가기·깨어난 뒤·readonly·reader·이전 run은 기록하지 않는다. 등급·능력치·윤목은 없다. 행동 순서·중복·일회성 효과·보행·위치 재개·rpg와 play 자료형과 enum·auto·행동과 선택의 한 저장·저장 실패 보존·readonly·소유권/이전 run·지팡이 전후·해석 확정을 회귀 범위로 둔다. HTTP/file 실제 두 탭 검증은 유닛 모의와 구분한다. 확인 초기화만 새 run과 awake:false를 만들며 같은 run의 최초 awakeAt을 유지한다.
 - 화면의 상태 조건과 표시값은 같은 순간에 관찰한다. 선택 후 상태가 바뀐 요소를 예전 조건의 요소로 오판하지 않는다. 실제 잘못된 표시를 검출하는 음성 검사도 유지한다.
 
 ## 커밋과 외부 작업

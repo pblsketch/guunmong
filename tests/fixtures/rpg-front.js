@@ -95,7 +95,6 @@ window.GUUN = {
     "credit": "배경음 국립국악원 「디지털 이음」 국악기 연주 음원(공공누리 제1유형) · 퉁소 곡은 단소 연주로 대신함",
     "creditFull": "공공누리 제1유형 출처 표시: 국립국악원 「디지털 이음」 국악기 연주 음원(악구), https://www.gugak.go.kr/digitaleum/ . 쓴 악구: 대금 풍류 「청성곡」 악구 w3-190-010~050 · 해금 산조(지영희류) 진양조 악구 s3-001-001~006 · 대금 풍류 「상령산」 악구 w3-141-010·020·030 · 아쟁 산조(윤윤석류) 진양조 악구 s4-001-001~006 · 양금 풍류 「염불도드리」 악구 s5-117-010·015·030·040 · 소금 연례악 「수제천」 악구 w4-440-010·012·014·019·022~025 · 피리 경기대풍류 「당악」 악구 w1-719-001~004 · 거문고 풍류(현악영산회상) 「상령산」 악구 s2-111-010·020 · 가야금 산조(성금련류) 굿거리 악구 s1-001-040~048 · 태평소 행악 「대취타」 악구 w2-510-001~013 · 단소 풍류 「청성곡」 악구 w5-190-010·020·025·030(퉁소 대신 단소) · 피리 연례악 「수제천」 악구 w1-440-010·020·030 · 대금 산조 진양조 악구 w3-001-001~006 · 양금 풍류 「우조가락도드리」 악구 s5-133-010~060 · 양금 풍류 「타령」 악구 s5-118-010~090 · 단소 풍류 「청성곡」 악구 w5-190-040~057(퉁소 대신 단소) · 대금 풍류 「청성곡」 끝 가락 악구 w3-190-060·070 · 거문고 풍류 「윗도드리」 악구 s2-122-010~040. 악구를 이어 붙이고 음량을 맞춰 썼어요. 퉁소 곡(난양공주의 달밤, 취미궁)은 퉁소 녹음이 없어 단소 연주로 대신했어요. 녹음을 불러오지 못할 때도 합성한 가락으로 대신해요. 효과음은 브라우저에서 합성해요."
   },
-  "board": [],
   "bonds": [
     {
       "id": "chae",
@@ -239,21 +238,48 @@ window.GUUN = {
         {
           "id": "boast",
           "label": "벼슬과 집안을 뽐내는 시",
-          "reply": "섬월이 종이를 접어 내려놓았다. 자랑은 가락에 얹히지 않았다."
+          "reply": "섬월이 종이를 접어 내려놓았다. 자랑은 가락에 얹히지 않았다.",
+          "wish": [
+            {
+              "wish": "bugwi",
+              "step": 1
+            },
+            {
+              "wish": "pungryu",
+              "step": -1
+            }
+          ]
         },
         {
           "id": "heart",
           "label": "눈앞의 풍경에 마음을 담은 시",
-          "reply": "섬월이 붓끝을 따라 읽다가 고개를 들었다."
+          "reply": "섬월이 붓끝을 따라 읽다가 고개를 들었다.",
+          "wish": [
+            {
+              "wish": "pungryu",
+              "step": 1
+            }
+          ]
         },
         {
           "id": "mock",
           "label": "다른 선비의 시를 비웃는 시",
-          "reply": "선비들이 웅성거렸다. 섬월은 못 들은 척 눈을 돌렸다."
+          "reply": "선비들이 웅성거렸다. 섬월은 못 들은 척 눈을 돌렸다.",
+          "wish": [
+            {
+              "wish": "gongmyeong",
+              "step": 1
+            },
+            {
+              "wish": "pungryu",
+              "step": -1
+            }
+          ]
         }
       ],
       "answer": "heart",
-      "note": "시의 주제를 고르는 일은 게임이 꾸민 장치예요. 섬월이 소유의 시를 골라 노래한 일은 원작에 있어요."
+      "note": "시의 주제를 고르는 일은 게임이 꾸민 장치예요. 섬월이 소유의 시를 골라 노래한 일은 원작에 있어요.",
+      "music": true
     },
     {
       "id": "ch-geomungo-tune",
@@ -378,7 +404,12 @@ window.GUUN = {
       "answer": "gyeonghong",
       "fail": "그 사람은 이 길에 온 적이 없다. 단서를 다시 보자.",
       "success": "길벗의 웃음이 떠올랐다.",
-      "note": "단서를 모아 추리하는 일은 게임이 꾸민 장치예요. 적경홍이 남장을 하고 동행하다가 섬월과 자리를 바꾼 일은 원작에 있어요."
+      "note": "단서를 모아 추리하는 일은 게임이 꾸민 장치예요. 적경홍이 남장을 하고 동행하다가 섬월과 자리를 바꾼 일은 원작에 있어요.",
+      "after": {
+        "from": "ch-chunun-ghost",
+        "clue": 1,
+        "text": "한 번 속아 본 눈은 작은 기척도 흘려 넘기지 않는다."
+      }
     },
     {
       "id": "ch-tungso-melody",
@@ -2194,8 +2225,7 @@ window.GUUN = {
           "solid": true,
           "label": "버들잎 곁 구슬 흔적 · 선택",
           "visibleAt": [],
-          "action": "huayin-pearl",
-          "sprite": "prop-floor-grey"
+          "action": "huayin-pearl"
         }
       ]
     },
@@ -2591,8 +2621,7 @@ window.GUUN = {
           "visibleAt": [
             "e02-tianjin:tianjin-listen"
           ],
-          "action": "tianjin-pearl",
-          "sprite": "prop-stool"
+          "action": "tianjin-pearl"
         }
       ]
     },
@@ -2795,8 +2824,7 @@ window.GUUN = {
           "solid": true,
           "label": "창가의 구슬 흔적 · 선택",
           "visibleAt": [],
-          "action": "geomungo-pearl",
-          "sprite": "prop-cushion"
+          "action": "geomungo-pearl"
         }
       ]
     },
@@ -3517,8 +3545,7 @@ window.GUUN = {
           "solid": true,
           "label": "잎 곁 구슬 흔적 · 선택",
           "visibleAt": [],
-          "action": "chunun-pearl",
-          "sprite": "prop-cushion"
+          "action": "chunun-pearl"
         }
       ]
     },
@@ -4076,8 +4103,7 @@ window.GUUN = {
           "solid": true,
           "label": "거울 곁 구슬 흔적 · 선택",
           "visibleAt": [],
-          "action": "gyeonghong-pearl",
-          "sprite": "prop-stool"
+          "action": "gyeonghong-pearl"
         }
       ]
     },
@@ -4293,8 +4319,7 @@ window.GUUN = {
           "visibleAt": [
             "e07-tungso:tungso-message"
           ],
-          "action": "tungso-pearl",
-          "sprite": "prop-cushion"
+          "action": "tungso-pearl"
         }
       ]
     },
@@ -4637,7 +4662,12 @@ window.GUUN = {
         "after": "깨고 남은 것",
         "zero": 0,
         "scoreNotice": "점수로 평가하지 않아요",
-        "save": "이 장을 그림으로 저장"
+        "save": "이 장을 그림으로 저장",
+        "bonds": "꿈에서 만난 인연",
+        "secretWish": "숨긴 소원",
+        "noSecret": "고르지 않음",
+        "peak": "가장 찼던 소원 → 빈 선방",
+        "recap": "육관대사의 되짚기"
       },
       "journal": {
         "pearls": "구슬에서 팔선녀로",
@@ -4645,7 +4675,53 @@ window.GUUN = {
         "unscored": "인연 잇기와 구슬은 채점하지 않아요"
       },
       "teacherPeek": "핵심 능력 보기",
-      "audioNotice": "국립국악원 「디지털 이음」 · 공공누리 제1유형 · 퉁소 대신 단소"
+      "audioNotice": "국립국악원 「디지털 이음」 · 공공누리 제1유형 · 퉁소 대신 단소",
+      "secretWish": {
+        "title": "숨긴 소원",
+        "prompt": "소원 가운데 꿈에서 가장 먼저 이루고 싶은 것 하나를 마음속에 숨겨 두세요.",
+        "hint": "한 번 고르면 바꿀 수 없어요. 어떻게 이룰지는 알려 주지 않아요.",
+        "button": "이 소원을 숨기고 꿈으로",
+        "review": "처음 숨긴 소원",
+        "saved": "마음속에 숨겨 두었어요.",
+        "teacher": "선생님용에서는 숨긴 소원을 기록하지 않아요.",
+        "retry": "기록을 저장하지 못했어요. 다시 시도해 주세요."
+      },
+      "band": {
+        "label": "소원과 인연",
+        "wish": "{wish} {level}",
+        "levels": [
+          "비어 있음",
+          "조금",
+          "반쯤",
+          "많이 참",
+          "가득 참"
+        ],
+        "hidden": "{wish} 알 수 없음",
+        "secret": "숨긴 소원",
+        "bonds": "인연 여덟 칸 가운데 {count}",
+        "bondCounts": [
+          "찬 칸 없음",
+          "한 칸",
+          "두 칸",
+          "세 칸",
+          "네 칸",
+          "다섯 칸",
+          "여섯 칸",
+          "일곱 칸",
+          "여덟 칸"
+        ],
+        "separator": ", "
+      },
+      "choice": {
+        "up": "▲",
+        "down": "▼",
+        "stay": "소원 그대로",
+        "first": "처음 고른 길"
+      },
+      "collapse": {
+        "label": "꿈에서 쌓은 소원과 인연이 비어 간다",
+        "bonds": "꿈에서 만난 인연"
+      }
     }
   },
   "people": {
@@ -4882,6 +4958,7 @@ window.GUUN = {
     },
     {
       "id": "e01-huayin",
+      "guide": "성진은 인간 세상의 양소유로 다시 태어났다. 자라서 글재주가 뛰어난 소유는 과거를 보러 집을 떠난다.",
       "ch": "2",
       "kind": "event",
       "title": "화음현의 버들 노래",
@@ -4939,7 +5016,6 @@ window.GUUN = {
           "desc": "채봉이 답시를 써 보낸 종이. 훗날 서로를 알아보는 단서가 된다."
         }
       ],
-      "square": "sq-huayin",
       "meet": "chae",
       "pearl": {
         "x": 25,
@@ -4951,12 +5027,12 @@ window.GUUN = {
     },
     {
       "id": "l-namjeon",
+      "guide": "화음현에서 진채봉과 혼약을 맺었지만 곧 난리가 일어나 두 사람은 헤어졌다. 소유는 난리를 피해 산으로 들어간다.",
       "ch": "2",
       "kind": "link",
       "title": "남전산의 도인",
       "img": "sc_namjeon",
       "bgm": "mountain",
-      "square": "sq-namjeon",
       "lines": [
         "난리를 피해 산에 든 소유가 도인에게 곡을 배웠다.",
         {
@@ -4996,6 +5072,7 @@ window.GUUN = {
     },
     {
       "id": "e02-tianjin",
+      "guide": "난리가 가라앉자 소유는 다시 과거 길에 올라 낙양에 닿았다. 천진교 주루에서는 낙양의 이름난 기생 계섬월이 선비들의 시 가운데 하나를 골라 노래한다고 한다.",
       "ch": "2",
       "kind": "event",
       "title": "천진교 주루의 시회",
@@ -5040,7 +5117,6 @@ window.GUUN = {
           "desc": "천진교에서 소유가 지은 시를 담은 종이. 섬월은 그 시를 노래했다."
         }
       ],
-      "square": "sq-tianjin",
       "meet": "seomwol",
       "pearl": {
         "x": 64,
@@ -5052,6 +5128,7 @@ window.GUUN = {
     },
     {
       "id": "e03-geomungo",
+      "guide": "섬월은 서울 정 사도 댁의 딸 경패가 빼어나다고 알려 주었다. 경패는 바깥 남자를 만나지 않지만 음악을 아낀다. 그래서 소유는 그 댁에 드나드는 두연사를 찾아가, 여도사 차림으로 거문고를 들려줄 꾀를 낸다.",
       "ch": "2",
       "kind": "event",
       "title": "여도사의 거문고",
@@ -5101,7 +5178,6 @@ window.GUUN = {
           "desc": "정씨 집에 들어갈 때 쓴 여도사 차림. 옷보다 곡조가 오래 기억된다."
         }
       ],
-      "square": "sq-jeongbu",
       "meet": "gyeongpae",
       "pearl": {
         "x": 49,
@@ -5114,6 +5190,7 @@ window.GUUN = {
     },
     {
       "id": "e04-exam",
+      "guide": "거문고 일은 그렇게 지나갔다. 소유는 처음 길을 떠난 까닭인 과거 시험장으로 향한다.",
       "ch": "2",
       "kind": "event",
       "title": "장원급제",
@@ -5147,11 +5224,11 @@ window.GUUN = {
         "fine": "분명한 뜻을 펼친 글이라는 평을 얻었다.",
         "near": "장원은 정해졌다. 글의 여운은 더 기를 만했다."
       },
-      "items": [],
-      "square": "sq-hallim"
+      "items": []
     },
     {
       "id": "e05-chunun",
+      "guide": "장원 급제한 소유는 정 사도의 사위로 정해져 정씨 집 화원의 별당에 머문다. 혼례 날을 기다리던 어느 날 밤의 일이다.",
       "ch": "2",
       "kind": "event",
       "title": "선녀인가, 귀신인가",
@@ -5202,7 +5279,6 @@ window.GUUN = {
           "desc": "귀신을 쫓으려던 소유가 믿은 부적. 장난이 밝혀진 뒤에는 웃음의 흔적이다."
         }
       ],
-      "square": "sq-hallim",
       "meet": "chunun",
       "pearl": {
         "x": 51,
@@ -5214,12 +5290,12 @@ window.GUUN = {
     },
     {
       "id": "l-hebei",
+      "guide": "한림학사가 된 소유에게 나라의 일이 맡겨진다. 하북이 조정을 따르지 않자 황제는 소유를 사신으로 보낸다.",
       "ch": "2",
       "kind": "link",
       "title": "하북으로 간 사신",
       "img": "sc_hebei",
       "bgm": "march",
-      "square": "sq-sasin",
       "lines": [
         "하북이 들썩이자 소유가 조서를 지었다.",
         "부절을 든 사신으로 연왕을 만나 싸움 대신 말로 설득했다.",
@@ -5244,6 +5320,7 @@ window.GUUN = {
     },
     {
       "id": "e06-gyeonghong",
+      "guide": "연왕을 설득한 소유는 서울로 돌아오는 길에 오른다. 한단에서 젊은 길손 하나가 그에게 말을 건넨다.",
       "ch": "2",
       "kind": "event",
       "title": "적생의 정체",
@@ -5298,7 +5375,6 @@ window.GUUN = {
           "desc": "적경홍이 궁에서 빠져나오며 탄 말. 게임 설정 · 실제로는 → 소유에게 주었다는 기록은 없다. 뜰의 장식은 그 여정을 기억하는 표시다."
         }
       ],
-      "square": "sq-handan",
       "meet": "gyeonghong",
       "pearl": {
         "x": 89,
@@ -5310,6 +5386,7 @@ window.GUUN = {
     },
     {
       "id": "e07-tungso",
+      "guide": "서울로 돌아온 소유는 벼슬이 높아졌다. 남전산의 도인에게 받은 백옥 퉁소를 그는 아직 간직하고 있다.",
       "ch": "2",
       "kind": "event",
       "title": "달밤의 퉁소",
@@ -5340,7 +5417,6 @@ window.GUUN = {
         "near": "가락은 궁중에 닿았다. 여운은 잔잔했다."
       },
       "items": [],
-      "square": "sq-yebu",
       "meet": "nanyang",
       "pearl": {
         "x": 90,
@@ -5353,12 +5429,12 @@ window.GUUN = {
     },
     {
       "id": "l-bongnae",
+      "guide": "소유의 퉁소 가락은 궁중에까지 알려졌다. 황제는 소유를 궁궐 봉래전으로 불러 궁녀들의 부채에 시를 쓰게 한다.",
       "ch": "2",
       "kind": "link",
       "title": "봉래전의 부채",
       "img": "sc_bongnae",
       "bgm": "palace",
-      "square": "sq-bongnae",
       "lines": [
         "궁중에서 소유가 부채와 비단에 시를 써 주었다.",
         "궁녀가 된 채봉은 그를 알아보고 부채에 답시를 적었다.",
@@ -6168,5 +6244,6 @@ window.GUUN = {
       "hanja": "功名",
       "evidence": "공명을 후세에 전하고"
     }
-  ]
+  ],
+  "board": []
 };

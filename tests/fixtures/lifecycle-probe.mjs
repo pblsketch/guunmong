@@ -17,7 +17,7 @@ export async function lifecycle(h) {
     experiences:scenes.map(s=>({scene:s.id,map:'map-cell',actor:s.id==='c3-awake'?'seongjin':'yang',spawn:{x:2,y:5,facing:'down'},
       beats:s.id==='c3-feast'?[beat('feast-first'),beat('feast-last')]:[beat(s.id==='c3-staff'?'strike':s.id==='c3-monk'?'monk-talk':'awake-look',s.id==='c3-staff'?'staff':'continue')],optional:[]})),
     wishes:[],bonds:[],chapters:{},bgm:{},notes:{}};
-  const scripts=['js/core/util.js','js/core/world.js','js/core/experience.js','js/core/save.js','js/core/data.js','js/core/audio.js','js/core/text.js','js/core/ui.js','js/game/app.js','js/game/stage.js','js/game/world.js'];
+  const scripts=['js/core/util.js','js/core/world.js','js/core/experience.js','js/core/play.js','js/core/save.js','js/core/data.js','js/core/audio.js','js/core/text.js','js/core/ui.js','js/game/app.js','js/game/stage.js','js/game/world.js'];
   const file=path.join(SHOTS,'lifecycle.html');
   fs.writeFileSync(file,'<!doctype html><html lang="ko"><head><meta charset="utf-8"><base href="../../../"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/rpg.css"></head><body><div id="app"></div>'+scripts.map(s=>'<script src="'+s+'"></script>').join('')+
     '<script>G.data='+JSON.stringify(data)+';'+
@@ -26,7 +26,7 @@ export async function lifecycle(h) {
     'G.app.screens.waking=async(ctx)=>{ctx.step("staff");await new Promise(resolve=>{const b=G.util.h("button",{type:"button",dataset:{act:"staff"}},"저장 접점 시험");b.onclick=()=>{window.strikeBefore=G.save.state.awake;window.strikeSaved=G.app.wake(ctx);window.strikeAfter=G.save.state.awake;if(strikeSaved)resolve(true);};ctx.tray(b);ctx.signal.addEventListener("abort",()=>resolve(false),{once:true});});};'+
     'G.app.on("scene",ctx=>{window.currentCtx=ctx;});G.save.load("t2-lifecycle");G.save.acquireWriter().then(()=>G.app.boot());</script></body></html>');
   const p=await h.page();await p.goto(h.origin+'/tests/shots/t2/lifecycle.html');await ready(p);
-  await p.getByRole('button',{name:'시작하기',exact:true}).click();if (await p.evaluate(() => !!G.data.notes?.mission)) await p.locator('[data-mission="start"]').click();
+  await p.getByRole('button',{name:'시작하기',exact:true}).click();if (await p.evaluate(() => !!G.data.notes?.mission)) { await p.waitForSelector('[data-mission]'); while (await p.locator('[data-mission="next"]').count()) await p.locator('[data-mission="next"]').click(); await p.locator('[data-mission="start"]').click(); };
   const interact=async()=>{await p.locator('[data-act="interact"]').click();await dialogue(p);};
   await interact();assert.equal((await state(p)).rpg.scenes['c3-feast'].beat,'feast-last');
   await p.reload();await ready(p);await p.getByRole('button',{name:'이어 하기',exact:true}).click();

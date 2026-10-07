@@ -49,7 +49,7 @@ export const state = p => p.evaluate(() => JSON.parse(JSON.stringify(G.save.stat
 export async function start(p) {
   await p.getByRole('button', { name: '시작하기', exact: true }).click();
   // 미션 퍼스트: 새로 시작하면 임무 창이 먼저 뜬다(임무 자료가 있는 제품 자료). 실제 단추로 닫는다.
-  if (await p.evaluate(() => !!G.data.notes?.mission)) await p.locator('[data-mission="start"]').click();
+  if (await p.evaluate(() => !!G.data.notes?.mission)) { await p.waitForSelector('[data-mission]'); while (await p.locator('[data-mission="next"]').count()) await p.locator('[data-mission="next"]').click(); await p.locator('[data-mission="start"]').click(); };
   await p.waitForSelector('[data-world]');
 }
 export async function target(p, id) {
@@ -69,7 +69,8 @@ export async function target(p, id) {
   await p.locator('[data-act="interact"][data-target="' + id + '"]').click();
 }
 export async function openTargets(p) {
-  if (!await p.locator('.world-tools').evaluate(el => el.open)) await p.locator('.world-tools > summary').click();
+  // 조작 도구는 화면에서 숨긴 키보드 길이다. 키보드처럼 초점을 옮겨 연다.
+  if (!await p.locator('.world-tools').evaluate(el => el.open)) { await p.locator('.world-tools > summary').focus(); await p.keyboard.press('Enter'); }
   if (!await p.locator('.world-targets').evaluate(el => el.open)) await p.locator('.world-targets summary').click();
 }
 export async function idle(p) {
@@ -103,15 +104,23 @@ export async function fieldCell(p, x, y, touch = false) {
   await idle(p);
 }
 // 위기 도전 창을 실제 단추로 푼다. 답은 공개 자료에서 읽지만 저장·상태를 주입하지 않는다.
+// wrong이면 첫 판가름을 실제로 실패시킨 뒤(고르기·추리는 오답 하나, 찾기는 촛불을 다 쓰고 다시 하기, 가락은 첫 소절에서 한 번 틀림) 다시 풀어 이어 간다.
 export async function challenge(p, { wrong = false } = {}) {
   const id = await p.evaluate(() => document.querySelector('.challenge-book')?.dataset.challengeId || null);
   if (!id) return null;
   const c = await p.evaluate(id => JSON.parse(JSON.stringify(G.data.challenges.find(c => c.id === id))), id);
   const book = p.locator('.challenge-book');
-  if (wrong && c.kind !== 'sequence') {
-    const miss = c.kind === 'search' ? c.spots.find(s => s.id !== c.answer).id : c.options.find(o => o.id !== c.answer).id;
-    if (c.kind === 'deduce') for (let i = 0; i < c.clues.length; i++) await book.locator('[data-clue="' + i + '"]').click();
-    await book.locator(c.kind === 'search' ? '[data-spot="' + miss + '"]' : '[data-option="' + miss + '"]').click();
+  if (wrong && c.kind === 'search') {
+    // 미리 표시한 곳(앞 도전 첫 성공)은 누를 수 없으므로 눌리는 곳 가운데서 촛불이 다 꺼질 때까지 헛짚는다.
+    for (let i = 0; i < c.tries; i++) {
+      const open = await book.locator('[data-spot]:not([disabled])').evaluateAll(els => els.map(el => el.dataset.spot));
+      await book.locator('[data-spot="' + c.spots.find(s => s.id !== c.answer && open.includes(s.id)).id + '"]').click();
+    }
+    await book.locator('[data-challenge="retry"]').click();
+  } else if (wrong && c.kind !== 'sequence') {
+    const miss = c.options.find(o => o.id !== c.answer).id;
+    if (c.kind === 'deduce') for (let i = 0; i < c.clues.length; i++) if (await book.locator('[data-clue="' + i + '"][aria-pressed="false"]').count()) await book.locator('[data-clue="' + i + '"]').click();
+    await book.locator('[data-option="' + miss + '"]').click();
   }
   if (c.kind === 'pick') await book.locator('[data-option="' + c.answer + '"]').click();
   if (c.kind === 'deduce') {
@@ -121,16 +130,33 @@ export async function challenge(p, { wrong = false } = {}) {
   if (c.kind === 'search') await book.locator('[data-spot="' + c.answer + '"]').click();
   if (c.kind === 'sequence') for (const [round, notes] of c.rounds.entries()) {
     await p.waitForSelector('.challenge-book[data-round="' + round + '"][data-ready="true"]', { timeout: 20000 });
+    if (wrong && round === 0) await book.locator('[data-note="' + (notes[0] + 1) % c.notes.length + '"]').click();
     for (const n of notes) await book.locator('[data-note="' + n + '"]').click();
   }
   await p.locator('.challenge-book[data-solved="true"] [data-challenge="continue"]').click();
   return c;
 }
+// 생각 선택: choice가 'up'이면 ▲만 있는 선택지, 'stay'면 물러남('소원 그대로')을 학생이 보는 미리 보기 글로 고른다. 없으면 첫 선택지.
+async function talkChoice(p, choice) {
+  const id = await p.evaluate(choice => {
+    const u = G.data.notes?.ui?.choice || {}, buttons = [...document.querySelectorAll('[data-dialogue] .choice-tray [data-talk]')];
+    const preview = b => b.querySelector('[data-preview]')?.textContent || '';
+    const hit = choice === 'stay' ? buttons.find(b => preview(b) === u.stay) : choice === 'up' ? buttons.find(b => preview(b).includes(u.up) && !preview(b).includes(u.down)) : null;
+    return (hit || buttons[0]).dataset.talk;
+  }, choice || null);
+  return '[data-dialogue] .choice-tray [data-talk="' + id + '"]';
+}
+// 소원 찾기 확정 뒤 같은 화면의 숨긴 소원을 실제 단추로 고른다(고르기 전에는 다음 단추가 없다).
+export async function secretWish(p, wish = 'gongmyeong') {
+  await p.locator('[data-secret-wish="' + wish + '"]').click();
+  await p.locator('[data-act="secret"]').click();
+  await p.waitForSelector('[data-secret-chosen="' + wish + '"]');
+}
 export async function dialogue(p, options = {}) {
   await p.waitForSelector('[data-dialogue], .challenge-book');
   if (await challenge(p, options)) await p.waitForSelector('[data-dialogue]');
   while (await p.locator('[data-dialogue]').count()) {
-    if (await p.locator('[data-dialogue] .choice-tray [data-talk]').count()) await p.locator('[data-dialogue] .choice-tray [data-talk]').first().click();
+    if (await p.locator('[data-dialogue] .choice-tray [data-talk]').count()) await p.locator(await talkChoice(p, options.choice)).click();
     else await p.locator('[data-dialogue] [data-act="next"]').click();
     await p.waitForTimeout(30);
   }

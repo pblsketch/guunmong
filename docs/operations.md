@@ -41,7 +41,7 @@ cd ..
 ## 기록 초기화
 
 - 게임 안: 설정 → 기록 지우기 또는 처음 화면 → 처음부터 새로. 확인 후 화면·대기를 먼저 취소하고 설정 네 개만 남긴 새 회차를 한 번 저장한다. 실패하면 기존 기록을 유지한다.
-- 설정까지 지우려면 브라우저 개발자 도구에서 localStorage의 `guunmong-v2`(임시 데이터는 `guunmong-v2-fixture-stub`)을 지운다.
+- 설정까지 지우려면 브라우저 개발자 도구에서 localStorage의 `guunmong-v3`(임시 데이터는 `guunmong-v3-fixture-stub`)을 지운다. 이전 판 기록 `guunmong-v2`는 게임이 지우지 않으므로 필요하면 따로 지운다.
 
 구판 guunmong-v1은 새 판의 초기화가 읽거나 지우지 않는다.
 
@@ -150,6 +150,8 @@ python tools/build_fonts.py
 공개 위치는 pblsketch 계정의 GitHub Pages(저장소 이름 `guunmong`, 바꿀 수 있음)다. 저장소 만들기, 올리기, Pages 켜기는 각각 사용자에게 먼저 확인을 받는다. 작업 저장소의 이력은 올리지 않고, 지금 추적 파일만 새 저장소의 첫 커밋으로 옮긴다.
 
 같은 날 후속 모바일 보완은 공개 제품 커밋 90a3918로 반영했다. 추적 457개 파일의 트리가 작업판 a1836db와 일치했고 Pages built를 확인했다. 공개 첫 화면 8조건·두 손 조작 4조건과 초기 흐름·저장·재접속·권한 이전은 종료 0이며, 런타임 231개가 Git blob 원본 바이트와 모두 일치했다. 근거는 tests/shots/mobile-public-title.log, mobile-public-controls.log, mobile-public-runtime.log다. 그 뒤 커밋은 배포 확인을 기록한 문서 변경이다.
+
+2026-10-07 위기 도전·임무 창·이야기 지도·승인 그림 43개를 공개 제품 커밋 599c6b0으로 반영했다. 작업판 5f1da79와 Git 트리(64e5a1c)가 같고, 내보낸 사본의 권리 검사가 통과했으며 Pages built를 확인했다. 공개 주소에서 새 파일 HTTP 200·원본 해시 일치, 실제 Chrome으로 새 시작의 임무 창·돌다리 팔선녀·느낌표·이야기 지도와 화면 오류 0을 확인했다(tests/shots/explore/live-*.png). 공개 전체 완주나 실기기·수업 검증이 아니다. Windows tar 대신 Python tarfile로 풀어 한글 이름 문제를 피했다.
 
 ```powershell
 cd tests; node run-all.mjs; cd ..                                   # 1. 작업 저장소에서 전체 통과

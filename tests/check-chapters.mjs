@@ -108,7 +108,7 @@ await page.getByRole('button',{name:'이어 하기',exact:true}).click();await p
 await page.evaluate(()=>restoreT9Paint());
 await page.evaluate(()=>{const original=HTMLCanvasElement.prototype.toBlob;window.restoreT9Blob=()=>{HTMLCanvasElement.prototype.toBlob=original};HTMLCanvasElement.prototype.toBlob=function(callback,...args){return original.call(this,blob=>{window.finishT9Blob=()=>callback(blob)},...args)}});await page.locator('[data-act="save-image"]').click();await page.waitForFunction(()=>typeof window.finishT9Blob==='function');const staleDownload=page.waitForEvent('download',{timeout:500}).then(()=>true,()=>false);await page.evaluate(()=>G.app.title());await page.evaluate(()=>{finishT9Blob();restoreT9Blob()});assert.equal(await staleDownload,false,'이탈한 결과 화면의 늦은 PNG 다운로드 차단')});
  await test('reader·이전 회차·확정 해석 불변',async()=>{const reader=await context.newPage();observe(reader);await reader.goto(page.url());await ready(reader);assert.equal(await reader.evaluate(()=>G.save.access),'reader');const before=await state(reader),raw=await reader.evaluate(()=>localStorage.getItem(G.save.key));assert.deepEqual(await reader.evaluate(()=>({current:G.save.transact(G.save.state.rpg.run,d=>{d.name='reader'}),stale:G.save.transact('old-run',d=>{d.name='stale'})})),{current:false,stale:false});assert.deepEqual(await state(reader),before);assert.equal(await reader.evaluate(()=>localStorage.getItem(G.save.key)),raw);await reader.close();const locked=(await state(page)).interp;await page.evaluate(()=>G.app.open('c5-dialogue'));await until(page,async()=>{assert.equal(await page.locator('[data-act="revise"]').count(),0);return(await current(page)).scene==='r-result'},'확정 해석 replay');assert.deepEqual((await state(page)).interp,locked)});
- await test('옛 등급·자동 안내를 새 수행 완료로 표시하지 않음',async()=>{await page.evaluate(()=>{const saved=JSON.parse(localStorage.getItem(G.save.key));saved.events['e04-exam']={turns:['study','study'],rolls:[1,1],hits:2,grade:'fine',reward:{gong:0,fame:0,wealth:0},peek:false,auto:false};saved.done['e04-exam']=true;saved.rpg.scenes['e04-exam']={status:'done',beat:null,actions:[],hint:null};saved.events['e08-wonsu']={turns:[],rolls:[],hits:0,grade:null,reward:null,peek:false,auto:true};saved.rpg.scenes['e08-wonsu']={status:'auto',beat:null,actions:[],hint:'teacher'};localStorage.setItem(G.save.key,JSON.stringify(saved))});await page.reload();await ready(page);const rows=await page.evaluate(()=>G.app.ledgerRows().filter(row=>row.id==='e04-exam'||row.id==='e08-wonsu').map(row=>({id:row.id,status:row.status,firstLabel:row.firstLabel})));assert.deepEqual(rows,[{id:'e04-exam',status:'이전 기록',firstLabel:'이전 기록'},{id:'e08-wonsu',status:'자동 안내',firstLabel:'자동 안내'}])});
+ await test('검증되지 않은 완료·자동 안내를 새 수행 완료로 표시하지 않음',async()=>{await page.evaluate(()=>{const saved=JSON.parse(localStorage.getItem(G.save.key));saved.done['e04-exam']=true;saved.rpg.scenes['e04-exam']={status:'done',beat:null,actions:[],hint:null};saved.rpg.scenes['e08-wonsu']={status:'auto',beat:null,actions:[],hint:'teacher'};localStorage.setItem(G.save.key,JSON.stringify(saved))});await page.reload();await ready(page);const rows=await page.evaluate(()=>G.app.ledgerRows().filter(row=>row.id==='e04-exam'||row.id==='e08-wonsu').map(row=>({id:row.id,status:row.status,firstLabel:row.firstLabel})));assert.deepEqual(rows,[{id:'e04-exam',status:'진행',firstLabel:'진행'},{id:'e08-wonsu',status:'자동 안내',firstLabel:'자동 안내'}]);assert.equal(await page.evaluate(()=>G.save.state.done['e04-exam']),undefined)});
 
  await test('교사 모드 해제 때 일지·해석 입력 보존과 교사 도움 불변',async()=>{
    await installFixture(page,['chae']);await teacherMode(page,true);await fillMatch(page,true);
@@ -219,6 +219,96 @@ await page.evaluate(()=>{const original=HTMLCanvasElement.prototype.toBlob;windo
      console.log('  PNG blob snapshot: filename/paint=클릭스냅샷, saved=나중에입력');
    }finally{await isolated.close()}
  });
+ // 5장 되짚기·E11·결과 모델(명세 8·9절). 합성 저장은 회귀 fixture이며 학생 완주 증거가 아니다.
+ const PEAK_RGB=[176,120,40];
+ const RECAP_A=['꿈에서 네가 고른 말은 부귀 쪽 말 한 번, 소원을 그대로 둔 말 한 번이었다.','선생님 도움으로 넘긴 대목도 있었다.','선녀와 귀신이 한 사람의 꾸밈임을 처음부터 알아보았지.','자객이 숨은 곳은 촛불이 다 꺼지도록 찾지 못했지.','처음 바란 것은 풍류, 꿈에서 가장 차오른 것은 출장입상·부귀.'];
+ const RECAP_B=['꿈속의 갈림길은 모두 선생님의 도움으로 지나왔구나.','꿈에서 가장 차오른 것은 출장입상·부귀·공명.'];
+ const ASK='그 삶은 처음 바라던 삶과 같았느냐?',FIRST_LINE='사람의 세상을 겪어 보니 어떠했느냐?';
+ const E11_A='꿈에서 나는 부귀 쪽 말·소원을 그대로 둔 말을 가장 많이 골랐다.';
+ async function interpFixture(p,play,teacherScene){
+   await p.goto(origin+'/index.html');await ready(p);
+   await p.evaluate(({play,teacherScene})=>{const saved=JSON.parse(JSON.stringify(G.save.state)),list=G.app.list(),stop=list.findIndex(s=>s.id==='c5-dialogue');saved.started=true;saved.pos='c5-dialogue';saved.step='scene';saved.reach=5;saved.awake=true;saved.awakeAt=1700000000123;saved.done={};saved.items=[];saved.bonds=[];saved.pearls={};saved.rpg.cursor=null;saved.rpg.scenes={};for(const scene of list.slice(0,stop)){saved.done[scene.id]=true;const exp=G.experience.find(G.data,scene.id);if(!exp)continue;saved.rpg.scenes[scene.id]={status:'done',beat:null,actions:exp.beats.map(b=>({id:b.id,by:teacherScene===scene.id?'teacher':'student'})),hint:null};for(const beat of exp.beats)for(const effect of beat.effects||[]){if(effect.kind==='item'&&!saved.items.includes(effect.id))saved.items.push(effect.id);if(effect.kind==='bond'&&!saved.bonds.includes(effect.id))saved.bonds.push(effect.id)}}saved.ledger={'a-wish':{first:true,help:null,final:true},'j-match':{first:true,help:null,final:true}};saved.journal={wish:{selected:G.data.scenes.find(s=>s.id==='c1-wish').answers.slice(),wrong:0},bondLink:'misaek',revealed:{misaek:true}};saved.interp={};saved.wrong=[];saved.name='';saved.finishedAt=0;saved.play=play;localStorage.setItem(G.save.key,JSON.stringify(saved))},{play,teacherScene});
+   await p.reload();await ready(p);assert.deepEqual((await state(p)).play,play,'fixture play 보존');
+   await p.getByRole('button',{name:'이어 하기',exact:true}).click();await p.waitForSelector('.play[data-scene="c5-dialogue"]');
+ }
+ async function recapDialogue(p){const lines=[];for(let i=0;i<60;i++){const c=await current(p);if(c.step==='interp-pick')return lines;const box=p.locator('.stage-dialogue');if(c.step==='interp-dialogue'&&await box.count()){const text=(await box.innerText()).trim();lines.push(text);await next(p);await p.waitForFunction(prev=>(document.querySelector('.stage-dialogue')?.innerText||'').trim()!==prev||G.app.current().step!=='interp-dialogue',text)}else await advance(p)}throw Error('interp-pick 도달 실패')}
+ async function toResult(p,option,evidence,revisedCount){
+   await p.locator('.interp-opt[data-opt="'+option+'"]').click();await p.locator('.ev-opt[data-ev="'+evidence+'"]').click();await next(p);
+   await until(p,async()=>(await current(p)).step==='interp-revise','interp-revise');
+   await p.locator('[data-act="revise"]').click();assert.equal(await p.locator('.ev-opt').count(),revisedCount,'응답 뒤 근거 수');
+   const shown=await p.locator('.ev-opt').evaluateAll(ns=>ns.map(n=>n.dataset.ev));
+   await p.locator('.interp-opt[data-opt="'+option+'"]').click();await p.locator('.ev-opt[data-ev="'+evidence+'"]').click();await next(p);
+   await until(p,async()=>(await current(p)).scene==='r-result','r-result');await p.waitForSelector('.journal-page');
+   await p.waitForFunction(()=>[...document.querySelectorAll('[data-trace-image] img')].every(img=>img.complete&&img.naturalWidth));
+   return shown;
+ }
+ // 실제 내려받은 PNG에서 막대 색 줄을 세로 띠로 묶어 각 막대의 가장 긴 가로 길이를 잰다.
+ async function downloadedPng(p,tag){
+   await p.evaluate(()=>{window.t7Paint=[];const fill=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(...a){t7Paint.push(String(a[0]));return fill.apply(this,a)}});
+   const download=p.waitForEvent('download');await p.locator('[data-act="save-image"]').click();const file=await download;
+   const target=path.join(SHOTS,'t7-result-'+tag+'.png');await file.saveAs(target);const bytes=fs.readFileSync(target);
+   assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a','PNG 서명');
+   const scan=await p.evaluate(async({b64,rgb})=>{const img=new Image();img.src='data:image/png;base64,'+b64;await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext('2d');g.drawImage(img,0,0);const d=g.getImageData(0,0,c.width,c.height).data;const bands=[];let open=null;for(let y=600;y<c.height;y++){let best=0,run=0;for(let x=0;x<c.width;x++){const i=(y*c.width+x)*4;if(d[i]===rgb[0]&&d[i+1]===rgb[1]&&d[i+2]===rgb[2]&&d[i+3]===255){run++;best=Math.max(best,run)}else run=0}if(best>=8){if(!open){open={y,width:0};bands.push(open)}open.width=Math.max(open.width,best)}else open=null}return{width:c.width,height:c.height,bands}},{b64:bytes.toString('base64'),rgb:PEAK_RGB});
+   const texts=await p.evaluate(()=>t7Paint);return{scan,texts,bytes:bytes.length};
+ }
+ async function resultSections(p){return p.evaluate(()=>{const t=s=>document.querySelector(s)?.innerText.trim()??null;const bars=[...document.querySelectorAll('.result-peak [data-peak]')].map(row=>{const fill=row.querySelector('.peak-fill'),track=fill?.parentElement;return{wish:row.dataset.peak,ratio:fill&&track?fill.getBoundingClientRect().width/track.clientWidth:null,empty:!!row.querySelector('.peak-empty'),label:row.getAttribute('aria-label')||''}});return{secret:t('.result-secret'),peak:t('.result-peak'),recap:t('.result-recap'),bonds:t('.result-bonds'),ev:t('.jp-ev'),trace:t('.dream-trace-evidence'),bars,rows:document.querySelectorAll('.ledger tbody tr').length}})}
+ await test('5장 되짚기(혼합·동률·첫 결과)·E11 8/11·결과와 실제 PNG의 숨긴 소원·막대·되짚기',async()=>{
+   const isolated=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true}),p=await isolated.newPage();observe(p);
+   try{
+     const play={secretWish:'pungryu',choices:{'ch-tianjin-poem':{option:'boast'},'ch-yoyeon-reply':{option:'calm'}},firsts:{'ch-chunun-ghost':{ok:true,clues:1},'ch-yoyeon-night':{ok:false,tried:[]}},peak:{chuljang:4,bugwi:4,pungryu:2,gongmyeong:1}};
+     await interpFixture(p,play,'e10-neungpa');
+     const lines=await recapDialogue(p);
+     assert.deepEqual(lines.slice(0,RECAP_A.length+2),[...RECAP_A,ASK,FIRST_LINE],'되짚기 줄 차례');
+     assert.equal(await p.locator('.ev-opt').count(),8,'응답 전 근거 8');
+     assert.equal((await p.locator('.ev-opt[data-ev="E11"]').innerText()).split('\n')[0].trim(),E11_A);
+     assert.doesNotMatch(await p.locator('.interp-pick-box').innerText(),/\{|\}/);
+     const shown=await toResult(p,'i-own','E11',11);assert.ok(shown.includes('E11'));
+     assert.deepEqual((await state(p)).interp.first,{option:'i-own',evidence:'E11'},'저장은 근거 id만');
+     const dom=await resultSections(p);
+     assert.equal(dom.ev,E11_A,'결과 근거는 다시 만든 E11');assert.ok(dom.trace.includes(E11_A));
+     assert.match(dom.secret,/숨긴 소원/);assert.match(dom.secret,/풍류/);
+     assert.match(dom.peak,/가장 찼던 소원 → 빈 선방/);assert.doesNotMatch(dom.peak,/\d|%/,'막대에 숫자 없음');
+     assert.deepEqual(dom.bars.map(b=>b.wish),['chuljang','bugwi','pungryu','gongmyeong']);
+     dom.bars.forEach((b,i)=>{assert.ok(Math.abs(b.ratio-[1,1,.5,.25][i])<.02,'DOM 막대 '+b.wish+' '+b.ratio);assert.ok(b.empty,'빈 선방 막대');assert.doesNotMatch(b.label,/\d/)});
+     for(const line of RECAP_A)assert.ok(dom.recap.includes(line),'결과 되짚기 '+line);assert.ok(!dom.recap.includes(ASK),'결과 되짚기는 1~3');
+     assert.match(dom.bonds,/꿈에서 만난 인연/);assert.doesNotMatch(dom.bonds,/\d|칸|모두|명/,'인연 수 세기 없음');
+     const met=await p.evaluate(()=>G.data.bonds.filter(b=>G.save.state.bonds.includes(b.id)).map(b=>b.name));assert.ok(met.length>0);for(const name of met)assert.ok(dom.bonds.includes(name),'인연 이름 '+name);
+     assert.equal(dom.rows,14,'장부 14행');
+     assert.doesNotMatch(await p.locator('.ledger').innerText(),/숨긴 소원|되짚기|부귀 쪽 말/,'장부에 선택·숨긴 소원 없음');
+     const model=await p.evaluate(()=>G.app.lastPage());assert.equal(model.evidence,E11_A);assert.deepEqual(model.recap,RECAP_A);
+     const png=await downloadedPng(p,'mixed');
+     assert.equal(png.scan.width,900);
+     assert.equal(png.scan.bands.length,4,'PNG 막대 넷 '+JSON.stringify(png.scan.bands));
+     const full=png.scan.bands[0].width;png.scan.bands.forEach((b,i)=>assert.ok(Math.abs(b.width/full-[1,1,.5,.25][i])<.02,'PNG 막대 비율 '+JSON.stringify(png.scan.bands)));
+     // 긴 줄은 PNG 폭에 맞춰 나뉘므로(나뉜 자리의 띄어쓰기 생략) 빈칸을 뺀 이어 붙인 글에서 찾는다.
+     const flat=s=>s.replace(/\s+/g,''),painted=flat(png.texts.join(''));
+     for(const word of ['숨긴 소원','풍류','가장 찼던 소원 → 빈 선방','육관대사의 되짚기','꿈에서 만난 인연',E11_A,...RECAP_A,...met])assert.ok(painted.includes(flat(word)),'PNG 글 '+word);
+     assert.ok(!painted.includes(flat(ASK)));
+     assert.deepEqual(png.texts.filter(t=>t!==model.date&&/\d/.test(t)),[],'PNG에 날짜 밖 숫자 없음');
+     console.log('  T7 혼합: 되짚기 '+RECAP_A.length+'줄+물음, 근거 8/11, PNG '+png.bytes+'B 막대 '+png.scan.bands.map(b=>b.width).join('/'));
+   }finally{await isolated.close()}
+ });
+ await test('기록 없는 5장: 선생님 도움 줄·E11 숨김 7/10·결과 고르지 않음',async()=>{
+   const isolated=await browser.newContext({viewport:{width:390,height:844},acceptDownloads:true}),p=await isolated.newPage();observe(p);
+   try{
+     const play={secretWish:null,choices:{},firsts:{},peak:{chuljang:2,bugwi:2,pungryu:1,gongmyeong:2}};
+     await interpFixture(p,play,null);
+     const lines=await recapDialogue(p);
+     assert.deepEqual(lines.slice(0,RECAP_B.length+2),[...RECAP_B,ASK,FIRST_LINE]);
+     assert.equal(await p.locator('.ev-opt').count(),7,'기록 없음 응답 전 근거 7');assert.equal(await p.locator('.ev-opt[data-ev="E11"]').count(),0);
+     await toResult(p,'i-vain','E5',10);
+     const dom=await resultSections(p);
+     assert.match(dom.secret,/고르지 않음/);for(const line of RECAP_B)assert.ok(dom.recap.includes(line));
+     assert.doesNotMatch(await p.locator('.journal-page').innerText(),/가장 많이 골랐다|\{top/);
+     dom.bars.forEach((b,i)=>assert.ok(Math.abs(b.ratio-[.5,.5,.25,.5][i])<.02,'DOM 막대 '+b.wish));
+     assert.equal(dom.rows,14);
+     assert.equal(await p.evaluate(()=>G.play.e11(G.save.state,G.data)),null);
+     const png=await downloadedPng(p,'none');
+     const flat=s=>s.replace(/\s+/g,''),painted=flat(png.texts.join(''));for(const word of ['고르지 않음',...RECAP_B])assert.ok(painted.includes(flat(word)),'PNG 글 '+word);
+     assert.ok(!painted.includes(flat('가장 많이 골랐다')),'기록 없으면 PNG에 E11 없음');
+     assert.equal(png.scan.bands.length,4);
+   }finally{await isolated.close()}
+ });
  await context.close();
 }catch(error){if(!errors.length)errors.push(error.stack);console.error('종속 시나리오 중단: '+error.message)}finally{await browser.close();await new Promise(r=>server.close(r))}
-console.log('점검 묶음 '+passed+'/9 통과');if(errors.length)console.error(errors.join('\n'));process.exit(errors.length||passed!==9?1:0);
+console.log('점검 묶음 '+passed+'/11 통과');if(errors.length)console.error(errors.join('\n'));process.exit(errors.length||passed!==11?1:0);

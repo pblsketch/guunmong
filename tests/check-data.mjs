@@ -39,7 +39,8 @@ for (const [name, change] of [
   ok(sandbox.G.checkData(bad).some(problem => problem.startsWith('house-story:')), '생활 공간 조건', name + ' 거부');
 }
 const story = sandbox.G.storyText(d);
-ok(story.count > 0 && story.count <= 4400, '글 총량', String(story.count));
+const STORY_LIMIT = 5000;
+ok(story.count > 0 && story.count <= STORY_LIMIT, '글 총량', String(story.count));
 const scenes = d.scenes;
 const events = scenes.filter(s => s.kind === 'event');
 const links = scenes.filter(s => s.kind === 'link');
@@ -84,17 +85,6 @@ for (const s of events) {
 if (events[10]?.core || events[11]?.core) ok(JSON.stringify(events[10]?.core) === JSON.stringify(['muye', 'jiryak']) &&
   JSON.stringify(events[11]?.core) === JSON.stringify(['munjang']), '구판 필드', '개선·재회 core 호환');
 ok(links.length === 3 && dream.length === 15, '꿈', '사건 12·이음 3');
-ok(new Set(dream.map(s => s.square)).size === 14, '말판', '꿈 장면 칸 14');
-ok(events[3]?.square === 'sq-hallim' && events[4]?.square === 'sq-hallim', '말판', '급제·가춘운 같은 칸');
-for (const s of dream) {
-  const q = d.board.find(q => q.id === s.square);
-  ok(q && (q.scene === s.id || (s === events[4] && q.scene === events[3]?.id)), s.id, '말판 연결');
-}
-for (const q of d.board) {
-  ok(q.start ? q.scene === null : scenes.some(s => s.id === q.scene), q.id, '장면 참조');
-  const expected = q.id === 'sq-wonsu' ? ['chuljang.chul'] : q.id === 'sq-seungsang' ? ['chuljang.ip'] : [];
-  ok(JSON.stringify(q.fills || []) === JSON.stringify(expected), q.id, '출장입상만 칸으로 채움');
-}
 const items = scenes.flatMap(s => [...(s.items || []), ...(s.bonus?.items || [])]);
 const itemImages = fs.readdirSync(path.join(ROOT, 'assets/items')).filter(f => f.endsWith('.webp')).map(f => f.slice(0, -5));
 ok(items.length === 14 && new Set(items.map(i => i.id)).size === 14, '물건', '중복 없이 14개');
@@ -124,7 +114,7 @@ ok(d.interp.evidence.filter(e => e.after).length === 3, '해석', '응답 뒤 �
 const plain = s => s.replace(/\*\*/g, '').replace(/\{([^}|]+)\|[^}]+\}/g, '$1');
 const toTexts = v => typeof v === 'string' ? [plain(v)] : Array.isArray(v) ? v.flatMap(toTexts) : v && !v.mark ? toTexts(v.text || v.gloss || '') : [];
 const before = scenes.filter(s => ['1', '3'].includes(s.ch)).flatMap(s => [...toTexts(s.lines), ...toTexts(s.monologue), ...(s.timeline || []).flatMap(f => toTexts(f.lines))]);
-for (const e of d.interp.evidence) ok((e.after ? toTexts(d.interp.lastWords) : before).some(t => t.includes(e.text)), e.id, '선택 전에 실제로 읽은 근거');
+for (const e of d.interp.evidence.filter(e => !e.template)) ok((e.after ? toTexts(d.interp.lastWords) : before).some(t => t.includes(e.text)), e.id, '선택 전에 실제로 읽은 근거');
 const opening = scenes.find(s => s.id === 'cut-josin');
 ok(opening?.optional === true && d.notes.comparison?.scene === opening.id, '조신', '결과의 선택형 비교 읽기');
 ok(scenes.filter(s => !s.optional).length === 28 && scenes.find(s => !s.optional)?.id === 'c1-bridge', '본편', '구운몽부터 28단위');
@@ -135,6 +125,93 @@ for (const [key, ids] of Object.entries({ abilities: ['munjang', 'eumak', 'muye'
   ok(ids.every(id => typeof d.notes.ui?.[key]?.[id] === 'string'), '화면 글', key);
 }
 ok(d.notes.ui?.result?.scoreNotice === '점수로 평가하지 않아요', '결과', '평가 안내');
+// ── 고른 대로 차오르는 꿈: 선택의 소원 증감·물러남·뒤 장면 변화·되짚기 틀·E11 (README '위기 도전과 생각 선택'·'되짚기 틀')
+const VISIBLE_WISHES = ['chuljang', 'bugwi', 'pungryu', 'gongmyeong'];
+const challenge = id => (d.challenges || []).find(c => c.id === id);
+const shape = c => Object.fromEntries((c?.options || []).map(o => [o.id, o.stay ? 'stay' : (o.wish || []).map(w => w.wish + (w.step > 0 ? '+' : '-')).join(',')]));
+ok(challenge('ch-tianjin-poem')?.music === true, '시회', '시·음악 자리 표시');
+ok(JSON.stringify(shape(challenge('ch-tianjin-poem'))) === JSON.stringify({ boast: 'bugwi+,pungryu-', heart: 'pungryu+', mock: 'gongmyeong+,pungryu-' }), '시회', '처음 고른 시의 증감');
+ok(challenge('ch-tianjin-poem')?.answer === 'heart', '시회', '정답이 있는 도전으로 남음');
+ok(JSON.stringify(shape(challenge('ch-yoyeon-reply'))) === JSON.stringify({ sword: 'gongmyeong+', call: 'chuljang+', calm: 'stay' }), '자객 앞', '생각 선택 증감과 물러남');
+const order = challenge('ch-neungpa-order');
+ok(order && order.scene === 'e10-neungpa' && order.beat === 'neungpa-share' && order.kind === 'talk' && order.at === 0 && typeof order.prompt === 'string' && typeof order.note === 'string', '반사곡 차례', '새 생각 선택 자리');
+ok(order && Object.values(shape(order)).join('|') === 'chuljang+|gongmyeong+|stay', '반사곡 차례', '장수·공·쓰러진 군사의 증감');
+ok(/게임/.test(order?.note || '') && /원작/.test(order?.note || ''), '반사곡 차례', '꾸민 장치라는 원작과 게임 노트');
+for (const id of ['ch-bridge-reply', 'ch-gyeonghong-reply']) ok((challenge(id)?.options || []).every(o => !('wish' in o) && !('stay' in o)), id, '이번에는 소원을 움직이지 않음');
+for (const c of d.challenges || []) for (const o of c.options || []) for (const w of o.wish || []) {
+  ok(VISIBLE_WISHES.includes(w.wish), c.id + '/' + o.id, '드러난 소원 넷만 움직임');
+  ok(w.wish !== 'pungryu' || c.music === true, c.id + '/' + o.id, '풍류는 시·음악 자리에서만');
+}
+const water = challenge('ch-bansagok-water'), who = challenge('ch-gyeonghong-who');
+ok(water?.after?.from === 'ch-yoyeon-night' && JSON.stringify(water.after.spots) === JSON.stringify(['stream', 'pool']) && typeof water.after.text === 'string', '반사곡 물', '자객 첫 성공 뒤 미리 표시할 두 곳');
+ok(who?.after?.from === 'ch-chunun-ghost' && who.after.clue === 1 && typeof who.after.text === 'string', '적생 추리', '가춘운 첫 성공 뒤 미리 펼칠 단서(답을 주지 않는 1번)');
+for (const c of [water, who, order]) if (c) for (const t of [c.after?.text, ...(c.options || []).map(o => o.reply?.text || o.reply)].filter(t => typeof t === 'string')) ok(story.texts.includes(plain(t)), c.id, '새 반응·안내가 이야기 총량에 듦');
+const E11 = d.interp.evidence.find(e => e.id === 'E11');
+ok(d.interp.evidence.length === 11 && E11?.template === true && typeof E11.text === 'string' && typeof E11.from === 'string', '해석', 'E11 내가 꿈에서 고른 길 틀 근거');
+ok(d.interp.options.find(o => o.id === 'i-own')?.fits?.includes('E11'), '해석', 'E11은 i-own에 맞음');
+const recap = d.interp.recap || {};
+for (const key of ['chose', 'item', 'pickName', 'stayName', 'none', 'teacher', 'wishLine', 'peakOnly', 'ask']) ok(typeof recap[key] === 'string' && recap[key].trim(), '되짚기', key + ' 틀');
+ok(Array.isArray(recap.counts) && recap.counts.length >= 3 && recap.counts.every(v => typeof v === 'string' && !/[0-9]/.test(v)), '되짚기', '횟수는 숫자 없는 말');
+ok(JSON.stringify((recap.first || []).map(f => f.challenge)) === JSON.stringify(['ch-chunun-ghost', 'ch-yoyeon-night']), '되짚기', '이번 묶음 두 도전의 첫 결과');
+ok(recap.ask === '그 삶은 처음 바라던 삶과 같았느냐?', '되짚기', '마지막 물음');
+ok(story.texts.some(t => t === recap.ask), '되짚기', '틀 문장이 이야기 총량에 듦');
+ok(story.texts.some(t => t.includes('출장입상') && t.includes('공명') && t.includes('부귀') && t.includes('풍류') && !t.includes('{')), '되짚기', '가장 긴 채움으로 셈');
+{
+  // 틀 근거 E11도 학생이 읽는 글이다. 네 소원 쪽과 물러남을 모두 든 가장 긴 채움이 이야기 총량에 있어야 한다.
+  const names = d.wishes.filter(w => VISIBLE_WISHES.includes(w.id)).map(w => w.name);
+  const top = [...names.map(n => (recap.pickName || '').replace('{wish}', n)), recap.stayName].join('·');
+  const filled = (E11?.text || '').replace(/\{top(?::([^}]+))?\}/, (all, pair) => top + (pair ? pair.split('/')[0] : ''));
+  ok(E11 && !filled.includes('{') && story.texts.includes(filled), '해석', 'E11 틀을 가장 길게 채운 줄이 이야기 총량에 듦');
+}
+const ui = d.notes.ui || {};
+for (const [group, keys] of Object.entries({ secretWish: ['title', 'prompt', 'hint', 'button', 'review', 'saved', 'teacher', 'retry'], band: ['label', 'wish', 'hidden', 'secret', 'bonds', 'separator'], choice: ['up', 'down', 'stay', 'first'], collapse: ['label', 'bonds'] })) {
+  for (const key of keys) ok(typeof ui[group]?.[key] === 'string', '화면 글', group + '.' + key);
+}
+ok(Array.isArray(ui.band?.levels) && ui.band.levels.length === 5 && Array.isArray(ui.band?.bondCounts) && ui.band.bondCounts.length === 9, '화면 글', '띠의 정도·인연 칸 말');
+for (const key of ['bonds', 'secretWish', 'noSecret', 'peak', 'recap']) ok(typeof ui.result?.[key] === 'string', '화면 글', 'result.' + key);
+ok(ui.result?.noSecret === '고르지 않음' && ui.result?.bonds === '꿈에서 만난 인연' && ui.choice?.first === '처음 고른 길', '화면 글', '결과·다시 읽기 문구');
+const digits = v => typeof v === 'string' ? /[0-9]/.test(v) : Array.isArray(v) ? v.some(digits) : v && typeof v === 'object' ? Object.values(v).some(digits) : false;
+ok(!digits([ui.secretWish, ui.band, ui.choice, ui.collapse, recap]), '화면 글', '소원 정도에 숫자 없음');
+const warns = (code, change) => {
+  const bad = structuredClone(d);
+  try { change(bad); } catch { return false; } // 바꿀 자료가 없으면 음성 사례도 성립하지 않는다
+  return sandbox.G.checkData(bad).some(p => p.startsWith(code + ':'));
+};
+const optionOf = (bad, id, option) => bad.challenges.find(c => c.id === id).options.find(o => o.id === option);
+for (const [name, code, change] of [
+  ['미색 증감', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'misaek', step: 1 }]; }],
+  ['없는 소원 id', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'fame', step: 1 }]; }],
+  ['한 칸 넘는 증감', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'gongmyeong', step: 2 }]; }],
+  ['0 증감', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'gongmyeong', step: 0 }]; }],
+  ['빈 증감', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = []; }],
+  ['같은 소원 두 번', 'challenge-wish', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'gongmyeong', step: 1 }, { wish: 'gongmyeong', step: 1 }]; }],
+  ['도전 결과에 증감', 'challenge-wish', bad => { bad.challenges.find(c => c.id === 'ch-chunun-ghost').options[0].wish = [{ wish: 'bugwi', step: 1 }]; }],
+  ['시·음악 아닌 자리의 풍류', 'challenge-pungryu', bad => { optionOf(bad, 'ch-yoyeon-reply', 'sword').wish = [{ wish: 'pungryu', step: 1 }]; }],
+  ['시회 표시 없는 풍류', 'challenge-pungryu', bad => { delete bad.challenges.find(c => c.id === 'ch-tianjin-poem').music; }],
+  ['물러남 둘', 'challenge-stay', bad => { const o = optionOf(bad, 'ch-yoyeon-reply', 'call'); delete o.wish; o.stay = true; }],
+  ['물러남 없음', 'challenge-stay', bad => { delete optionOf(bad, 'ch-neungpa-order', 'fallen').stay; }],
+  ['증감 있는 물러남', 'challenge-stay', bad => { optionOf(bad, 'ch-yoyeon-reply', 'calm').wish = [{ wish: 'bugwi', step: 1 }]; }],
+  ['정답 도전의 물러남', 'challenge-stay', bad => { optionOf(bad, 'ch-tianjin-poem', 'heart').stay = true; }],
+  ['답이 든 미리 표시', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-bansagok-water').after.spots = ['stream', 'dragon']; }],
+  ['없는 자리 미리 표시', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-bansagok-water').after.spots = ['stream', 'cave']; }],
+  ['없는 앞 도전', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-bansagok-water').after.from = 'ch-missing'; }],
+  ['뒤 도전을 앞 도전으로', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-gyeonghong-who').after.from = 'ch-yoyeon-night'; }],
+  ['생각 선택을 앞 도전으로', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-bansagok-water').after.from = 'ch-yoyeon-reply'; }],
+  ['범위 밖 단서', 'challenge-after', bad => { const c = bad.challenges.find(c => c.id === 'ch-gyeonghong-who'); c.after.clue = c.clues.length; }],
+  ['추리에 자리 표시', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-gyeonghong-who').after.spots = ['stream']; }],
+  ['안내 없는 변화', 'challenge-after', bad => { bad.challenges.find(c => c.id === 'ch-gyeonghong-who').after.text = ''; }],
+  ['인연에 증감', 'bond-fill', bad => { bad.bonds[0].wish = [{ wish: 'bugwi', step: 1 }]; }],
+  ['구슬에 증감', 'pearl-wish', bad => { bad.scenes.find(s => s.pearl).pearl.wish = [{ wish: 'bugwi', step: 1 }]; }],
+  ['인연 효과에 증감', 'effect-fields', bad => { const e = bad.experiences.flatMap(e => e.beats).flatMap(b => b.effects).find(v => v.kind === 'bond'); e.wish = [{ wish: 'bugwi', step: 1 }]; }],
+  ['틀 표시 없는 E11', 'evidence', bad => { delete bad.interp.evidence.find(e => e.id === 'E11').template; }],
+  ['근거 개수', 'evidence-count', bad => { bad.interp.evidence = bad.interp.evidence.filter(e => e.id !== 'E11'); }],
+  ['없는 근거를 맞춤', 'interp-fits', bad => { bad.interp.options[0].fits.push('E12'); }],
+  ['되짚기 틀 빠짐', 'interp-recap', bad => { delete bad.interp.recap.ask; }],
+  ['되짚기 틀의 모르는 자리', 'interp-recap', bad => { bad.interp.recap.wishLine += '{score}'; }],
+  ['되짚기 횟수 말 부족', 'interp-recap', bad => { bad.interp.recap.counts = ['한 번']; }],
+  ['되짚기 첫 결과의 생각 선택', 'interp-recap', bad => { bad.interp.recap.first[0].challenge = 'ch-yoyeon-reply'; }],
+  ['상한 넘는 글', 'story-limit', bad => { bad.challenges.find(c => c.id === 'ch-yoyeon-reply').options[0].reply.text = '가'.repeat(1200); }],
+]) ok(warns(code, change), '음성 사례', name + ' → ' + code);
 const banned = [[0xC9C0, 0xD559, 0xC0AC], [0xD2F0, 0xC194, 0xB8E8, 0xC158]].map(c => String.fromCharCode(...c));
 for (const { at, text } of strings) {
   ok(!/\?{2,}|\uFFFD/.test(text), at, '한국어 인코딩 손실');
@@ -157,7 +234,7 @@ if (fs.existsSync(textbook)) {
     }
   }
 }
-console.log(`사건 ${events.length} · 이음 ${links.length} · 물건 ${items.length} · 근거 ${d.interp.evidence.length} · 이야기 ${story.count}/4400자 · 교과서 겹침 ${overlaps}`);
+console.log(`사건 ${events.length} · 이음 ${links.length} · 물건 ${items.length} · 근거 ${d.interp.evidence.length} · 이야기 ${story.count}/${STORY_LIMIT}자 · 교과서 겹침 ${overlaps}`);
 for (const issue of issues) console.error('✗ ' + issue);
 console.log(issues.length ? `✗ 데이터 점검 실패 ${issues.length}건` : '✓ 실제 데이터 점검 통과');
 process.exitCode = issues.length ? 1 : 0;

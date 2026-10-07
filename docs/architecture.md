@@ -12,26 +12,25 @@
 
 | 부분 | 역할과 연결 |
 | --- | --- |
-| `js/data/` | 인물·장·말판·장면·소원·인연·집·일지·해석·노트·음원·동작 그림의 순수 데이터와 maps/experiences |
+| `js/data/` | 인물·장·장면·도전·소원·인연·집·일지·해석·노트·음원·동작 그림의 순수 데이터와 maps/experiences |
 | `util`, `text`, `ui` | 요소·조사·정수배, 글 표기, 알림·시트·설정 공통 표시 |
 | `data` | script를 읽고 누락과 데이터 경고를 수집. 실제 자료와 시험 자료의 검사 모드를 구분 |
 | `world`, `experience` | DOM·저장소 없이 보행·가시성·경로·장소 전환, 순서·행동·원작 사실·rpg 이관 계산 |
-| `sim` | 구판 계산 파일을 보존하며 새 플레이에서는 호출하지 않음 |
-| `save` | Web Locks의 배타 writer만 v2 상태를 저장. 동결 스냅샷·실패 보존 트랜잭션·활동 장부·체험 API 제공 |
+| `play` | 소원 막대 값(원작분 바닥 + 선택분), 선택 자리·뒤 장면 변화 찾기, 되짚기 모델·문장·E11을 계산하는 순수 함수(G.play) |
+| `save` | Web Locks의 배타 writer만 v3 상태를 저장. 동결 스냅샷·실패 보존 트랜잭션·활동 장부·체험 API와 선택·첫 판가름·숨긴 소원 기록 API 제공 |
 | `audio` | 로컬 녹음, 합성 대체 가락과 효과음. 배경음·효과음 설정 분리 |
 | `activity` | 맞대기의 묶음 선택·확정과 도움 사다리 |
 | `app` | 열기 문, 장 순서, 재개 위치, 깨어남, 전체 게임 화면, 목차·설정·장부와 확장 지점 |
 | `stage` | 게임 창 안의 컷신과 공통 대화·초상·효과, 대화 중 생각 선택. 다른 꿈 화면에 의존하지 않음 |
-| `challenge` | 원작 위기 대목의 도전 창(고르기·추리·찾기·가락)과 생각 선택 단추. 결과를 저장하지 않고 월드가 기존 행동 기록으로 잇는다 |
+| `challenge` | 원작 위기 대목의 도전 창(고르기·추리·찾기·가락)과 생각 선택 단추. 첫 판가름을 즉시 저장하고, 소원 방향 미리 보기·처음 고른 길·앞 도전 결과로 바뀐 뒤 장면을 그린다 |
 | `world` 화면 | 맵·대상 목록·이동·대화·관찰을 app ctx와 연결 |
-| `event`, `hud` | event는 월드가 없는 옛 자료의 읽기 화면, hud는 현재 꿈 보따리 단추와 권한 갱신. 본편 사건은 world 사용 |
-| 구판 `board`, `prep` | 파일·자산은 보존하되 실행 HTML에서 제외 |
+| `event`, `hud` | event는 월드가 없는 옛 자료의 읽기 화면, hud는 꿈 보따리 단추와 2장~난간 타격 전의 소원 띠(숫자 없는 막대·인연 여덟 칸), 깨어남 저장 뒤의 무너짐 연출. 본편 사건은 world 사용 |
 | `dream` | 말판과 독립한 G.dream. 생활 공간·인연·소원·원작 물건·구슬의 공통 표시·접근 제공 |
-| `cutscene`, `wish`, `wake` | 시간 순서 컷신, 소원 낱말 찾기, 난간 타격과 사라짐 |
+| `cutscene`, `wish`, `wake` | 시간 순서 컷신, 소원 낱말 찾기와 숨긴 소원, 난간 타격과 사라짐 |
 | `journal`, `interp`, `result` | 맞대기·인연 잇기, 응답 전후 해석, 마지막 장과 PNG |
 | `main` | 데이터 → 저장 → app 순서로 시작하고 첫 입력에서 소리를 해제 |
 
-core는 app·말판·집을 호출하지 않는다. 화면은 app의 screens·hook·on·toolbar로 연결한다. save는 실행 시점에 world/experience를 참조한다. 두 순수 모듈은 main의 load 전에 등록돼야 한다.
+core는 app·말판·집을 호출하지 않는다. 화면은 app의 screens·hook·on·toolbar로 연결한다. save는 실행 시점에 world/experience/play를 참조한다. 세 순수 모듈은 main의 load 전에 등록돼야 한다.
 
 app은 viewport 크기의 game-shell 안에 필드와 HUD를 배치한다. 월드의 대화는 필드 위에 잠깐 표시하며 평소 방향 버튼·대상 목록·도움은 접힌 조작 도구에 둔다. 소원·책·결과는 같은 게임 화면 안의 창으로 표시하고 긴 내용만 창 안에서 스크롤한다. 필드 아래로 본문을 이어 붙이거나 문서 전체를 스크롤하지 않는다. 다른 창에 남겨 두는 필드 그림은 이벤트와 입력 표식을 제거한 inert 사본이다.
 
@@ -39,12 +38,12 @@ app은 viewport 크기의 game-shell 안에 필드와 HUD를 배치한다. 월�
 
 깨어남은 cinematic 표시로 같은 승인 취미궁 맵 위에 96px 호승 자세와 대사를 얹는다. stage는 필드 배율·초점, cutscene은 맵의 발 위치를 사용한다. wake는 동기 저장 성공 뒤에만 타격 자세로 바꾸고 이벤트 없는 그림을 선방 배경으로 걷어 낸다. 점수·말판·집의 구판 부서짐 화면을 호출하지 않는다. 저장 실패에서 지팡이 대기를 유지하고, 진입 오류는 게임 안의 오류 창으로 표시한다.
 
-index.html은 core(util → world → experience → save → data → audio → text → ui → activity), app → stage → challenge → world 화면, dream → 집·구슬·보따리·깨어남·일지·해석·결과·호환 사건·HUD·컷신·소원, main 순서로 등록한다. `dream.js`가 G.dream을 만들며 뒤의 화면들이 이를 사용한다. board/prep/sim은 실행 script 목록에 없고 구판 파일과 기록만 보존한다.
+index.html은 core(util → world → experience → play → save → data → audio → text → ui → activity), app → stage → challenge → world 화면, dream → 집·구슬·보따리·깨어남·일지·해석·결과·호환 사건·HUD·컷신·소원, main 순서로 등록한다. `dream.js`가 G.dream을 만들며 뒤의 화면들이 이를 사용한다. 옛 판의 board·prep·sim 모듈과 말판 자료는 0022에서 지웠다.
 
 ## 한 판의 흐름
 
 1. 로컬 script 데이터와 maps/experiences를 읽고 실제 28단위·12사건·3이음의 모든 참조·필수 경로를 검사한다. missing/problems가 있으면 시작을 막는다. 대표 시험 두 프로필은 실제 전체 통과와 별도다.
-2. v2 저장을 읽고 acquireWriter를 기다린다. 같은 열쇠 writer는 하나이며 다른 탭은 reader다. 최초 옛 기록 이관은 writer에서만 run을 만들고 rpg를 추가한다. 무효 기존 run은 열람만 허용한다.
+2. v3 저장을 읽고(없으면 v2에서 설정 넷만 읽음) acquireWriter를 기다린다. 같은 열쇠 writer는 하나이며 다른 탭은 reader다. run은 writer의 최초 저장에서만 만든다. 무효 기존 run은 열람만 허용한다.
 3. app은 list/canOpen/open/resume 문을 유지한다. 새 판 시작은 확인·화면 취소 뒤 reset으로 새 run을 한 번 저장하고 돌다리를 연다.
 4. 화면 ctx는 생성 시 run을 보관한다. readonly·ctx.alive·취소 신호를 모든 비동기 경계에서 검사한다. save.onChange의 access/storage/reset 알림은 화면 폐기·재표시에 연결한다.
 5. 월드는 scene/map/beat/actor를 읽어 이동·대화·관찰을 보여 준다. 유효 보행 칸을 끝낼 때 저장하며 필수 행동은 순서대로 한 번 기록한다. map/spawn 전환은 이동·대화·관찰자를 취소하고 안전 입구에서 시작한다.
@@ -57,7 +56,7 @@ index.html은 core(util → world → experience → save → data → audio →
 
 ## 저장과 소리
 
-상태는 `guunmong-v2`의 JSON 한 덩이다. 시험 자료는 별도 열쇠를 쓰고 구판 v1은 읽거나 지우지 않는다. 잠금 이름은 guunmong-write:<저장 열쇠>이며 exclusive/ifAvailable로 하나의 writer만 유지한다. reader는 메모리도 바꾸지 않는다. 권한 이전·bfcache는 최신 저장을 다시 읽으며 pagehide는 즉시 쓰기를 막는다. 같은 run의 awake는 단조롭고 확인 초기화만 새 run을 만든다. 원격 동기화는 없다.
+상태는 `guunmong-v3`의 JSON 한 덩이다. 시험 자료는 별도 열쇠를 쓴다. v3가 없을 때 v2에서 설정 넷만 읽고, v2·v1은 고치거나 지우지 않는다. 선택·첫 판가름·숨긴 소원·가장 찼던 값은 `play`에 있다. 잠금 이름은 guunmong-write:<저장 열쇠>이며 exclusive/ifAvailable로 하나의 writer만 유지한다. reader는 메모리도 바꾸지 않는다. 권한 이전·bfcache는 최신 저장을 다시 읽으며 pagehide는 즉시 쓰기를 막는다. 같은 run의 awake는 단조롭고 확인 초기화만 새 run을 만든다. 원격 동기화는 없다.
 
 http(s)에서는 로컬 mp3를 Web Audio로 재생하며 최근 곡의 디코딩 결과를 재사용한다. 파일로 열면 audio 요소를 사용하고 녹음을 읽을 수 없을 때 합성 가락으로 대체한다. 효과음은 브라우저 합성이다. 화면 접기는 두 소리 경로를 모두 멈춘다.
 

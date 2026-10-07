@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { harness, ROOT, start, target, dialogue, ready, state, step, seekTarget, fieldCell } from './rpg-harness.mjs';
+import { harness, ROOT, start, target, dialogue, ready, state, step, seekTarget, fieldCell, secretWish } from './rpg-harness.mjs';
 
 const shots = path.join(ROOT, 'tests/shots');
 const order = ['c1-bridge', 'c1-cell', 'c1-wish', 'c1-exile', 'c1-rebirth', 'e01-huayin'];
@@ -114,6 +114,16 @@ async function solveWish(p, help = false, reconnect = false) {
   for (const id of answers) { const b = p.locator('[data-word="' + id + '"]'); if (!await b.isDisabled()) await b.click(); }
   const s = await state(p); assert.deepEqual(s.ledger['a-wish'], { first: !help, help: help ? 'student' : null, final: true });
   assert.deepEqual([...s.journal.wish.selected].sort(), [...answers].sort()); assert.equal(await p.locator('.wish-found[data-wish="misaek"] b').innerText(), '?'); await log(p, '소원 확정');
+  // 숨긴 소원을 고르기 전에는 다음 단추가 없다. 고르면 같은 화면에 고른 것만 남는다.
+  assert.equal(await p.locator('#tray [data-act="next"]').count(), 0, '숨긴 소원 전 다음 없음');
+  assert.equal(await p.locator('[data-secret-wish="misaek"]').count(), 0, '미색은 숨긴 소원 후보 아님');
+  await secretWish(p, 'pungryu'); assert.equal((await state(p)).play.secretWish, 'pungryu');
+}
+// 소원 확정 뒤에는 숨긴 소원 질문이 먼저 나오고, 고른 뒤에야 다음 단추가 생긴다.
+async function chooseSecretThenNext(p) {
+  await p.waitForSelector('[data-act="secret"]');
+  assert.equal(await p.locator('#tray [data-act="next"]').count(), 0, '숨긴 소원 전 다음 없음');
+  await secretWish(p); await p.waitForSelector('#tray [data-act="next"]:not([disabled])');
 }
 async function toHuayin(p) {
   await next(p); await at(p, 'c1-exile', 'exile-listen'); await target(p, 'exile-master');
@@ -149,7 +159,7 @@ async function finishHuayin(p, opt = {}) {
   const s = await state(p); assert.equal(s.teacher, false); assert.equal(s.awake, false); assert.ok(order.every(id => s.done[id] === true));
   assert.equal(s.items.filter(id => id === 'it-yangryu').length, 1); assert.deepEqual(s.bonds, ['chae']); assert.equal(!!s.pearls.chae, !!opt.pearl);
   for (const record of Object.values(s.rpg.scenes)) assert.ok(record.actions.every(a => a.by === 'student'));
-  assert.deepEqual(s.abil, { munjang: 0, eumak: 0, muye: 0, jiryak: 0 }); assert.deepEqual(s.res, { gong: 0, fame: 0, wealth: 0 }); assert.deepEqual(s.events, {});
+  for (const k of ['abil', 'res', 'best', 'events']) assert.equal(Object.hasOwn(s, k), false, k + ' 옛 필드 없음');
   assert.equal(await p.locator('[data-score],[data-grade],[data-act="prep"],.sim-hud').count(), 0); await log(p, '대표 구간 종료 / 전체 본편 완료 아님');
 }
 try {
@@ -179,7 +189,7 @@ try {
     await test(name + ' 일반 학생 실제 조작·소원·시전·구슬·전환', async () => {
       p = await h.page('rpg-opening', { width, height: 844 }, { hasTouch: mode === 'touch' });
       const entry = await p.evaluate(() => ({ ok: G.data.ok, problems: G.data.problems, teacher: G.save.state.teacher, key: G.save.key }));
-      assert.equal(entry.ok, true, 'rpg-opening 실제 진입'); assert.deepEqual(entry.problems, []); assert.equal(entry.teacher, false); assert.equal(entry.key, 'guunmong-v2-fixture-rpg-opening');
+      assert.equal(entry.ok, true, 'rpg-opening 실제 진입'); assert.deepEqual(entry.problems, []); assert.equal(entry.teacher, false); assert.equal(entry.key, 'guunmong-v3-fixture-rpg-opening');
       await toWish(p, { mode, big, name, reconnect: big, observe: help }); await solveWish(p, help, big); await capture(p, name + '-wish'); await toHuayin(p); await finishHuayin(p, { name, pearl: help, reconnect: big });
       await p.context().close(); p = null;
     });
@@ -285,7 +295,7 @@ try {
       assert.equal(observed.sameRaw, true);
       assert.deepEqual(observed.after, observed.before);
       assert.equal(await p.locator('.wish-word:not([disabled])').count(), 0);
-      await p.waitForSelector('#tray [data-act="next"]:not([disabled])');
+      await chooseSecretThenNext(p);
     } else if (scenario.failAt === 1) {
       assert.equal(observed.attempts, 1);
       assert.equal(observed.sameObject, true, '첫 저장 실패에서 동결 상태 객체 보존');
@@ -299,7 +309,7 @@ try {
       assert.deepEqual(observed.persisted, observed.after);
       assert.equal(observed.error, null);
       assert.ok(observed.writes.filter(write => !write.blocked).every(write => write.ledger.final), '부분 확정 영속 금지');
-      await p.waitForSelector('#tray [data-act="next"]:not([disabled])');
+      await chooseSecretThenNext(p);
     }
     await p.context().close(); p = null;
     compatPassed++;

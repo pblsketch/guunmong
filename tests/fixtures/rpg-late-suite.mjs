@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { harness, ROOT, start, target, dialogue, state } from './rpg-harness.mjs';
+import { harness, ROOT, start, target, dialogue, state, secretWish } from './rpg-harness.mjs';
 await import('./rpg-e10-return-suite.mjs');
 
 const rights = spawnSync(process.execPath, ['tests/check-rights.mjs'], { cwd: ROOT, encoding: 'utf8' });
@@ -80,6 +80,7 @@ try {
     if (current.kind === 'wish') {
       const answers = await page.evaluate(() => G.app.current().data.answers);
       for (const id of answers) { const button = page.locator('[data-word="' + id + '"]'); if (!await button.isDisabled()) await button.click(); }
+      await secretWish(page);
       await page.locator('#tray [data-act="next"]').click();
       continue;
     }

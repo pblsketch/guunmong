@@ -697,8 +697,7 @@
         "solid": true,
         "label": "버들잎 곁 구슬 흔적 · 선택",
         "visibleAt": [],
-        "action": "huayin-pearl",
-        "sprite": "prop-floor-grey"
+        "action": "huayin-pearl"
       }
     ]
   },
@@ -748,7 +747,7 @@
       { "id": "tianjin-guests", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "시를 겨루는 선비들", "visibleAt": ["e02-tianjin:tianjin-enter"], "action": "tianjin-enter", "sprite": "prop-stool" },
       { "id": "tianjin-brush", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "시전과 붓", "verb": "시 쓰기", "visibleAt": ["e02-tianjin:tianjin-write"], "action": "tianjin-write", "sprite": "prop-table" },
       { "id": "tianjin-seomwol", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "계섬월", "sprite": "npc-singer", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-listen", "person": "seomwol" },
-      { "id": "tianjin-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "술잔 곁 구슬 흔적 · 선택", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-pearl", "sprite": "prop-stool" }
+      { "id": "tianjin-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "술잔 곁 구슬 흔적 · 선택", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-pearl" }
     ]
   },
   {
@@ -773,7 +772,7 @@
       { "id": "geomungo-clothes", "x": 2, "y": 6, "kind": "item", "solid": true, "label": "여도사 차림", "verb": "갈아입기", "visibleAt": ["e03-geomungo:geomungo-dress"], "action": "geomungo-dress", "sprite": "prop-chest" },
       { "id": "geomungo-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "거문고", "verb": "타기", "visibleAt": ["e03-geomungo:geomungo-play"], "action": "geomungo-play", "sprite": "prop-table" },
       { "id": "geomungo-listener", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "발 너머 소저", "sprite": "npc-noble-lady", "visibleAt": ["e03-geomungo:geomungo-response"], "action": "geomungo-response", "person": "gyeongpae" },
-      { "id": "geomungo-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "창가의 구슬 흔적 · 선택", "visibleAt": [], "action": "geomungo-pearl", "sprite": "prop-cushion" }
+      { "id": "geomungo-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "창가의 구슬 흔적 · 선택", "visibleAt": [], "action": "geomungo-pearl" }
     ]
   },
   {
@@ -866,7 +865,7 @@
     "objects": [
       { "id": "chunun-screen", "x": 5, "y": 3, "kind": "scenery", "solid": true, "label": "걷힌 병풍", "visibleAt": ["e05-chunun:chunun-reveal"], "action": null, "sprite": "prop-wall-red" },
       { "id": "chunun-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "가춘운", "sprite": "npc-white-robe", "visibleAt": ["e05-chunun:chunun-reveal"], "action": "chunun-reveal", "person": "chunun" },
-      { "id": "chunun-pearl", "x": 2, "y": 7, "kind": "pearl", "solid": true, "label": "잎 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "chunun-pearl", "sprite": "prop-cushion" }
+      { "id": "chunun-pearl", "x": 2, "y": 7, "kind": "pearl", "solid": true, "label": "잎 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "chunun-pearl" }
     ]
   },
   {
@@ -937,7 +936,7 @@
     "objects": [
       { "id": "gyeonghong-seat", "x": 4, "y": 3, "kind": "scenery", "solid": true, "label": "밤사이 바뀐 자리", "visibleAt": ["e06-gyeonghong:gyeonghong-discover"], "action": "gyeonghong-discover", "sprite": "prop-cushion" },
       { "id": "gyeonghong-revealed", "x": 8, "y": 3, "kind": "npc", "solid": true, "label": "적경홍", "sprite": "npc-gyeonghong", "visibleAt": ["e06-gyeonghong:gyeonghong-reveal"], "action": "gyeonghong-reveal", "person": "gyeonghong" },
-      { "id": "gyeonghong-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "거울 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "gyeonghong-pearl", "sprite": "prop-stool" }
+      { "id": "gyeonghong-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "거울 곁 구슬 흔적 · 선택", "visibleAt": [], "action": "gyeonghong-pearl" }
     ]
   },
   {
@@ -963,7 +962,7 @@
       { "id": "tungso-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "백옥 퉁소", "verb": "불기", "visibleAt": ["e07-tungso:tungso-play"], "action": "tungso-play", "sprite": "prop-table" },
       { "id": "tungso-crane", "x": 9, "y": 2, "kind": "scenery", "solid": true, "label": "가락에 내려온 학", "sprite": "prop-crane", "visibleAt": ["e07-tungso:tungso-crane"], "action": "tungso-crane" },
       { "id": "tungso-message", "x": 8, "y": 6, "kind": "scenery", "solid": true, "label": "궁중에서 전해 온 이야기", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-message", "sprite": "prop-chest" },
-      { "id": "tungso-pearl", "x": 2, "y": 2, "kind": "pearl", "solid": true, "label": "달빛 속 구슬 흔적 · 선택", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-pearl", "sprite": "prop-cushion" }
+      { "id": "tungso-pearl", "x": 2, "y": 2, "kind": "pearl", "solid": true, "label": "달빛 속 구슬 흔적 · 선택", "visibleAt": ["e07-tungso:tungso-message"], "action": "tungso-pearl" }
     ]
   },
   {
@@ -1113,7 +1112,7 @@
       { "id": "yoyeon-choice", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "칼을 내려놓으려는 자객", "sprite": "npc-assassin", "visibleAt": ["e09-yoyeon:yoyeon-choice"], "action": "yoyeon-choice" },
       { "id": "yoyeon-speak", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-speak"], "action": "yoyeon-speak", "person": "yoyeon" },
       { "id": "yoyeon-warning", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-warning"], "action": "yoyeon-warning", "person": "yoyeon" },
-      { "id": "yoyeon-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "촛대 아래 구슬 흔적 · 선택", "visibleAt": ["e09-yoyeon:yoyeon-speak","e09-yoyeon:yoyeon-warning"], "action": "yoyeon-pearl", "sprite": "prop-stool" }
+      { "id": "yoyeon-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "촛대 아래 구슬 흔적 · 선택", "visibleAt": ["e09-yoyeon:yoyeon-speak","e09-yoyeon:yoyeon-warning"], "action": "yoyeon-pearl" }
     ]
   },
   {
@@ -1134,7 +1133,7 @@
       { "id": "neungpa-defeat", "x": 3, "y": 2, "kind": "scenery", "solid": true, "label": "남해 태자가 물러난 물가", "visibleAt": ["e10-neungpa:neungpa-defeat"], "action": "neungpa-defeat", "sprite": "prop-wall-red" },
       { "id": "neungpa-share", "x": 7, "y": 5, "kind": "item", "solid": true, "label": "군사들에게 나눌 물", "verb": "나눠 주기", "visibleAt": ["e10-neungpa:neungpa-share"], "action": "neungpa-share", "sprite": "prop-table" },
       { "id": "neungpa-monk", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "남악의 늙은 스님", "sprite": "npc-old-monk", "visibleAt": ["e10-neungpa:neungpa-monk"], "action": "neungpa-monk" },
-      { "id": "neungpa-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "물밑 구슬 흔적 · 선택", "visibleAt": ["e10-neungpa:neungpa-defeat","e10-neungpa:neungpa-share","e10-neungpa:neungpa-monk"], "action": "neungpa-pearl", "sprite": "prop-cushion" }
+      { "id": "neungpa-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "물밑 구슬 흔적 · 선택", "visibleAt": ["e10-neungpa:neungpa-defeat","e10-neungpa:neungpa-share","e10-neungpa:neungpa-monk"], "action": "neungpa-pearl" }
     ]
   },
   {

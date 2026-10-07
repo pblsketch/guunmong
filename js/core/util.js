@@ -32,6 +32,11 @@ window.G = window.G || {};
     }
     return el;
   };
+  // 늦은 호환 click 막기: 실기기(특히 iOS)는 손을 뗀 뒤 click을 늦게 보내, 그사이 나타난 대사창·다음 단추가 그 click을 받아 첫 줄이 넘어갈 수 있다.
+  // since 뒤에 시작된 누름에서 온 click만 받는다. 키보드 click(detail 0)과 새로 누른 입력은 그대로 통과한다.
+  let lastPress = -Infinity;
+  document.addEventListener('pointerdown', () => { lastPress = performance.now(); }, true);
+  U.staleTap = (e, since) => !!e && e.detail !== 0 && lastPress < since;
   U.$ = (s, r = document) => r.querySelector(s);
   U.$$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   U.esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

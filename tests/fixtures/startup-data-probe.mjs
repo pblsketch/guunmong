@@ -11,7 +11,7 @@ import { start, target, dialogue, ready } from './rpg-harness.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const SHOTS = path.join(ROOT, 'tests/shots');
 const FIXTURE = '/tests/fixtures/world-opening.js';
-const KEY = 'guunmong-v2-fixture-world-opening';
+const KEY = 'guunmong-v3-fixture-world-opening';
 const LOADER_ERROR = 'startup-data-probe: loader failure';
 const BOOT_ERROR = 'startup-data-probe: boot failure';
 const sha = raw => createHash('sha256').update(raw ?? 'null').digest('hex');
@@ -158,7 +158,7 @@ export async function startupDataFailures() {
     assert.deepEqual(result.evidence.locks, [], '자료 실패 때 writer 요청 없음');
     assert.equal(result.evidence.memoryRpg, null, '자료 실패 때 저장 load/이관 없음');
     assert.equal(result.evidence.booted, false, '자료 실패 때 boot 없음');
-    assert.equal(result.evidence.key, 'guunmong-v2', '자료 실패 때 저장 열쇠 선택도 하지 않음');
+    assert.equal(result.evidence.key, 'guunmong-v3', '자료 실패 때 저장 열쇠 선택도 하지 않음');
     assert.match(result.evidence.text, /자료.*읽/);
     assert.match(result.evidence.text, /새로 고침/);
     assert.match(result.evidence.text, /다시 시도/);
@@ -355,7 +355,7 @@ export async function startupDataFailures() {
           await target(p, 'bridge-voice'); await dialogue(p); const savedRaw = await raw(p);
           setup.setMode(mode); await fault(p, mode);
           // 기본 열쇠도 이 격리 문맥에서 만든 기록의 사본만 사용한다. 개인 기록을 읽지 않는다.
-          await p.evaluate(savedRaw => { localStorage.setItem('guunmong-v2', savedRaw); startupProbe.writes.length = 0; }, savedRaw);
+          await p.evaluate(savedRaw => { localStorage.setItem('guunmong-v3', savedRaw); startupProbe.writes.length = 0; }, savedRaw);
           const before = await p.evaluate(() => {
             window.startupSnapshot = G.save.state;
             return { memory: JSON.stringify(G.save.state), key: G.save.key, stored: JSON.stringify(Object.entries(localStorage).sort()), reads: startupProbe.reads.length };

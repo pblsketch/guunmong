@@ -55,10 +55,12 @@
     }
     const transition = h('div.wake-transition', { 'aria-hidden': 'true' }, snapshot ? h('div.wake-dream', snapshot) : null, room);
     ctx.field.replaceChildren(transition); G.audio.shatter();
+    // 깨어남이 저장된 뒤에만 소원 띠가 무너진다(저장 실패면 여기까지 오지 않는다). 건너뛰면 띠도 곧바로 사라진다.
+    const collapse = G.save.state.awake && ctx.committed ? G.hud?.collapse?.(ctx) : null;
     await new Promise((resolve) => {
       let settled = false;
-      const end = () => { if (settled) return; settled = true; clearTimeout(timer); ctx.signal.removeEventListener('abort', end); resolve(); };
-      const timer = setTimeout(end, matchMedia('(prefers-reduced-motion: reduce)').matches ? 300 : 1800);
+      const end = () => { if (settled) return; settled = true; clearTimeout(timer); ctx.signal.removeEventListener('abort', end); collapse?.finish(); resolve(); };
+      const timer = setTimeout(end, Math.max(matchMedia('(prefers-reduced-motion: reduce)').matches ? 300 : 1800, collapse?.duration || 0));
       ctx.signal.addEventListener('abort', end, { once: true });
       ctx.tray(h('button.btn.primary', { type: 'button', disabled: !ctx.canProceed(), dataset: { act: 'skip' }, on: { click: () => { if (ctx.canProceed() && !document.querySelector('.sheet-back, .fold-ov')) end(); } } }, '선방으로 ▶'));
     });

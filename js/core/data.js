@@ -6,7 +6,9 @@
 //  - 데이터 파일은 모두 window.GUUN 아래에 제 몫을 적는다. 예: (window.GUUN = window.GUUN || {}).scenes = [...]
 // <script> 태그로 읽으므로 index.html을 파일로 바로 열어도(file://) 동작한다.
 (function () {
-  const FILES = ['people', 'chapters', 'board', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes', 'bgm', 'sprites', 'maps', 'experiences', 'challenges'];
+  // 데이터 파일 버전: 코드와 데이터를 함께 바꿔 배포할 때 올린다. 브라우저 캐시가 옛 데이터를 새 코드에 주지 않게 한다.
+  const DATA_VERSION = '20261008';
+  const FILES = ['people', 'chapters', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes', 'bgm', 'sprites', 'maps', 'experiences', 'challenges'];
   const D = (G.data = { ok: false, fixture: null, loaded: [], missing: [], problems: [] });
 
   function addScript(src) {
@@ -25,13 +27,12 @@
     const fx = q.get('fixture');
     if (fx && /^[a-z0-9-]+$/i.test(fx)) D.fixture = fx === '1' ? 'stub' : fx;
     const list = D.fixture ? ['tests/fixtures/' + D.fixture + '.js'] : FILES.map((n) => 'js/data/' + n + '.js');
-    const res = await Promise.all(list.map(addScript));
+    const res = await Promise.all(list.map((f) => addScript(D.fixture ? f : f + '?v=' + DATA_VERSION)));
     list.forEach((f, i) => (res[i] ? D.loaded : D.missing).push(f));
     const src = window.GUUN || {};
     Object.assign(D, {
       people: src.people || {},
       chapters: src.chapters || {},
-      board: src.board || [],
       scenes: Array.isArray(src.scenes) ? src.scenes : [],
       wishes: src.wishes || [],
       bonds: src.bonds || [],
@@ -66,6 +67,36 @@
   const KINDS = ['cut', 'scene', 'wish', 'event', 'link', 'waking', 'journal', 'interp', 'result'];
   const CORES = [['munjang'], ['munjang'], ['eumak'], ['munjang'], ['jiryak'], ['jiryak'], ['eumak'], ['muye', 'jiryak'], ['muye'], ['jiryak']];
   const MEETS = [1, 2, 3, 5, 6, 7, 9, 10];
+  const STORY_LIMIT = 5000;
+  // 선택이 움직일 수 있는 소원은 드러난 넷뿐이다. 미색은 값이 없고 꿈 내내 '?'다.
+  const GAUGE_WISHES = ['chuljang', 'bugwi', 'pungryu', 'gongmyeong'];
+  // 되짚기 틀(interp.recap)과 틀 근거가 쓸 수 있는 자리 이름. {이름} 또는 {이름:을/를}처럼 조사 한 쌍을 붙인다.
+  const RECAP_SLOTS = {
+    chose: ['items'], item: ['name', 'times'], pickName: ['wish'], stayName: [], none: [], teacher: [],
+    wishLine: ['secret', 'peak'], peakOnly: ['peak'], ask: [],
+  };
+  const EVIDENCE_SLOTS = ['top'];
+  const JOSA = ['을/를', '이/가', '은/는', '와/과', '으로/로'];
+  const SLOT = /\{([a-z]+)(?::([^{}|]+))?\}/g;
+  // 틀을 채운다. 조사 쌍은 셈에 쓰이므로 긴 꼴(으로)이나 앞 꼴을 붙인다. 실제 화면은 G.util.josa로 고른다.
+  function fill(template, values) {
+    return String(template).replace(SLOT, (all, key, pair) => {
+      if (!Object.hasOwn(values, key)) return all;
+      const forms = String(pair || '').split('/').filter(Boolean);
+      const josa = forms.length ? forms.slice().sort((a, b) => b.length - a.length)[0] : '';
+      return values[key] + josa;
+    });
+  }
+  // 틀의 자리 이름이 허락된 것인지, 남는 중괄호가 없는지 본다.
+  function slotsOk(template, allowed) {
+    if (typeof template !== 'string' || !template.trim()) return false;
+    let ok = true;
+    const rest = template.replace(SLOT, (all, key, pair) => {
+      if (!allowed.includes(key) || (pair != null && !JOSA.some((j) => j === pair || j.split('/').reverse().join('/') === pair))) ok = false;
+      return '';
+    });
+    return ok && !/[{}]/.test(rest);
+  }
   // 목적어 뒤의 소유 보어·부사만 잇는다. 다른 절의 평판 획득까지 묶지 않는다.
   const OWNER = '(?:(?:자신|자기|나|그|양소유)(?:만)?의|내|제)?';
   const OBJECT_MODIFIERS = '(?:' + [
@@ -81,6 +112,26 @@
     if (Array.isArray(value)) return value.flatMap(lines);
     if (!object(value) || value.mark) return [];
     return ['text', 'gloss'].flatMap((key) => typeof value[key] === 'string' ? [plain(value[key])] : []);
+  }
+  const hangul = (text) => (String(text).match(/[가-힣]/g) || []).length;
+  const longest = (list) => array(list).filter((v) => typeof v === 'string').reduce((a, b) => (hangul(b) > hangul(a) ? b : a), '');
+  // 5장 되짚기 틀을 가장 길게 채운 줄. 드러난 소원 넷과 물러남을 모두 가장 긴 횟수 말로 고른 경우를 센다.
+  function recapTexts(d) {
+    const r = (d.interp || {}).recap;
+    if (!object(r)) return [];
+    const names = array(d.wishes).filter((w) => w && GAUGE_WISHES.includes(w.id) && typeof w.name === 'string').map((w) => w.name);
+    const times = longest(r.counts);
+    const items = [...names.map((wish) => fill(r.item, { name: fill(r.pickName, { wish }), times })),
+      fill(r.item, { name: r.stayName, times })].join(', ');
+    const chose = [fill(r.chose, { items }), r.teacher].filter((v) => typeof v === 'string');
+    const out = hangul(chose.join('')) >= hangul(r.none || '') ? chose : [r.none];
+    for (const f of array(r.first)) if (object(f)) out.push(longest([f.ok, f.fail]));
+    const peak = names.join('·');
+    out.push(longest([fill(r.wishLine, { secret: longest(names), peak }), fill(r.peakOnly, { peak })]), r.ask);
+    // 틀 근거(E11)도 학생이 읽는 글이므로 가장 길게 채워 센다. top은 네 소원 쪽과 물러남이 모두 같은 횟수인 경우다.
+    const top = [...names.map((wish) => fill(r.pickName, { wish })), r.stayName].filter((v) => typeof v === 'string').join('·');
+    for (const e of array((d.interp || {}).evidence)) if (object(e) && e.template === true && typeof e.text === 'string') out.push(fill(e.text, { top }));
+    return out.filter((v) => typeof v === 'string' && v.trim()).map(plain);
   }
   G.storyText = function (d = D) {
     const texts = [];
@@ -110,7 +161,9 @@
       for (const clue of array(c.clues)) if (typeof clue === 'string') texts.push(plain(clue));
       for (const spot of array(c.spots)) if (typeof spot?.clue === 'string') texts.push(plain(spot.clue));
       for (const o of array(c.options)) texts.push(...(typeof o?.reply === 'string' ? [plain(o.reply)] : lines(o?.reply)));
+      if (object(c.after) && typeof c.after.text === 'string') texts.push(plain(c.after.text));
     }
+    texts.push(...recapTexts(d));
     return { texts, count: texts.reduce((n, text) => n + (text.match(/[가-힣]/g) || []).length, 0) };
   };
   G.checkData = function (d = D, options = {}) {
@@ -152,12 +205,15 @@
         if (!object(s.pearl) || !['x', 'y', 'r'].every((k) => Number.isFinite(s.pearl[k])) || s.pearl.r <= 0 ||
             s.pearl.x < 0 || s.pearl.x > 100 || s.pearl.y < 0 || s.pearl.y > 100) issue('pearl', s.id);
       } else if (s.pearl) issue('pearl', s.id);
+      // 구슬은 소원을 움직이지 않는다.
+      if (object(s.pearl) && ['wish', 'fills', 'step'].some((k) => k in s.pearl)) issue('pearl-wish', s.id);
       for (const r of array(s.remeet)) if (!r || !bondIds.has(r.bond)) issue('remeet', s.id);
       if (s.kind === 'event') {
         const index = events.indexOf(s);
         if (!s.id.startsWith('e' + String(index + 1).padStart(2, '0') + '-')) issue('event-order', s.id);
         if (String(s.ch) !== '2') issue('event-chapter', s.id);
         if ('preview' in s && (typeof s.preview !== 'string' || !s.preview.trim())) issue('preview', s.id);
+        if ('guide' in s && (typeof s.guide !== 'string' || !s.guide.trim() || s.guide.length > 140)) issue('guide', s.id);
         if ('clues' in s && (!array(s.clues).length || array(s.clues).some((c) => typeof c !== 'string' || !c.trim() || !String(s.preview).includes(c)))) issue('clue', s.id);
         if ('core' in s && (!Array.isArray(s.core) || s.core.length < 1 || s.core.length > 2 || new Set(s.core).size !== s.core.length || s.core.some((k) => !ABIL.includes(k)))) issue('core', s.id);
         if ('core' in s && !fixture && index < CORES.length && JSON.stringify(array(s.core).slice().sort()) !== JSON.stringify(CORES[index].slice().sort())) issue('core-canon', s.id);
@@ -224,21 +280,27 @@
     }
     inspect(d.scenes, 'scenes');
     inspect(d.interp, 'interp');
-    for (const q of array(d.board)) {
-      if (!q) { issue('board', 'invalid'); continue; }
-      if (!/^sq-/.test(q.id) || !['office', 'place'].includes(q.kind) || q.fall || q.down) issue('board', q.id);
-      checkFills(q.fills, q.id);
-    }
     for (const p of array((d.journal || {}).pairs)) {
       if (!p || !p.evidence || p.scored === false || bondIds.has(p.event)) issue('journal-pair', p && p.id);
     }
     const io = array((d.interp || {}).options);
     if (io.length !== 4) issue('interp-options', io.length);
     const story = G.storyText(d);
-    if (story.count > 4400) issue('story-limit', story.count);
+    if (story.count > STORY_LIMIT) issue('story-limit', story.count);
     const evidence = array((d.interp || {}).evidence);
-    if (evidence.length !== 10) issue('evidence-count', evidence.length);
-    for (const e of evidence) if (!e || typeof e.text !== 'string' || !e.text.trim() || !story.texts.some((text) => text.includes(plain(e.text)))) issue('evidence', e && e.id);
+    // 이야기에서 읽는 근거 열 개와, 학생 기록으로 채우는 틀 근거 E11(template:true) 하나.
+    const templates = evidence.filter((e) => object(e) && Object.hasOwn(e, 'template'));
+    if (evidence.length - templates.length !== 10) issue('evidence-count', evidence.length);
+    if (!fixture && (evidence.length !== 11 || templates.length !== 1 || templates[0].id !== 'E11')) issue('evidence-count', evidence.length);
+    for (const e of templates) if (e.template !== true || !slotsOk(e.text, EVIDENCE_SLOTS) || !/\{top/.test(e.text)) issue('evidence-template', e.id);
+    for (const e of evidence) {
+      if (!object(e)) { issue('evidence', 'invalid'); continue; }
+      if (Object.hasOwn(e, 'template')) continue; // 틀 근거는 이야기 줄이 아니라 학생 기록에서 만든다
+      if (typeof e.text !== 'string' || !e.text.trim() || !story.texts.some((text) => text.includes(plain(e.text)))) issue('evidence', e.id);
+    }
+    const evidenceIds = new Set(evidence.filter(object).map((e) => e.id));
+    for (const o of io) for (const id of array(o?.fits)) if (!evidenceIds.has(id)) issue('interp-fits', (o && o.id) + '/' + id);
+    if (!fixture || Object.hasOwn(d.interp || {}, 'recap')) checkRecap(d, issue);
     out.push(...G.checkWorldData(d, options));
     return out;
   };
@@ -411,13 +473,35 @@
     original(d.maps); original(d.experiences);
     if (partial) original(d.scenes);
     checkChallenges(d, experienceById, issue);
-    if (G.storyText(d).count > 4400) issue('story-limit', G.storyText(d).count);
+    if (G.storyText(d).count > STORY_LIMIT) issue('story-limit', G.storyText(d).count);
     return out;
   };
+  // 소원을 움직이는 선택 자리 수. 한 소원의 ▲ 횟수는 이 수를 넘지 못한다.
+  const choiceSites = (d) => array(d.challenges).filter((c) => object(c) && array(c.options).some((o) => object(o) && ('wish' in o || 'stay' in o))).length;
+  // 5장 되짚기 틀(interp.recap). 형식은 js/data/README.md의 '되짚기 틀과 E11'.
+  function checkRecap(d, issue) {
+    const r = (d.interp || {}).recap;
+    if (!object(r)) { issue('interp-recap', 'missing'); return; }
+    const keys = [...Object.keys(RECAP_SLOTS), 'counts', 'first'];
+    for (const key of Object.keys(r)) if (!keys.includes(key)) issue('interp-recap', 'field/' + key);
+    for (const [key, allowed] of Object.entries(RECAP_SLOTS)) if (!slotsOk(r[key], allowed) || /[0-9]/.test(r[key])) issue('interp-recap', key);
+    const counts = array(r.counts);
+    if (!Array.isArray(r.counts) || counts.length < Math.max(1, choiceSites(d)) || counts.some((v) => typeof v !== 'string' || !v.trim() || /[0-9{}]/.test(v))) issue('interp-recap', 'counts');
+    const seen = new Set();
+    for (const f of array(r.first)) {
+      const c = object(f) && array(d.challenges).find((v) => v?.id === f.challenge);
+      if (!c || c.kind === 'talk' || seen.has(f.challenge) || ['ok', 'fail'].some((k) => !slotsOk(f[k], []) || /[0-9]/.test(f[k])) ||
+          Object.keys(f).some((k) => !['challenge', 'ok', 'fail'].includes(k))) issue('interp-recap', 'first/' + (f && f.challenge));
+      if (object(f)) seen.add(f.challenge);
+    }
+    if (!Array.isArray(r.first) || !array(r.first).length) issue('interp-recap', 'first');
+  }
   // 위기 도전과 생각 선택(js/data/challenges.js). 형식은 js/data/README.md의 '위기 도전과 생각 선택'.
   function checkChallenges(d, experienceById, issue) {
     const ids = new Set(), slots = new Set();
     const text = (v) => typeof v === 'string' && !!v.trim(), name = (id) => typeof id === 'string' && /^[a-z][a-z0-9-]*$/.test(id);
+    const byId = new Map(array(d.challenges).filter((c) => object(c) && typeof c.id === 'string').map((c) => [c.id, c]));
+    const sceneIndex = new Map(array(d.scenes).filter(object).map((s, i) => [s.id, i]));
     for (const c of array(d.challenges)) {
       if (!object(c) || typeof c.id !== 'string' || !/^ch-[a-z0-9-]+$/.test(c.id) || ids.has(c.id)) { issue('challenge-id', c?.id); continue; }
       ids.add(c.id);
@@ -427,8 +511,39 @@
       if (slots.has(slot)) issue('challenge-duplicate', c.id); slots.add(slot);
       const options = array(c.options), optionIds = new Set(options.map((o) => o?.id));
       if (!['sequence', 'search'].includes(c.kind) && (options.length < 2 || optionIds.size !== options.length || options.some((o) => !object(o) || !name(o.id) || !text(o.label)))) issue('challenge-options', c.id);
+      // 소원 증감: 고른 말만 소원을 움직인다. 드러난 넷만, 한 번에 한 칸, 풍류는 시·음악 자리에서만.
+      if (c.music != null && c.music !== true) issue('challenge-music', c.id);
+      let moving = 0, stays = 0;
+      for (const o of options.filter(object)) {
+        if ('wish' in o) {
+          moving++;
+          const list = o.wish;
+          if (!['talk', 'pick'].includes(c.kind) || !Array.isArray(list) || !list.length || new Set(list.map((w) => w?.wish)).size !== list.length ||
+              list.some((w) => !object(w) || Object.keys(w).some((k) => !['wish', 'step'].includes(k)) || !GAUGE_WISHES.includes(w.wish) || (w.step !== 1 && w.step !== -1))) issue('challenge-wish', c.id + '/' + o.id);
+          if (array(list).some((w) => w?.wish === 'pungryu') && c.music !== true) issue('challenge-pungryu', c.id + '/' + o.id);
+        }
+        if ('stay' in o) {
+          stays++;
+          if (o.stay !== true || c.kind !== 'talk' || 'wish' in o) issue('challenge-stay', c.id + '/' + o.id);
+        }
+      }
+      // 소원을 움직이는 생각 선택 자리에는 물러남(stay)이 정확히 하나 있다. 정답이 있는 도전에는 물러남이 없다.
+      if (c.kind === 'talk' && (moving || stays) && (stays !== 1 || !moving)) issue('challenge-stay', c.id);
+      if (c.after != null) {
+        const a = c.after, from = object(a) ? byId.get(a.from) : null;
+        let bad = !object(a) || Object.keys(a).some((k) => !['from', 'spots', 'clue', 'text'].includes(k)) || !text(a.text) ||
+          !from || from === c || from.kind === 'talk' || !(sceneIndex.get(from.scene) < sceneIndex.get(c.scene));
+        if (!bad && c.kind === 'search') {
+          const spots = array(c.spots), marked = a.spots;
+          bad = 'clue' in a || !Array.isArray(marked) || !marked.length || new Set(marked).size !== marked.length || spots.length - marked.length < 2 ||
+            marked.some((id) => id === c.answer || !spots.some((v) => v?.id === id && text(v.clue)));
+        } else if (!bad && c.kind === 'deduce') {
+          bad = 'spots' in a || !Number.isInteger(a.clue) || a.clue < 0 || a.clue >= array(c.clues).length;
+        } else if (!bad) bad = true; // 뒤 장면 변화는 찾기·추리 도전에만
+        if (bad) issue('challenge-after', c.id);
+      }
       if (c.kind === 'talk') {
-        if (!Number.isInteger(c.at) || c.at < 0 || c.at >= array(b.lines).length || !text(c.prompt) ||
+        if (!Number.isInteger(c.at) || c.at < 0 || c.at >= array(b.lines).length || !text(c.prompt) || (c.note != null && !text(c.note)) ||
             options.some((o) => !object(o?.reply) || !text(o.reply.text) || o.reply.say != null && !Object.hasOwn(d.people || {}, o.reply.say))) issue('challenge-talk', c.id);
         continue;
       }

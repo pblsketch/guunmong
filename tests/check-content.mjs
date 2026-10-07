@@ -6,7 +6,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { target, seekTarget, dialogue } from './fixtures/rpg-harness.mjs';
+import { target, seekTarget, dialogue, secretWish } from './fixtures/rpg-harness.mjs';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const SHOTS = path.join(ROOT, 'tests/shots'); fs.mkdirSync(SHOTS, { recursive: true });
 const EXPECTED_CHECKS = 6;
@@ -44,7 +44,7 @@ async function newPage(name, viewport, dpr = 1) {
       page.close().catch((error) => console.error('종료 오류: ' + error.message));
     }
   });
-  await watchToasts(page);
+  await watchToasts(page); await watchPlay(page);
   await page.addInitScript(() => {
     window.pngText = [];
     const draw = CanvasRenderingContext2D.prototype.fillText;
@@ -56,6 +56,29 @@ async function newPage(name, viewport, dpr = 1) {
     }
   });
   return page;
+}
+// 도전 창이 열린 순간의 모습(뒤 장면 변화)과 띠 무너짐 시작 순간의 저장 상태를 관찰만 한다(새로 고침에도 남게 검사 쪽에 모은다).
+async function watchPlay(page) {
+  page.challenges = []; page.collapses = [];
+  await page.exposeFunction('__challengeSeen', (r) => page.challenges.push(r));
+  await page.exposeFunction('__collapseSeen', (r) => page.collapses.push(r));
+  await page.addInitScript(() => {
+    let collapsing = false;
+    new MutationObserver((list) => {
+      for (const m of list) {
+        if (m.type === 'childList') for (const n of m.addedNodes) {
+          const book = n.nodeType === 1 && (n.matches('.challenge-book') ? n : n.querySelector('.challenge-book'));
+          if (book) window.__challengeSeen({ id: book.dataset.challengeId, after: book.querySelector('[data-after]')?.textContent || null,
+            warned: book.querySelectorAll('[data-warned]').length, open: book.querySelectorAll('.challenge-clue[aria-pressed="true"]').length });
+        }
+        if (m.type === 'attributes' && m.target.matches('.wish-band') && m.target.dataset.collapse && !collapsing) {
+          collapsing = true;
+          let stored = null; try { stored = JSON.parse(localStorage.getItem(G.save.key)).awake; } catch {}
+          window.__collapseSeen({ value: m.target.dataset.collapse, awake: G.save.state.awake, stored });
+        }
+      }
+    }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-collapse'] });
+  });
 }
 async function watchToasts(page) {
   page.toasts = [];
@@ -152,7 +175,7 @@ const current = (page) => page.evaluate(() => G.app.current());
 const state = (page) => page.evaluate(() => JSON.parse(JSON.stringify(G.save.state)));
 const ready = (page) => page.waitForFunction(() => window.G?.app?.booted);
 const next = (page) => page.locator('#tray [data-act="next"]').click();
-async function start(page) { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); if (await page.evaluate(() => !!G.data.notes?.mission)) await page.locator('[data-mission="start"]').click(); }
+async function start(page) { await page.getByRole('button', { name: '시작하기', exact: true }).click(); await page.waitForSelector('.play'); if (await page.evaluate(() => !!G.data.notes?.mission)) { await page.waitForSelector('[data-mission]'); while (await page.locator('[data-mission="next"]').count()) await page.locator('[data-mission="next"]').click(); await page.locator('[data-mission="start"]').click(); }; }
 async function resume(page) { await page.reload(); await ready(page); await page.getByRole('button', { name: '이어 하기', exact: true }).click(); await page.waitForSelector('.play'); }
 async function boardReadiness(page) {
   return page.evaluate(() => {
@@ -224,6 +247,13 @@ async function wrongWish(page) {
   for (const id of answers) await page.locator('[data-word="' + id + '"]').click();
   assert.deepEqual((await state(page)).ledger['a-wish'], { first: false, help: 'student', final: true });
 }
+const SECRET = { direct: 'gongmyeong', observe: 'pungryu', mix: 'bugwi' };
+async function chooseSecret(page, mode) {
+  assert.equal(await page.locator('#tray [data-act="next"]').count(), 0, '숨긴 소원 전 다음 없음');
+  assert.equal(await page.locator('[data-secret-wish="misaek"]').count(), 0, '미색은 숨긴 소원 후보 아님');
+  await secretWish(page, SECRET[mode]);
+  assert.equal((await state(page)).play.secretWish, SECRET[mode]);
+}
 async function correctWish(page) {
   const answers = await page.evaluate(() => G.app.current().data.answers);
   assert.equal(answers.length, 5);
@@ -244,6 +274,8 @@ async function actTarget(page, id, input, options = {}) {
   else await target(page, id);
   if (await page.locator('[data-dialogue], .challenge-book').count()) await dialogue(page, options);
 }
+// (가) 휴대폰: 모든 첫 판가름 성공·▲ 쪽 말, (나) 태블릿: 모든 첫 판가름 실패·물러남 쪽 말, 혼합: 첫 선택지.
+const PATH = { direct: { wrong: false, choice: 'up' }, observe: { wrong: true, choice: 'stay' }, mix: { wrong: false } };
 async function correctMatch(page) {
   const picks = await page.evaluate(() => G.data.journal.pairs.map(pair => ({ id: pair.id, pick: G.data.wishes.find(wish => wish.id === pair.wish).name })));
   assert.equal(picks.length, 5);
@@ -270,10 +302,25 @@ async function worldStep(page, memo, mode) {
   }
   const input = memo.inputUsed ? 'list' : mode === 'direct' ? 'touch' : mode === 'observe' ? 'list' : 'keyboard';
   // 관찰 판은 위기 도전에서 한 번 틀려 이야기 속 대가를 본 뒤 다시 푼다.
-  if (info.beat.trigger.target) await actTarget(page, info.beat.trigger.target, input, { wrong: mode === 'observe' });
-  else { await page.locator('[data-act="interact"]:not([disabled])').click(); if (await page.locator('[data-dialogue], .challenge-book').count()) await dialogue(page); }
+  if (info.beat.trigger.target) await actTarget(page, info.beat.trigger.target, input, PATH[mode]);
+  else { await page.locator('[data-act="interact"]:not([disabled])').click(); if (await page.locator('[data-dialogue], .challenge-book').count()) await dialogue(page, PATH[mode]); }
   memo.inputUsed = true; memo.actions++;
   return true;
+}
+const DIGIT = /[0-9０-９]/;
+// 소원 띠: 2장부터 난간 타격 전까지 월드 위 막대 아래에 있고, 글·낭독·도움말 어디에도 숫자가 없으며 미색은 '?'.
+async function bandCheck(page, c, s, memo, where) {
+  const band = await page.evaluate(() => {
+    const el = document.querySelector('.play .topbar .wish-band');
+    if (!el) return null;
+    const labels = [el, ...el.querySelectorAll('*')].flatMap(n => ['aria-label', 'title'].map(a => n.getAttribute(a)).filter(Boolean));
+    return { words: [el.textContent, el.querySelector('.band-say')?.textContent || '', ...labels].join(' '), collapse: el.dataset.collapse || null,
+      misaek: el.querySelector('.band-wish[data-wish="misaek"] .band-name')?.textContent ?? null, world: !!document.querySelector('[data-world]') };
+  });
+  if (band) { assert.doesNotMatch(band.words, DIGIT, where + ': 띠에 숫자 없음'); critical(band.misaek === '?', '띠의 미색 노출: ' + where); memo.band.add(c.scene); }
+  if (c.ch === '1') assert.equal(band, null, where + ': 1장에는 띠 없음');
+  else if (s.awake) { if (c.scene !== 'c3-staff') assert.equal(band, null, where + ': 깨어난 뒤 띠 없음'); }
+  else if ((c.ch === '2' || c.ch === '3') && c.scene !== 'c3-awake' && await page.locator('[data-world]').count()) assert.ok(band, where + ': 꿈 월드에 띠');
 }
 async function savePng(page, tag, s) {
   await page.locator('.name-in').fill('검증');
@@ -306,9 +353,61 @@ async function savePng(page, tag, s) {
   for (const word of ['취미궁에서 누린 삶', '깨어난 뒤의 선방', '고친 흔적', '소원', '구슬', '도움 안내', '검증']) assert.ok(texts.includes(word), 'PNG 내용 ' + word);
   console.log('  실제 PNG ' + path.basename(file) + ' ' + bytes.length + 'B · 색 ' + pixels.colors + ' · 글 픽셀 ' + pixels.dark);
 }
+// 두 대비 경로(명세 16절): 첫 판가름·고른 말·뒤 장면 변화·되짚기·E11이 경로와 맞는지 실제 기록과 화면으로 본다.
+async function pathChecks(page, mode, s, memo) {
+  const data = await page.evaluate(() => ({ challenges: G.data.challenges.filter(c => c.kind !== 'talk').map(c => ({ id: c.id, answer: c.answer })),
+    sites: G.play.sites(G.data).map(site => ({ id: site.id, kind: G.data.challenges.find(c => c.id === site.id)?.kind, answer: G.data.challenges.find(c => c.id === site.id)?.answer, options: site.options })),
+    recap: G.data.interp.recap }));
+  assert.equal(data.challenges.length, 7, '위기 도전 일곱');
+  const firsts = Object.fromEntries(data.challenges.map(c => [c.id, s.play.firsts[c.id]?.ok]));
+  if (mode === 'direct') assert.ok(Object.values(firsts).every(ok => ok === true), '(가) 모든 첫 판가름 성공: ' + JSON.stringify(firsts));
+  if (mode === 'observe') assert.ok(Object.values(firsts).every(ok => ok === false), '(나) 모든 첫 판가름 실패: ' + JSON.stringify(firsts));
+  assert.equal(data.sites.length, 3, '소원을 움직이는 선택 자리 셋');
+  for (const site of data.sites) {
+    const option = site.options.find(o => o.id === s.play.choices[site.id]?.option);
+    assert.ok(option, '학생이 고른 말 기록: ' + site.id);
+    if (mode === 'direct') assert.ok(!option.stay && option.wish.every(w => w.step > 0), '(가) ▲ 쪽 말: ' + site.id + ' ' + option.id);
+    if (mode === 'observe') assert.ok(site.kind === 'talk' ? option.stay === true : option.id !== site.answer, '(나) 물러남 쪽 말·첫 오답: ' + site.id + ' ' + option.id);
+  }
+  // 뒤 장면 변화: 자객 첫 성공이면 반사곡의 경계한 물 두 곳, 가춘운 첫 성공이면 적생 단서 하나가 처음부터 펼쳐짐. 실패면 없음.
+  const seen = page.challenges;
+  const water = seen.find(b => b.id === 'ch-bansagok-water'), who = seen.find(b => b.id === 'ch-gyeonghong-who');
+  assert.ok(water && who, '뒤 장면 도전을 실제로 엶');
+  const yoyeon = firsts['ch-yoyeon-night'] === true, chunun = firsts['ch-chunun-ghost'] === true;
+  assert.equal(water.warned, yoyeon ? 2 : 0, '반사곡 미리 표시한 곳'); assert.equal(!!water.after, yoyeon, '반사곡 안내');
+  assert.equal(who.open, chunun ? 1 : 0, '적생 미리 펼친 단서'); assert.equal(!!who.after, chunun, '적생 안내');
+  // 5장 되짚기: 학생 기록으로 채운 줄이 기존 대사 앞에 실제로 나오고 경로와 맞는다.
+  const said = memo.c5.join(' / '), lines = memo.recap.lines;
+  for (const line of lines) assert.ok(said.includes(line), '5장 되짚기 줄 표시: ' + line);
+  const r = data.recap, secret = await page.evaluate(id => G.data.wishes.find(w => w.id === id).name, SECRET[mode]);
+  assert.ok(lines.some(line => line.startsWith(r.wishLine.split('{')[0]) && line.includes(secret)), '숨긴 소원이 되짚기에: ' + secret);
+  for (const f of r.first) assert.ok(lines.includes(firsts[f.challenge] ? f.ok : f.fail), '첫 결과 줄: ' + f.challenge);
+  assert.equal(lines.some(line => line.includes(r.stayName)), mode === 'observe', '물러남 줄은 (나)에만');
+  assert.ok(memo.recap.e11 && memo.e11.includes(memo.recap.e11), 'E11 글이 같은 기록에서: ' + memo.e11);
+  if (mode === 'observe') assert.ok(memo.e11.includes(r.stayName), '(나) E11은 물러남');
+  if (mode === 'direct') assert.ok(!memo.e11.includes(r.stayName), '(가) E11은 ▲ 쪽 말');
+  assert.ok(memo.collapse, '난간 타격 뒤 띠 무너짐'); const dream = await page.evaluate(() => G.app.list().filter(scene => scene.ch === '2' || scene.ch === '3' && !scene.awakened).map(scene => scene.id));
+  assert.deepEqual([...memo.band], dream, '2장 첫 장면부터 난간 타격까지 모든 꿈 장면에서 띠를 실제로 관찰');
+  return { secret, lines: lines.filter(line => line !== r.ask) };
+}
+// 결과 DOM과 내려받은 PNG가 같은 모델로 숨긴 소원·가장 찼던 소원(숫자 없는 막대)·되짚기를 담는다.
+async function resultModelChecks(page, expect) {
+  const dom = await page.evaluate(() => {
+    const t = s => document.querySelector(s)?.innerText || '';
+    const peak = document.querySelector('.result-peak');
+    return { secret: t('.result-secret'), recap: t('.result-recap'), peak: [t('.result-peak'), ...[...(peak?.querySelectorAll('*') || [])].map(n => n.getAttribute('aria-label') || '')].join(' '),
+      rows: document.querySelectorAll('.result-peak [data-peak]').length, fills: [...document.querySelectorAll('.result-peak .peak-fill')].map(f => f.getBoundingClientRect().width),
+      heading: G.data.notes.ui.result.peak, png: window.pngText.join('').replace(/\s+/g, '') };
+  });
+  assert.ok(dom.secret.includes(expect.secret), '결과 숨긴 소원');
+  assert.ok(dom.rows >= 4 && dom.fills.some(w => w > 0), '가장 찼던 소원 막대'); assert.doesNotMatch(dom.peak, DIGIT, '가장 찼던 소원에 숫자 없음');
+  for (const line of expect.lines) assert.ok(dom.recap.includes(line), '결과 되짚기: ' + line);
+  const flat = v => v.replace(/\s+/g, '');
+  for (const word of [expect.secret, dom.heading, ...expect.lines]) assert.ok(dom.png.includes(flat(word)), 'PNG 내용: ' + word);
+}
 async function fullRun(tag, viewport, mode, dpr) {
   const page = await newPage(tag, viewport, dpr);
-  const memo = { steps: new Set(), scenes: [], worldScenes: new Set(), fiction: new Set(), variants: 0, reload: false, lock: false, wish: false, match: false, revised: false, pearls: new Set(), pearlScenes: new Set(), inputUsed: false, actions: 0, idle: 0 };
+  const memo = { band: new Set(), c5: [], collapse: false, steps: new Set(), scenes: [], worldScenes: new Set(), fiction: new Set(), variants: 0, reload: false, lock: false, wish: false, match: false, revised: false, pearls: new Set(), pearlScenes: new Set(), inputUsed: false, actions: 0, idle: 0 };
   const started = Date.now();
   try {
     await page.goto(BASE); await ready(page);
@@ -322,28 +421,31 @@ async function fullRun(tag, viewport, mode, dpr) {
       if (memo.awakeAt) critical(s.awake && s.awakeAt === memo.awakeAt, '깨어남 기록 소실');
       if (!s.awake) {
         critical(await page.evaluate(() => G.app.wishes().find((w) => w.id === 'misaek').hidden), '꿈 동안 미색 노출');
-        for (const resource of ['gong', 'fame', 'wealth']) critical(s.res[resource] === Object.values(s.events).reduce((sum, e) => sum + (e.reward?.[resource] || 0), 0), '사건 보상 밖 자원 가산');
+        for (const legacy of ['abil', 'res', 'best', 'events']) critical(!(legacy in s), '옛 판 저장 칸 ' + legacy + ' 남음');
       }
       if (!c) throw Error('완주 중 화면 없음');
       if (memo.scenes.at(-1) !== c.scene) memo.scenes.push(c.scene);
       const stamp = c.scene + '/' + c.step;
       if (!memo.steps.has(stamp)) {
-        memo.steps.add(stamp); await checks(page, tag + '/' + stamp);
+        memo.steps.add(stamp); await checks(page, tag + '/' + stamp); await bandCheck(page, c, s, memo, tag + '/' + stamp);
         if (['staff', 'journal-bond', 'result'].includes(c.step) && (/^e01-/.test(c.scene) || c.ch !== '2')) await page.screenshot({ path: path.join(SHOTS, 'play_' + tag + '_' + c.scene + '_' + c.step + '.png'), scale: 'css' });
       }
       for (const text of await page.locator('.mark.fiction:visible').allTextContents()) memo.fiction.add(text.trim());
       memo.variants += await page.locator('.mark.variant:visible').count();
+      if (c.scene === 'c5-dialogue' && c.step === 'interp-dialogue') memo.c5.push(await page.evaluate(() => document.querySelector('.stage-speech')?.innerText || ''));
       if (c.ch === 'R') break;
       if (c.scene === 'c3-awake' && !memo.lock) { await lockChecks(page, memo); continue; }
-      if (c.kind === 'wish' && !memo.wish) { if (mode === 'direct') await correctWish(page); else await wrongWish(page); memo.wish = true; continue; }
+      if (c.kind === 'wish' && !memo.wish) { if (mode === 'direct') await correctWish(page); else await wrongWish(page); await chooseSecret(page, mode); memo.wish = true; continue; }
       if (c.kind === 'journal' && c.step === 'activity' && !memo.match) { if (mode === 'direct') await correctMatch(page); else await wrongMatch(page); memo.match = true; continue; }
       if (c.step === 'journal-bond') { const link = page.locator('.link-opt:not([disabled])'); if (await link.count()) { await link.first().click(); continue; } }
       if (c.step === 'interp-pick') {
-        assert.equal(await page.locator('.ev-opt').count(), 7);
+        assert.equal(await page.locator('.ev-opt').count(), 8); // 학생이 고른 말이 있어 E11 포함
+        memo.e11 = await page.locator('.ev-opt[data-ev="E11"]').innerText();
+        memo.recap = await page.evaluate(() => ({ lines: G.play.recapLines(G.save.state, G.data), e11: G.play.e11(G.save.state, G.data), model: G.play.recap(G.save.state, G.data) }));
         await page.locator('.interp-opt').first().click(); await page.locator('.ev-opt').first().click(); await next(page); continue;
       }
       if (c.step === 'interp-revise' && !memo.revised) {
-        await page.locator('[data-act="revise"]').click(); assert.equal(await page.locator('.ev-opt').count(), 10);
+        await page.locator('[data-act="revise"]').click(); assert.equal(await page.locator('.ev-opt').count(), 11);
         memo.firstChoice = s.interp.first;
         memo.changedOption = await page.locator('.interp-opt').nth(1).getAttribute('data-opt');
         await page.locator('.interp-opt').nth(1).click(); await page.locator('.ev-opt[data-ev="E9"]').click(); await next(page); memo.revised = true; continue;
@@ -358,7 +460,12 @@ async function fullRun(tag, viewport, mode, dpr) {
       const staff = page.locator('[data-act="staff"]:not([disabled])');
       if (await staff.count()) {
         critical(!s.awake, '지팡이 클릭 전 깨어남'); assert.equal(await page.locator('[data-act="skip"]').count(), 0);
-        await staff.click(); const awake = await state(page); critical(awake.awake && awake.awakeAt > 0, '난간 클릭 순간 미저장'); memo.awakeAt = awake.awakeAt; continue;
+        await staff.click(); const awake = await state(page); critical(awake.awake && awake.awakeAt > 0, '난간 클릭 순간 미저장'); memo.awakeAt = awake.awakeAt;
+        // 만난 인연이 있으면 깨어남이 저장된 뒤에 띠가 무너지기 시작한다(건너뛰기는 그 뒤에만 보인다).
+        for (let i = 0; i < 100 && !page.collapses.length; i++) await page.waitForTimeout(50);
+        const collapse = page.collapses[0];
+        critical(!!collapse, '난간 타격 뒤 띠 무너짐 없음');
+        critical(collapse.awake === true && collapse.stored === true, '깨어남 저장 전 무너짐: ' + JSON.stringify(collapse)); memo.collapse = true; continue;
       }
       const skip = page.locator('[data-act="skip"]:visible');
       if (await skip.count()) { if (c.kind === 'waking') critical(s.awake, '깨어남 전 건너뛰기'); await skip.click(); continue; }
@@ -373,6 +480,7 @@ async function fullRun(tag, viewport, mode, dpr) {
     if (mode === 'mix') assert.ok(memo.reload); assert.ok(memo.lock && memo.wish && memo.match && memo.revised);
     assert.equal(memo.pearlScenes.size, 8);
     assert.equal(await page.locator('.ledger tbody tr').count(), 14); assert.equal(await page.locator('.board-view, .house-view, .bond-list').count(), 0);
+    const expect = await pathChecks(page, mode, s, memo);
     assert.equal(s.interp.changed.evidence, 'E9'); assert.ok(s.interp.final && s.interp.revised);
     assert.equal(s.interp.changed.option, memo.changedOption); assert.deepEqual(s.interp.first, memo.firstChoice);
     assert.equal(s.journal.revealed.misaek, true); assert.equal(s.ledger['a-wish'].help, mode === 'direct' ? null : 'student'); assert.equal(s.ledger['j-match'].help, mode === 'direct' ? null : 'student');
@@ -399,7 +507,7 @@ async function fullRun(tag, viewport, mode, dpr) {
       assert.equal(await page.locator('[data-act="revise"]').count(), 0, '확정한 해석의 두 번째 수정 금지'); await next(page);
     }
     assert.equal((await current(page)).scene, 'r-result'); assert.deepEqual((await state(page)).interp, s.interp);
-    await savePng(page, tag, s); await page.waitForTimeout(550);
+    await savePng(page, tag, s); await resultModelChecks(page, expect); await page.waitForTimeout(550);
     await checks(page, tag + '/result'); await page.screenshot({ path: path.join(SHOTS, 'complete_' + tag + '_screen.png'), fullPage: true, scale: 'css' });
     assert.ok(page.toasts.length > 0, '알림 검사가 실제 실행됨'); assert.deepEqual(page.toasts.filter((t) => t.hits.length), [], '알림이 본문·단추를 가리지 않음');
     await healthy(page);

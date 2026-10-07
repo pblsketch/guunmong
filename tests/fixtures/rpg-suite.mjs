@@ -93,7 +93,7 @@ try {
     assert.deepEqual(await cursor(p),{scene:'e04-exam',map:'map-hallim',x:2,y:5,facing:'right'});
     await target(p,'official'); assert.equal(await p.locator('.stage-portrait img').count(),0,'안내 호칭으로 실제 인물 얼굴 숨김'); await dialogue(p);
     let s=await state(p); assert.equal(s.rpg.run,rpg); assert.equal(s.done['e04-exam'],true); assert.equal(s.pos,'e08-wonsu');
-    assert.deepEqual(s.abil,{munjang:0,eumak:0,muye:0,jiryak:0}); assert.deepEqual(s.res,{gong:0,fame:0,wealth:0}); assert.deepEqual(s.events,{});
+    for(const k of ['abil','res','best','events'])assert.equal(Object.hasOwn(s,k),false,k+' 옛 필드 없음');
     assert.equal(await p.locator('[data-score],[data-act="prep"],[data-grade],.sim-hud').count(),0);
     await next(p); await at(p,'e08-wonsu','wonsu-exit'); await target(p,'prison-door'); await dialogue(p); await at(p,'e08-wonsu','wonsu-order'); assert.equal((await cursor(p)).map,'map-camp');
     await target(p,'camp-order'); await dialogue(p); assert.equal(await p.locator('[data-profile-end]').count(),1);
@@ -124,13 +124,20 @@ try {
       const p=await h.page(actorName==='seongjin'?'world-opening':'world-event',{width:820,height:844});await start(p);
       if(actorName==='chancellor'){await target(p,'paper');await dialogue(p);}
       const key=actorName==='seongjin'?'walk-seongjin':actorName==='scholar'?'walk-yang-scholar':'walk-yang-chancellor';
+      // 화면 캡처는 수백 ms 늦게 끝날 수 있다. (7,5)에서 왼쪽은 두 칸(520ms) 뒤 막혀 서 버리므로, 걷는 중 캡처는 페이지 시계를 멈춘 채로 한다.
+      // 멈출 시각은 지금보다 넉넉히 뒤로 잡는다(그 사이 시계가 앞서 가면 pauseAt이 과거로 갈 수 없다며 실패한다). 정지 상태라 그동안 걷기는 없다.
+      await p.clock.install();
       for(const [facing,keyPress] of [['down','s'],['left','a'],['up','w'],['right','d']]) {
         await seekTarget(p,actorName==='seongjin'?'front-table':'table');
         await fieldCell(p,7,5);
         await p.waitForFunction(()=>G.save.state.rpg.cursor.x===7&&G.save.state.rpg.cursor.y===5);
-        await p.locator('[data-world]').focus();await p.keyboard.down(keyPress);await p.waitForTimeout(75);
-        assert.ok(await p.locator('.world-actor').evaluate(el=>+el.dataset.frame>0),'현재 실제 걷기 프레임');
-        const clip=await p.locator('.world-actor').boundingBox();const moving=await p.screenshot({clip});await p.keyboard.up(keyPress); await idle(p);
+        await p.clock.pauseAt(await p.evaluate(()=>Date.now()+5000));
+        await p.locator('[data-world]').focus();await p.keyboard.down(keyPress);await p.clock.runFor(75);
+        const walking=()=>p.locator('.world-actor').evaluate(el=>el.dataset.moving==='true'&&+el.dataset.frame>0&&el.dataset.x==='7'&&el.dataset.y==='5');
+        assert.ok(await walking(),'현재 실제 걷기 프레임');
+        const clip=await p.locator('.world-actor').boundingBox();const moving=await p.screenshot({clip});
+        assert.ok(await walking(),'캡처하는 동안 걷기 프레임 유지');
+        await p.keyboard.up(keyPress); await p.clock.resume(); await idle(p);
         const stopped=await p.locator('.world-actor').screenshot();assert.notDeepEqual(moving,stopped,key+'/'+facing+' 실제 프레임');
         const foot=await p.evaluate(({key,facing})=>{
           const meta=G.data.sprites[key],el=document.querySelector('.world-actor'),w=document.querySelector('[data-world]'),r=el.getBoundingClientRect(),wr=w.getBoundingClientRect();

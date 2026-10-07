@@ -83,6 +83,15 @@
       const row = h('li.wish' + (wish.filled ? '.filled' : '') + (wish.half ? '.half' : '') + (wish.hidden ? '.hidden' : ''), { dataset: { wish: wish.id } },
         h('span.nm', wish.name), !wish.hidden && definition.hanja ? h('span.hanja', definition.hanja) : null,
         wish.filled ? h('span.stamp', { 'aria-label': '채워짐' }, '滿') : wish.half ? h('span.stamp.half', { 'aria-label': '반쯤 채워짐' }, '半') : null);
+      // 꿈 동안은 소원 띠와 같은 숫자 없는 막대(표시값 level). 滿·半 도장은 원작 바닥(canonFull·half)을 그대로 알린다.
+      if (!S().awake && !wish.hidden && wish.level !== null && wish.level !== undefined) {
+        const band = { levels: ['비어 있음', '조금', '반쯤', '많이 참', '가득 참'], ...(G.data.notes?.ui?.band || {}) };
+        const fill = h('span.band-fill');
+        fill.style.setProperty('--level', String(wish.level));
+        row.appendChild(h('span.wl-level', h('span.band-bar', { 'aria-hidden': 'true' }, fill),
+          h('span.sr', band.levels[Math.max(0, Math.min(band.levels.length - 1, Math.round(wish.level * (band.levels.length - 1))))])));
+        if (wish.secret) row.appendChild(h('span.wl-secret', { 'aria-label': band.secret || '숨긴 소원', title: band.secret || '숨긴 소원' }));
+      }
       if (!wish.hidden && wish.parts?.length) row.appendChild(h('span.wbar.parts', { 'aria-hidden': 'true' }, wish.parts.map(part => h('span.cell.part' + (part.filled ? '.on' : ''), { dataset: { part: part.id } }, part.name))));
       if (options.detail && wish.sources?.length) row.appendChild(h('div.src', wish.sources.map(D.sourceName).join(' · ')));
       if (options.detail && wish.hidden) row.appendChild(h('div.src', '꿈 일지에서만 드러나요'));

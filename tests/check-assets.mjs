@@ -162,7 +162,7 @@ try {
     }
     await page.evaluate(()=>G.dream.open('pearls')); await shot(tag+'_pearls'); await page.keyboard.press('Escape');
     await page.goto(origin+'/index.html?fixture=rpg-waking'); await ready();
-    await page.getByRole('button',{name:'시작하기',exact:true}).click();if (await page.evaluate(() => !!G.data.notes?.mission)) await page.locator('[data-mission="start"]').click();
+    await page.getByRole('button',{name:'시작하기',exact:true}).click();if (await page.evaluate(() => !!G.data.notes?.mission)) { await page.waitForSelector('[data-mission]'); while (await page.locator('[data-mission="next"]').count()) await page.locator('[data-mission="next"]').click(); await page.locator('[data-mission="start"]').click(); };
     for (let n=0;n<35;n++) {
       const c=await cur(); if(c?.step==='staff')break;
       if(await page.locator('[data-dialogue]').count()){await dialogue(page);continue;}

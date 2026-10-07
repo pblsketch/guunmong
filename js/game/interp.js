@@ -3,7 +3,13 @@
   const { h } = G.util;
   const I = () => G.data.interp || {};
   G.app.interpText = (id) => I().options.find((o) => o.id === id)?.text || '';
-  G.app.interpEvidence = (id) => I().evidence.find((e) => e.id === id) || {};
+  // 틀 근거(E11 '내가 꿈에서 고른 길')는 저장된 근거 id만 남기고, 화면·결과·PNG가 같은 기록에서 글을 다시 만든다.
+  // 학생이 고른 말이 없으면 글이 없어(null) 고를 수 없다. 깨어난 뒤에는 기록이 얼어 있어 언제 만들어도 같은 글이다.
+  const filled = (e) => (e.template ? { ...e, text: (e.id === 'E11' && G.play?.e11?.(G.save.state, G.data)) || '' } : e);
+  G.app.interpEvidence = (id) => { const e = I().evidence.find((x) => x.id === id); return e ? filled(e) : {}; };
+  const shownEvidence = (heard) => I().evidence.filter((e) => heard || !e.after).map(filled).filter((e) => !e.template || e.text);
+  // 5장 첫머리 되짚기(G.play.recapLines): 고른 말·첫 결과·숨긴 소원과 가장 찼던 소원·물음. 답하는 칸 없이 기존 대사로 잇는다.
+  const recapLines = () => (G.play?.recapLines ? G.play.recapLines(G.save.state, G.data) : []).map((text) => ({ say: 'yuk', text }));
   function picker(ctx, previous, heard, label) {
     const pick = { option: previous?.option || null, evidence: previous?.evidence || null };
     const box = h('div.interp-pick-box', h('h3', I().question));
@@ -28,7 +34,7 @@
       }
     }
     for (const op of I().options) options.append(h('button.interp-opt', { type: 'button', dataset: { opt: op.id }, on: { click: () => { if (locked || !ctx.canAct()) return; pick.option = op.id; G.audio.pick(); draw(); } } }, G.text.inline(op.text)));
-    for (const ev of I().evidence.filter((e) => heard || !e.after)) evidence.append(h('button.ev-opt', { type: 'button', dataset: { ev: ev.id }, on: { click: () => { if (locked || !ctx.canAct()) return; pick.evidence = ev.id; G.audio.pick(); draw(); } } }, G.text.inline(ev.text), ev.from ? h('small', ev.from) : null));
+    for (const ev of shownEvidence(heard)) evidence.append(h('button.ev-opt', { type: 'button', dataset: { ev: ev.id }, on: { click: () => { if (locked || !ctx.canAct()) return; pick.evidence = ev.id; G.audio.pick(); draw(); } } }, G.text.inline(ev.text), ev.from ? h('small', ev.from) : null));
     draw(); return result;
   }
   const summary = (pick) => h('div.interp-sum', h('p', G.text.inline(G.app.interpText(pick?.option))), h('p', G.text.inline(G.app.interpEvidence(pick?.evidence).text || '')));
@@ -50,7 +56,7 @@
       return false;
     };
     if (!st.first) {
-      ctx.step('interp-dialogue'); await G.stage.play(ctx, sc, { lines: [...(sc.lines || []), ...(I().dialogue || [])] });
+      ctx.step('interp-dialogue'); await G.stage.play(ctx, sc, { lines: [...(sc.lines || []), ...recapLines(), ...(I().dialogue || [])] });
       if (!ctx.alive()) return;
     }
     if (!st.first && !ro) {

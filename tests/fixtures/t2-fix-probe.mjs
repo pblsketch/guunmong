@@ -220,7 +220,7 @@ export async function transitionFailures(h) {
   data.scenes.find(s => s.id === 'c1-cell').kind = 'cutscene';
   data.experiences = data.experiences.filter(e => e.scene !== 'c1-cell');
   for (const map of data.maps) map.objects = map.objects.filter(o => o.action !== 'cell-look');
-  const scripts = ['js/core/util.js', 'js/core/world.js', 'js/core/experience.js', 'js/core/save.js', 'js/core/data.js',
+  const scripts = ['js/core/util.js', 'js/core/world.js', 'js/core/experience.js', 'js/core/play.js', 'js/core/save.js', 'js/core/data.js',
     'js/core/audio.js', 'js/core/text.js', 'js/core/ui.js', 'js/game/app.js', 'js/game/stage.js', 'js/game/world.js'];
   fs.writeFileSync(path.join(SHOTS, 't2-fix-transition.html'), '<!doctype html><html lang="ko"><head><meta charset="utf-8"><base href="../../../">' +
     '<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/rpg.css"></head><body><div id="app"></div>' +

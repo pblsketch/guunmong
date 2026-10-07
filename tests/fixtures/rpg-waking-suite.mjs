@@ -46,7 +46,7 @@ try{
     const p=await h.page('rpg-waking');
     assert.equal(await p.evaluate(()=>G.data.ok),true);
     assert.deepEqual(await p.evaluate(()=>G.app.list().map(s=>s.id)),['c3-feast','c3-monk','c3-staff','c3-awake']);
-    await toStaff(p);const s=await state(p);assert.equal(s.teacher,false);assert.equal(s.awake,false);assert.deepEqual(s.items,[]);assert.deepEqual(s.bonds,[]);assert.deepEqual(s.events,{});
+    await toStaff(p);const s=await state(p);assert.equal(s.teacher,false);assert.equal(s.awake,false);assert.deepEqual(s.items,[]);assert.deepEqual(s.bonds,[]);for(const k of ['abil','res','best','events'])assert.equal(Object.hasOwn(s,k),false,k+' 옛 필드 없음');
     assert.deepEqual(s.rpg.scenes['c3-staff'].actions,[]);assert.equal(s.rpg.scenes['c3-staff'].beat,'staff-strike');
     await p.context().close();
   });
@@ -142,7 +142,7 @@ try{
   await test('옛 auto staff 호환은 실제 입력만 원자 확정·다른 auto 보존',async()=>{
     const p=await h.page('rpg-waking');
     await p.evaluate(()=>{
-      const old=JSON.parse(JSON.stringify(G.save.state));old.started=true;old.pos='c3-awake';old.reach=3;old.res.gong=777;
+      const old=JSON.parse(JSON.stringify(G.save.state));old.started=true;old.pos='c3-awake';old.reach=3;old.name='보존 확인';
       old.rpg.scenes=Object.fromEntries(['c3-feast','c3-monk','c3-staff'].map(id=>[id,{status:'auto',beat:null,actions:[],hint:'teacher'}]));
       old.rpg.cursor=G.experience.cursor(G.data,'c3-awake',G.experience.find(G.data,'c3-awake').beats[0].id);localStorage.setItem(G.save.key,JSON.stringify(old));
     });
@@ -156,7 +156,7 @@ try{
     await p.locator('[data-act="staff"]').click();assert.deepEqual(await state(p),before);assert.equal(await raw(p),stored);
     await p.evaluate(()=>Storage.prototype.setItem=savedWrite);await p.locator('[data-act="staff"]').click();const after=await state(p);
     assert.equal(after.awake,true);assert.equal(after.pos,'c3-awake');assert.ok(after.awakeAt>0);assert.equal(after.rpg.scenes['c3-staff'].status,'done');assert.equal(after.rpg.scenes['c3-staff'].hint,'teacher');assert.deepEqual(after.rpg.scenes['c3-staff'].actions,[{id:'staff-strike',by:'student'}]);
-    for(const id of ['c3-feast','c3-monk'])assert.deepEqual(after.rpg.scenes[id],before.rpg.scenes[id]);assert.deepEqual(after.res,before.res);assert.deepEqual(after.events,before.events);await p.context().close();
+    for(const id of ['c3-feast','c3-monk'])assert.deepEqual(after.rpg.scenes[id],before.rpg.scenes[id]);assert.equal(after.name,before.name);assert.deepEqual(after.play,before.play);await p.context().close();
   });
   if(!guardsOnly)for(const width of [320,390,820,1280])for(const big of [false,true])await test(width+' '+(big?'큰 글자':'일반')+' 필드 안 타격창',async()=>{
     const p=await h.page('rpg-waking',{width,height:844});await toStaff(p,big);await p.evaluate(()=>document.fonts.ready);const g=await geometry(p);
