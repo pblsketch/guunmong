@@ -18,8 +18,8 @@ try {
     assert.equal(current.scene, 'e10-neungpa');
     if (!current.beat) break;
     if (!seen.includes(current.beat)) seen.push(current.beat);
-    if (current.beat === 'neungpa-return') {
-      assert.equal(current.map, 'map-yoyeon', '귀환 서술 전 진영 필드');
+    if (['neungpa-return', 'neungpa-share'].includes(current.beat)) {
+      assert.equal(current.map, 'map-yoyeon', '귀환 서술 전 진영 필드, 물은 깬 뒤 진영에서 나눔');
       assert.equal((await state(page)).awake, false, '작은 꿈 귀환은 awake를 바꾸지 않음');
     } else {
       assert.equal(current.map, ['neungpa-water','neungpa-enter'].includes(current.beat) ? 'map-bansagok' : 'map-baekryong');
@@ -29,10 +29,10 @@ try {
     else await page.locator('[data-act="interact"]').click();
     await dialogue(page);
   }
-  assert.deepEqual(seen, ['neungpa-water','neungpa-enter','neungpa-meet','neungpa-defeat','neungpa-share','neungpa-monk','neungpa-return']);
+  assert.deepEqual(seen, ['neungpa-water','neungpa-enter','neungpa-meet','neungpa-defeat','neungpa-monk','neungpa-return','neungpa-share']);
   assert.equal((await state(page)).awake, false);
   assert.deepEqual(h.errors, [], h.errors.join('\n'));
-  console.log('PASS e10 미리보기 실제 7행동 · 백룡담에서 진영 복귀 · awake false');
+  console.log('PASS e10 미리보기 실제 7행동 · 백룡담에서 진영 복귀 뒤 물 나누기 · awake false');
   await page.context().close();
 } finally {
   await h.close();

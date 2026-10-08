@@ -19,6 +19,8 @@
     const done = new Promise((r) => { resolveDone = r; });
     const cancel = () => { if (refreshCurrent === draw) refreshCurrent = null; resolveDone(false); };
     ctx.signal.addEventListener('abort', cancel, { once: true });
+    ctx.signal.addEventListener('abort', () => G.voice?.stop(), { once: true });
+    G.voice?.say(sc.monologue.split('\n').filter(Boolean));
     const words = new Map(sc.words.map((word) => [word.id, word]));
     const passage = h('div.wish-passage');
     let remaining = sc.monologue;

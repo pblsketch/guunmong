@@ -1,0 +1,60 @@
+{
+ "fairy": {
+  "id": "4e118bfbb83e401c84699c09b5f08257",
+  "name": "20대 여자_나긋나긋 쇼츠",
+  "source": "https://fish.audio/m/4e118bfbb83e401c84699c09b5f08257",
+  "author": "썸웨어코드"
+ },
+ "seongjin": {
+  "id": "078c1b6c34714bba92371c3386716823",
+  "name": "韩男",
+  "source": "https://fish.audio/m/078c1b6c34714bba92371c3386716823",
+  "author": "bffh6901069"
+ },
+ "yuk": {
+  "id": "73da877014f349c0ad3eb136c7f1a0c7",
+  "name": "차분한 한국어 남성",
+  "source": "https://fish.audio/m/73da877014f349c0ad3eb136c7f1a0c7",
+  "author": "민정익"
+ },
+ "narrator": {
+  "id": "2f06c7a428e9431fadd60af4dfe91763",
+  "name": "차분한 한국어 내레이션",
+  "source": "https://fish.audio/m/2f06c7a428e9431fadd60af4dfe91763",
+  "author": "유명준"
+ },
+ "yang": {
+  "id": "5a53fa5e9d3147c692abbc9327e588ba",
+  "name": "유툽",
+  "source": "https://fish.audio/m/5a53fa5e9d3147c692abbc9327e588ba",
+  "author": "창훈"
+ },
+ "elder": {
+  "id": "29da56534ac84ccd81092be4359a1639",
+  "name": "개인 기본음성 - 나레이션",
+  "source": "https://fish.audio/m/29da56534ac84ccd81092be4359a1639",
+  "author": "ljs"
+ },
+ "lady": {
+  "id": "c3d02d33de654760b2b23c31740b8cb2",
+  "name": "청아한 버스 안내 음성",
+  "source": "https://fish.audio/m/c3d02d33de654760b2b23c31740b8cb2",
+  "author": "자류스"
+ },
+ "speakers": {
+  "seongjin": "seongjin",
+  "yang": "yang",
+  "yuk": "yuk",
+  "hoseung": "yuk",
+  "dosa": "elder",
+  "josin": "elder",
+  "chae": "lady",
+  "gyeongpae": "lady",
+  "chunun": "lady",
+  "neungpa": "lady",
+  "nanyang": "lady",
+  "seomwol": "fairy",
+  "gyeonghong": "fairy",
+  "yoyeon": "fairy"
+ }
+}

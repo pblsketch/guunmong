@@ -14,6 +14,28 @@
   function next(e, actions) {
     return e.beats.find((b) => !actions.some((a) => a.id === b.id))?.id || null;
   }
+  // 필수 행동의 차례를 원작에 맞게 고친 장면과 그 전 차례. 2026-10-08: 반사곡의 물은 남악 꿈에서 깬 뒤에 나눈다.
+  const MOVED = { 'e10-neungpa': ['neungpa-water', 'neungpa-enter', 'neungpa-meet', 'neungpa-defeat', 'neungpa-share', 'neungpa-monk', 'neungpa-return'] };
+  // 전 차례로 남은 학생 기록을 지금 차례로 다시 세운다. 선택 행동(구슬)은 자리가 바뀌지 않은 마지막 필수 행동 뒤에 붙이고,
+  // 지금 차례에서 빈자리가 생기면 그 뒤는 버린다. 전 차례와 맞지 않는 기록은 그대로 두어 원래 검증에 맡긴다.
+  function reorder(e, actions) {
+    const old = MOVED[e.scene];
+    if (!old || !Array.isArray(actions) || !actions.every(object)) return actions;
+    const rank = (a) => e.beats.findIndex((b) => b.id === a.id);
+    const required = actions.filter((a) => rank(a) >= 0).map((a) => a.id);
+    if (required.some((id, i) => old[i] !== id) || required.every((id, i) => e.beats[i].id === id)) return actions;
+    const groups = [[]];
+    let anchor = groups[0];
+    for (const a of actions) {
+      if (rank(a) < 0) { anchor.push(a); continue; }
+      const group = [a]; groups.push(group);
+      if (rank(a) === groups.length - 2) anchor = group;
+    }
+    const kept = groups.shift();
+    groups.sort((x, y) => rank(x[0]) - rank(y[0]));
+    for (let i = 0; i < groups.length && rank(groups[i][0]) === i; i++) kept.push(...groups[i]);
+    return kept;
+  }
   function record(e) { return { status: 'active', beat: e.beats[0]?.id || null, actions: [], hint: null }; }
   function cursor(data, scene, beat) {
     const stage = G.world.stage(data, scene, beat);
@@ -30,8 +52,9 @@
       const value = validVersion && object(old?.scenes) ? old.scenes[e.scene] : null;
       if (!object(value)) continue;
       const rec = record(e);
-      let valid = object(value) && Array.isArray(value.actions);
-      if (valid) for (const action of value.actions) {
+      const actions = reorder(e, value.actions);
+      let valid = object(value) && Array.isArray(actions);
+      if (valid) for (const action of actions) {
         const b = object(action) && all(e).find((b) => b.id === action.id);
         const stage = G.world.stage(data, e.scene, next(e, rec.actions));
         // 구슬 공개 시점이 바뀌어도 이미 저장한 수집과 필수 행동은 보존한다.

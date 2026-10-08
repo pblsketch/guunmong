@@ -162,13 +162,14 @@
         "person": "fairy_chae",
         "sprite": "npc-fairy-green"
       },
-      { "id": "bridge-fairy-scarlet", "x": 4, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-scarlet" },
-      { "id": "bridge-fairy-ivory", "x": 5, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-ivory" },
-      { "id": "bridge-fairy-pink", "x": 6, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-pink" },
-      { "id": "bridge-fairy-violet", "x": 7, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-violet" },
-      { "id": "bridge-fairy-gold", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-gold" },
-      { "id": "bridge-fairy-navy", "x": 6, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-navy" },
-      { "id": "bridge-fairy-aqua", "x": 5, "y": 2, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet"], "action": null, "sprite": "npc-fairy-aqua" },
+      { "id": "bridge-fairy-green-stay", "x": 6, "y": 3, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-green" },
+      { "id": "bridge-fairy-scarlet", "x": 4, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-scarlet" },
+      { "id": "bridge-fairy-ivory", "x": 5, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-ivory" },
+      { "id": "bridge-fairy-pink", "x": 6, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-pink" },
+      { "id": "bridge-fairy-violet", "x": 7, "y": 0, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-violet" },
+      { "id": "bridge-fairy-gold", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-gold" },
+      { "id": "bridge-fairy-navy", "x": 6, "y": 1, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-navy" },
+      { "id": "bridge-fairy-aqua", "x": 5, "y": 2, "kind": "npc", "solid": true, "label": "선녀", "decor": true, "visibleAt": ["c1-bridge:bridge-meet", "c1-bridge:bridge-flower"], "action": null, "sprite": "npc-fairy-aqua" },
       {
         "id": "bridge-flower",
         "x": 5,
@@ -418,6 +419,7 @@
         "person": "yuk",
         "sprite": "npc-yuk"
       },
+      { "id": "exile-master-stay", "x": 7, "y": 4, "kind": "npc", "solid": true, "label": "육관대사", "decor": true, "visibleAt": ["c1-exile:exile-leave"], "action": null, "sprite": "npc-yuk" },
       {
         "id": "exile-door",
         "x": 5,
@@ -676,6 +678,8 @@
         "action": "huayin-reply",
         "sprite": "prop-table"
       },
+      { "id": "huayin-willow-stay", "x": 2, "y": 3, "kind": "scenery", "solid": true, "label": "누각에 닿은 버들", "decor": true, "visibleAt": ["e01-huayin:huayin-write", "e01-huayin:huayin-send", "e01-huayin:huayin-reply", "e01-huayin:huayin-leave"], "action": null, "sprite": "prop-willow" },
+      { "id": "huayin-nurse-stay", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "유모", "decor": true, "visibleAt": ["e01-huayin:huayin-reply"], "action": null, "sprite": "npc-nurse" },
       {
         "id": "huayin-road",
         "x": 6,
@@ -722,6 +726,7 @@
     "objects": [
       { "id": "namjeon-ridge", "x": 4, "y": 6, "kind": "scenery", "solid": true, "label": "산등성이의 좁은 길", "sprite": "prop-path", "visibleAt": ["l-namjeon:namjeon-climb"], "action": "namjeon-climb" },
       { "id": "namjeon-dosa", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "남전산 도인", "sprite": "npc-hermit", "visibleAt": ["l-namjeon:namjeon-learn"], "action": "namjeon-learn", "person": "dosa" },
+      { "id": "namjeon-dosa-stay", "x": 5, "y": 1, "kind": "npc", "solid": true, "label": "남전산 도인", "decor": true, "visibleAt": ["l-namjeon:namjeon-receive"], "action": null, "sprite": "npc-hermit" },
       { "id": "namjeon-instruments", "x": 7, "y": 4, "kind": "item", "solid": true, "label": "거문고와 백옥 퉁소", "verb": "받기", "visibleAt": ["l-namjeon:namjeon-receive"], "action": "namjeon-receive", "sprite": "prop-chest" }
     ]
   },
@@ -746,6 +751,7 @@
     "objects": [
       { "id": "tianjin-guests", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "시를 겨루는 선비들", "visibleAt": ["e02-tianjin:tianjin-enter"], "action": "tianjin-enter", "sprite": "prop-stool" },
       { "id": "tianjin-brush", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "시전과 붓", "verb": "시 쓰기", "visibleAt": ["e02-tianjin:tianjin-write"], "action": "tianjin-write", "sprite": "prop-table" },
+      { "id": "tianjin-guests-stay", "x": 2, "y": 2, "kind": "scenery", "solid": true, "label": "시를 겨루는 선비들", "decor": true, "visibleAt": ["e02-tianjin:tianjin-write", "e02-tianjin:tianjin-listen"], "action": null, "sprite": "prop-stool" },
       { "id": "tianjin-seomwol", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "계섬월", "sprite": "npc-singer", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-listen", "person": "seomwol" },
       { "id": "tianjin-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "술잔 곁 구슬 흔적 · 선택", "visibleAt": ["e02-tianjin:tianjin-listen"], "action": "tianjin-pearl" }
     ]
@@ -771,6 +777,7 @@
     "objects": [
       { "id": "geomungo-clothes", "x": 2, "y": 6, "kind": "item", "solid": true, "label": "여도사 차림", "verb": "갈아입기", "visibleAt": ["e03-geomungo:geomungo-dress"], "action": "geomungo-dress", "sprite": "prop-chest" },
       { "id": "geomungo-instrument", "x": 5, "y": 4, "kind": "item", "solid": true, "label": "거문고", "verb": "타기", "visibleAt": ["e03-geomungo:geomungo-play"], "action": "geomungo-play", "sprite": "prop-table" },
+      { "id": "geomungo-instrument-stay", "x": 5, "y": 4, "kind": "scenery", "solid": true, "label": "거문고", "decor": true, "visibleAt": ["e03-geomungo:geomungo-response"], "action": null, "sprite": "prop-table" },
       { "id": "geomungo-listener", "x": 9, "y": 3, "kind": "npc", "solid": true, "label": "발 너머 소저", "sprite": "npc-noble-lady", "visibleAt": ["e03-geomungo:geomungo-response"], "action": "geomungo-response", "person": "gyeongpae" },
       { "id": "geomungo-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "창가의 구슬 흔적 · 선택", "visibleAt": [], "action": "geomungo-pearl" }
     ]
@@ -1112,6 +1119,7 @@
       { "id": "yoyeon-choice", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "칼을 내려놓으려는 자객", "sprite": "npc-assassin", "visibleAt": ["e09-yoyeon:yoyeon-choice"], "action": "yoyeon-choice" },
       { "id": "yoyeon-speak", "x": 7, "y": 5, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-speak"], "action": "yoyeon-speak", "person": "yoyeon" },
       { "id": "yoyeon-warning", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "심요연", "sprite": "npc-yoyeon", "visibleAt": ["e09-yoyeon:yoyeon-warning"], "action": "yoyeon-warning", "person": "yoyeon" },
+      { "id": "neungpa-share", "x": 7, "y": 5, "kind": "item", "solid": true, "label": "군사들에게 나눌 물", "verb": "나눠 주기", "visibleAt": ["e10-neungpa:neungpa-share"], "action": "neungpa-share", "sprite": "prop-table" },
       { "id": "yoyeon-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "촛대 아래 구슬 흔적 · 선택", "visibleAt": ["e09-yoyeon:yoyeon-speak","e09-yoyeon:yoyeon-warning"], "action": "yoyeon-pearl" }
     ]
   },
@@ -1131,9 +1139,8 @@
     "objects": [
       { "id": "neungpa-meet", "x": 8, "y": 2, "kind": "npc", "solid": true, "label": "백능파", "sprite": "npc-neungpa", "visibleAt": ["e10-neungpa:neungpa-meet"], "action": "neungpa-meet", "person": "neungpa" },
       { "id": "neungpa-defeat", "x": 3, "y": 2, "kind": "scenery", "solid": true, "label": "남해 태자가 물러난 물가", "visibleAt": ["e10-neungpa:neungpa-defeat"], "action": "neungpa-defeat", "sprite": "prop-wall-red" },
-      { "id": "neungpa-share", "x": 7, "y": 5, "kind": "item", "solid": true, "label": "군사들에게 나눌 물", "verb": "나눠 주기", "visibleAt": ["e10-neungpa:neungpa-share"], "action": "neungpa-share", "sprite": "prop-table" },
       { "id": "neungpa-monk", "x": 3, "y": 6, "kind": "npc", "solid": true, "label": "남악의 늙은 스님", "sprite": "npc-old-monk", "visibleAt": ["e10-neungpa:neungpa-monk"], "action": "neungpa-monk" },
-      { "id": "neungpa-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "물밑 구슬 흔적 · 선택", "visibleAt": ["e10-neungpa:neungpa-defeat","e10-neungpa:neungpa-share","e10-neungpa:neungpa-monk"], "action": "neungpa-pearl" }
+      { "id": "neungpa-pearl", "x": 9, "y": 7, "kind": "pearl", "solid": true, "label": "물밑 구슬 흔적 · 선택", "visibleAt": ["e10-neungpa:neungpa-defeat","e10-neungpa:neungpa-monk"], "action": "neungpa-pearl" }
     ]
   },
   {

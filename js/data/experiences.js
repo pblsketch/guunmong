@@ -283,7 +283,7 @@
       ], "appearance": "walk-yang-scholar" }
     ],
     "optional": [
-      { "id": "tianjin-pearl", "trigger": { "kind": "inspect", "target": "tianjin-pearl" }, "lines": [2], "effects": [{ "kind": "pearl", "id": "seomwol" }], "appearance": "walk-yang-scholar" }
+      { "id": "tianjin-pearl", "trigger": { "kind": "inspect", "target": "tianjin-pearl" }, "lines": [6], "effects": [{ "kind": "pearl", "id": "seomwol" }], "appearance": "walk-yang-scholar" }
     ]
   },
   {
@@ -330,7 +330,7 @@
       ], "map": "map-chunun-room", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
-      { "id": "chunun-pearl", "trigger": { "kind": "inspect", "target": "chunun-pearl" }, "lines": [6], "effects": [{ "kind": "pearl", "id": "chunun" }], "appearance": "walk-yang-chancellor" }
+      { "id": "chunun-pearl", "trigger": { "kind": "inspect", "target": "chunun-pearl" }, "lines": [8], "effects": [{ "kind": "pearl", "id": "chunun" }], "appearance": "walk-yang-chancellor" }
     ]
   },
   {
@@ -379,7 +379,7 @@
       ], "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
-      { "id": "tungso-pearl", "trigger": { "kind": "inspect", "target": "tungso-pearl" }, "lines": [4], "effects": [{ "kind": "pearl", "id": "nanyang" }], "appearance": "walk-yang-chancellor" }
+      { "id": "tungso-pearl", "trigger": { "kind": "inspect", "target": "tungso-pearl" }, "lines": [6], "effects": [{ "kind": "pearl", "id": "nanyang" }], "appearance": "walk-yang-chancellor" }
     ]
   },
   {
@@ -430,7 +430,7 @@
       { "id": "yoyeon-warning", "trigger": { "kind": "talk", "target": "yoyeon-warning" }, "lines": [5], "effects": [{ "kind": "story", "id": "e09-yoyeon:warning" }], "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
-      { "id": "yoyeon-pearl", "trigger": { "kind": "inspect", "target": "yoyeon-pearl" }, "lines": [3], "effects": [{ "kind": "pearl", "id": "yoyeon" }], "appearance": "walk-yang-chancellor" }
+      { "id": "yoyeon-pearl", "trigger": { "kind": "inspect", "target": "yoyeon-pearl" }, "lines": [6], "effects": [{ "kind": "pearl", "id": "yoyeon" }], "appearance": "walk-yang-chancellor" }
     ]
   },
   {
@@ -443,12 +443,12 @@
       { "id": "neungpa-enter", "trigger": { "kind": "exit", "target": "neungpa-enter" }, "lines": [1], "effects": [], "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-meet", "trigger": { "kind": "talk", "target": "neungpa-meet" }, "lines": [2], "effects": [{ "kind": "bond", "id": "neungpa" }], "map": "map-baekryong", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
       { "id": "neungpa-defeat", "trigger": { "kind": "inspect", "target": "neungpa-defeat" }, "lines": [3], "effects": [], "appearance": "walk-yang-chancellor" },
-      { "id": "neungpa-share", "trigger": { "kind": "use", "target": "neungpa-share" }, "lines": [4], "effects": [{ "kind": "item", "id": "it-mulbyeong" }], "appearance": "walk-yang-chancellor" },
-      { "id": "neungpa-monk", "trigger": { "kind": "talk", "target": "neungpa-monk" }, "lines": [5,6], "effects": [], "appearance": "walk-yang-chancellor" },
-      { "id": "neungpa-return", "trigger": { "kind": "continue", "target": null }, "lines": [7], "effects": [{ "kind": "story", "id": "e10-neungpa:return" }], "map": "map-yoyeon", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" }
+      { "id": "neungpa-monk", "trigger": { "kind": "talk", "target": "neungpa-monk" }, "lines": [4,5], "effects": [], "appearance": "walk-yang-chancellor" },
+      { "id": "neungpa-return", "trigger": { "kind": "continue", "target": null }, "lines": [6], "effects": [{ "kind": "story", "id": "e10-neungpa:return" }], "map": "map-yoyeon", "spawn": { "x": 5, "y": 8, "facing": "up" }, "appearance": "walk-yang-chancellor" },
+      { "id": "neungpa-share", "trigger": { "kind": "use", "target": "neungpa-share" }, "lines": [7], "effects": [{ "kind": "item", "id": "it-mulbyeong" }], "appearance": "walk-yang-chancellor" }
     ],
     "optional": [
-      { "id": "neungpa-pearl", "trigger": { "kind": "inspect", "target": "neungpa-pearl" }, "lines": [2], "effects": [{ "kind": "pearl", "id": "neungpa" }], "appearance": "walk-yang-chancellor" }
+      { "id": "neungpa-pearl", "trigger": { "kind": "inspect", "target": "neungpa-pearl" }, "lines": [8], "effects": [{ "kind": "pearl", "id": "neungpa" }], "appearance": "walk-yang-chancellor" }
     ]
   },
   {

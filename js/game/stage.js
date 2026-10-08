@@ -92,6 +92,7 @@
       portrait(opt.hideFace && targetSpeaking ? null : b.say, b.mood, { shake: b.shake });
       dialogue.replaceChildren(b.mark ? G.text.block(b, { run: ctx.run, readonly: ctx.readonly }) : G.text.inline(b.text || b.gloss || '', { noFace: true }));
       if (b.effect) effect(b.effect);
+      G.voice?.say(b.mark || b.prompt ? null : b.text || b.gloss);
     }
     async function walk(opt = {}) {
       if (!active()) return false;
@@ -116,6 +117,7 @@
     function dispose() {
       if (disposed) return;
       disposed = true;
+      G.voice?.stop();
       for (const motion of animations) motion.cancel();
       animations.clear();
       for (const resolve of pending) resolve();

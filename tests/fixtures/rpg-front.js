@@ -869,7 +869,7 @@ window.GUUN = {
             "target": "tianjin-pearl"
           },
           "lines": [
-            2
+            6
           ],
           "effects": [
             {
@@ -1135,7 +1135,7 @@ window.GUUN = {
             "target": "chunun-pearl"
           },
           "lines": [
-            6
+            8
           ],
           "effects": [
             {
@@ -1391,7 +1391,7 @@ window.GUUN = {
             "target": "tungso-pearl"
           },
           "lines": [
-            4
+            6
           ],
           "effects": [
             {
@@ -1639,6 +1639,20 @@ window.GUUN = {
           "sprite": "npc-fairy-green"
         },
         {
+          "id": "bridge-fairy-green-stay",
+          "x": 6,
+          "y": 3,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-flower"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-green"
+        },
+        {
           "id": "bridge-fairy-scarlet",
           "x": 4,
           "y": 0,
@@ -1647,7 +1661,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-scarlet"
@@ -1661,7 +1676,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-ivory"
@@ -1675,7 +1691,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-pink"
@@ -1689,7 +1706,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-violet"
@@ -1703,7 +1721,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-gold"
@@ -1717,7 +1736,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-navy"
@@ -1731,7 +1751,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-aqua"
@@ -1986,6 +2007,20 @@ window.GUUN = {
           "sprite": "npc-yuk"
         },
         {
+          "id": "exile-master-stay",
+          "x": 7,
+          "y": 4,
+          "kind": "npc",
+          "solid": true,
+          "label": "육관대사",
+          "decor": true,
+          "visibleAt": [
+            "c1-exile:exile-leave"
+          ],
+          "action": null,
+          "sprite": "npc-yuk"
+        },
+        {
           "id": "exile-door",
           "x": 5,
           "y": 9,
@@ -2205,6 +2240,37 @@ window.GUUN = {
           "sprite": "prop-table"
         },
         {
+          "id": "huayin-willow-stay",
+          "x": 2,
+          "y": 3,
+          "kind": "scenery",
+          "solid": true,
+          "label": "누각에 닿은 버들",
+          "decor": true,
+          "visibleAt": [
+            "e01-huayin:huayin-write",
+            "e01-huayin:huayin-send",
+            "e01-huayin:huayin-reply",
+            "e01-huayin:huayin-leave"
+          ],
+          "action": null,
+          "sprite": "prop-willow"
+        },
+        {
+          "id": "huayin-nurse-stay",
+          "x": 9,
+          "y": 3,
+          "kind": "npc",
+          "solid": true,
+          "label": "유모",
+          "decor": true,
+          "visibleAt": [
+            "e01-huayin:huayin-reply"
+          ],
+          "action": null,
+          "sprite": "npc-nurse"
+        },
+        {
           "id": "huayin-road",
           "x": 6,
           "y": 9,
@@ -2406,6 +2472,20 @@ window.GUUN = {
           "person": "dosa"
         },
         {
+          "id": "namjeon-dosa-stay",
+          "x": 5,
+          "y": 1,
+          "kind": "npc",
+          "solid": true,
+          "label": "남전산 도인",
+          "decor": true,
+          "visibleAt": [
+            "l-namjeon:namjeon-receive"
+          ],
+          "action": null,
+          "sprite": "npc-hermit"
+        },
+        {
           "id": "namjeon-instruments",
           "x": 7,
           "y": 4,
@@ -2596,6 +2676,21 @@ window.GUUN = {
           ],
           "action": "tianjin-write",
           "sprite": "prop-table"
+        },
+        {
+          "id": "tianjin-guests-stay",
+          "x": 2,
+          "y": 2,
+          "kind": "scenery",
+          "solid": true,
+          "label": "시를 겨루는 선비들",
+          "decor": true,
+          "visibleAt": [
+            "e02-tianjin:tianjin-write",
+            "e02-tianjin:tianjin-listen"
+          ],
+          "action": null,
+          "sprite": "prop-stool"
         },
         {
           "id": "tianjin-seomwol",
@@ -2800,6 +2895,20 @@ window.GUUN = {
             "e03-geomungo:geomungo-play"
           ],
           "action": "geomungo-play",
+          "sprite": "prop-table"
+        },
+        {
+          "id": "geomungo-instrument-stay",
+          "x": 5,
+          "y": 4,
+          "kind": "scenery",
+          "solid": true,
+          "label": "거문고",
+          "decor": true,
+          "visibleAt": [
+            "e03-geomungo:geomungo-response"
+          ],
+          "action": null,
           "sprite": "prop-table"
         },
         {
@@ -5100,7 +5209,8 @@ window.GUUN = {
           "mood": "smile"
         },
         "섬월의 노래로 소유의 시가 주루에 울렸다.",
-        "섬월은 소유와 이야기를 나누며 정씨 집 소저를 알려 주었다."
+        "섬월은 소유와 이야기를 나누며 정씨 집 소저를 알려 주었다.",
+        "술잔 곁에 이름 모를 빛이 잠깐 흔들렸다."
       ],
       "gradeText": {
         "shine": "노래가 그친 뒤에도 시의 여운을 칭찬했다.",
@@ -5262,7 +5372,8 @@ window.GUUN = {
           "say": "yang",
           "text": "내가 옷으로 속인 일이 이렇게 돌아오는구나.",
           "mood": "smile"
-        }
+        },
+        "잎사귀 곁에 이름 모를 흰빛이 내려앉았다."
       ],
       "gradeText": {
         "shine": "속은 뒤 함께 크게 웃는 너른 품이 화제가 됐다.",
@@ -5409,7 +5520,8 @@ window.GUUN = {
         },
         "학이 날아와 가락에 맞추어 춤췄다.",
         "그 학은 난양공주의 퉁소에도 춤추던 학이었다.",
-        "궁중에 소문이 닿았다. 두 사람은 아직 얼굴을 마주하지 않았다."
+        "궁중에 소문이 닿았다. 두 사람은 아직 얼굴을 마주하지 않았다.",
+        "달빛 속에 이름 모를 빛 한 점이 떠 있었다."
       ],
       "gradeText": {
         "shine": "학을 부른 맑은 가락이라는 찬사가 퍼졌다.",

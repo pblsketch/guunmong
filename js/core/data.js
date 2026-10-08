@@ -7,7 +7,7 @@
 // <script> 태그로 읽으므로 index.html을 파일로 바로 열어도(file://) 동작한다.
 (function () {
   // 데이터 파일 버전: 코드와 데이터를 함께 바꿔 배포할 때 올린다. 브라우저 캐시가 옛 데이터를 새 코드에 주지 않게 한다.
-  const DATA_VERSION = '20261008';
+  const DATA_VERSION = '20261008-voice';
   const FILES = ['people', 'chapters', 'scenes', 'wishes', 'bonds', 'house', 'journal', 'interp', 'notes', 'bgm', 'sprites', 'maps', 'experiences', 'challenges'];
   const D = (G.data = { ok: false, fixture: null, loaded: [], missing: [], problems: [] });
 

@@ -666,12 +666,12 @@
         b.addEventListener('click', () => {
           if (!b.isConnected) return;
           if (!G.save.transact(r, n => { n[key] = !n[key]; })) { savingDenied(); return; }
-          G.audio.unlock(); G.audio.music(S().music); app.applySettings(); draw();
+          G.audio.unlock(); G.audio.music(S().music); if (!S().voice) G.voice?.stop(); app.applySettings(); draw();
         }); draw(); return h('div.setrow', h('span', label), b);
       };
       const full = h('button.btn.small', { type: 'button', dataset: { set: 'full' }, on: { click: () => ui.full.toggle() } }, '전체 화면');
       ui.full.watch(full, () => full.setAttribute('aria-pressed', String(ui.full.on())));
-      return h('div.settings', h('h3', '설정'), row('music', '배경음'), row('sound', '효과음'), row('big', '큰 글자'), row('teacher', '선생님용'), full,
+      return h('div.settings', h('h3', '설정'), row('music', '배경음'), row('sound', '효과음'), G.voice?.ready ? row('voice', '목소리') : null, row('big', '큰 글자'), row('teacher', '선생님용'), full,
         h('div.setrow', h('span', '기록 지우기'), h('button.btn.small.seal', { type: 'button', disabled: !writer(r), dataset: { set: 'clear' }, on: { click: () => { if (writer(r)) close('clear'); } } }, '기록 지우기')),
         h('p.small.muted', '진행 기록은 이 기기의 브라우저에만 저장돼요.'), h('div.credit-full', h('b', '음원 출처 '), G.audio.creditFull()));
     }, [{ label: '닫기', value: null, cls: 'primary' }], { cls: 'settings-sheet' });

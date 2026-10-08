@@ -2,7 +2,8 @@
 // 학생 기록은 v3 열쇠 하나에만 저장한다. v2·v1은 고치거나 지우지 않는다.
 (function () {
   const BASE_KEY = 'guunmong-v3', OLD_KEY = 'guunmong-v2';
-  const SETTINGS = ['music', 'sound', 'big', 'teacher'];
+  // v2에서 가져오는 설정은 넷이다. 목소리(voice)는 v3에서 생겨 기록 지우기 때만 함께 남긴다.
+  const SETTINGS = ['music', 'sound', 'big', 'teacher'], KEPT = [...SETTINGS, 'voice'];
   const ACTIVITIES = ['a-wish', 'j-match'];
   // 드러난 소원 넷. 최고값의 한도는 G.play.MAX(js/core/play.js)를 쓴다.
   const WISHES = ['chuljang', 'bugwi', 'pungryu', 'gongmyeong'];
@@ -21,7 +22,7 @@
   }
   const freshPlay = () => ({ secretWish: null, choices: {}, firsts: {}, peak: Object.fromEntries(WISHES.map((id) => [id, 0])) });
   const fresh = () => ({
-    v: 3, music: true, sound: true, big: false, teacher: false,
+    v: 3, music: true, sound: true, voice: true, big: false, teacher: false,
     started: false, pos: null, step: 'preview', reach: 0, done: {}, awake: false, awakeAt: 0,
     ledger: {}, wrong: [], items: [], bonds: [], pearls: {}, seenFiction: {}, journal: {}, interp: {},
     name: '', startedAt: 0, finishedAt: 0, rpg: null, play: freshPlay(),
@@ -322,7 +323,7 @@
       if (guard(run, options.readonly) || options.confirmed !== true || typeof options.cancel !== 'function') return false;
       options.cancel();
       if (guard(run, options.readonly)) return false;
-      const next = fresh(); for (const key of SETTINGS) next[key] = S[key];
+      const next = fresh(); for (const key of KEPT) next[key] = S[key];
       const newRun = globalThis.crypto?.randomUUID?.();
       if (!newRun) return false;
       next.rpg = { v: 1, run: newRun, cursor: null, scenes: {} };

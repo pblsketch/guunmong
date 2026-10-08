@@ -534,6 +534,20 @@ window.GUUN = {
           "sprite": "npc-fairy-green"
         },
         {
+          "id": "bridge-fairy-green-stay",
+          "x": 6,
+          "y": 3,
+          "kind": "npc",
+          "solid": true,
+          "label": "선녀",
+          "decor": true,
+          "visibleAt": [
+            "c1-bridge:bridge-flower"
+          ],
+          "action": null,
+          "sprite": "npc-fairy-green"
+        },
+        {
           "id": "bridge-fairy-scarlet",
           "x": 4,
           "y": 0,
@@ -542,7 +556,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-scarlet"
@@ -556,7 +571,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-ivory"
@@ -570,7 +586,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-pink"
@@ -584,7 +601,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-violet"
@@ -598,7 +616,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-gold"
@@ -612,7 +631,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-navy"
@@ -626,7 +646,8 @@ window.GUUN = {
           "label": "선녀",
           "decor": true,
           "visibleAt": [
-            "c1-bridge:bridge-meet"
+            "c1-bridge:bridge-meet",
+            "c1-bridge:bridge-flower"
           ],
           "action": null,
           "sprite": "npc-fairy-aqua"
@@ -881,6 +902,20 @@ window.GUUN = {
           "sprite": "npc-yuk"
         },
         {
+          "id": "exile-master-stay",
+          "x": 7,
+          "y": 4,
+          "kind": "npc",
+          "solid": true,
+          "label": "육관대사",
+          "decor": true,
+          "visibleAt": [
+            "c1-exile:exile-leave"
+          ],
+          "action": null,
+          "sprite": "npc-yuk"
+        },
+        {
           "id": "exile-door",
           "x": 5,
           "y": 9,
@@ -1098,6 +1133,37 @@ window.GUUN = {
           ],
           "action": "huayin-reply",
           "sprite": "prop-table"
+        },
+        {
+          "id": "huayin-willow-stay",
+          "x": 2,
+          "y": 3,
+          "kind": "scenery",
+          "solid": true,
+          "label": "누각에 닿은 버들",
+          "decor": true,
+          "visibleAt": [
+            "e01-huayin:huayin-write",
+            "e01-huayin:huayin-send",
+            "e01-huayin:huayin-reply",
+            "e01-huayin:huayin-leave"
+          ],
+          "action": null,
+          "sprite": "prop-willow"
+        },
+        {
+          "id": "huayin-nurse-stay",
+          "x": 9,
+          "y": 3,
+          "kind": "npc",
+          "solid": true,
+          "label": "유모",
+          "decor": true,
+          "visibleAt": [
+            "e01-huayin:huayin-reply"
+          ],
+          "action": null,
+          "sprite": "npc-nurse"
         },
         {
           "id": "huayin-road",

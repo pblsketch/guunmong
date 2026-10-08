@@ -28,7 +28,7 @@ async function route(width,height,big){
  assert.deepEqual(await p.evaluate(()=>{
   const lines=id=>Object.fromEntries(G.experience.find(G.data,id).beats.map(beat=>[beat.id,beat.lines]));
   return{chunun:lines('e05-chunun'),chununPearl:G.experience.find(G.data,'e05-chunun').optional[0].lines,gyeonghong:lines('e06-gyeonghong')};
- }),{chunun:{'chunun-fairy':[0,1],'chunun-ghost':[2,3],'chunun-talisman':[4,5],'chunun-reveal':[6,7]},chununPearl:[6],gyeonghong:{'gyeonghong-road':[0],'gyeonghong-companion':[1,2],'gyeonghong-discover':[3,4],'gyeonghong-reveal':[5,6]}});
+ }),{chunun:{'chunun-fairy':[0,1],'chunun-ghost':[2,3],'chunun-talisman':[4,5],'chunun-reveal':[6,7]},chununPearl:[8],gyeonghong:{'gyeonghong-road':[0],'gyeonghong-companion':[1,2],'gyeonghong-discover':[3,4],'gyeonghong-reveal':[5,6]}});
  if(big){await p.locator('[data-tool="settings"]').click();await p.locator('[data-set="big"]').click();await p.keyboard.press('Escape');}
  let steps=0,seen=new Set(),outfits=new Set();
  while(++steps<180){

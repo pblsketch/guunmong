@@ -18,7 +18,8 @@
 ## 브라우저 저장
 
 - 실제 열쇠는 `guunmong-v3`, 시험 열쇠는 `guunmong-v3-fixture-<이름>`이다. JSON의 `v`는 3이다(0022). 모든 학생은 새로 시작한다. v3가 없을 때 `guunmong-v2`(시험은 `guunmong-v2-fixture-<이름>`)를 **읽기만** 하여 설정 넷이 불리언이면 가져오고, 진행·기록은 가져오지 않는다. v2가 없거나 깨졌으면 기본값이다. `guunmong-v2`와 `guunmong-v1`은 고치지도 삭제하지도 않는다.
-- 맨 위 설정: `music`, `sound`, `big`, `teacher`. mode와 전체 화면 저장은 없다.
+- 맨 위 설정: `music`, `sound`, `voice`, `big`, `teacher`. mode와 전체 화면 저장은 없다. `voice`(대사 목소리, 기본 켜짐, 0024)는 v2에서 가져오지 않고 기본값으로 시작하며, 확인 초기화는 다섯 설정을 모두 남긴다. 저장에 `voice`가 없던 v3 기록은 기본값으로 읽는다.
+- 진행 기록의 필수 행동 차례를 고친 장면은 `js/core/experience.js`의 `MOVED`에 전 차례를 적는다. 전 차례 그대로인 기록은 읽을 때 지금 차례로 다시 세우고, 지금 차례에 빈자리가 생기면 그 앞까지만 남긴다(지금: `e10-neungpa`, 0024).
 - 진행: `started`, `pos`, `step`, `reach`, `done`, `awake`, `awakeAt`.
 - 기록: id 배열 `items`·`bonds`, id→true `pearls`·`seenFiction`, `ledger`, `wrong`, `journal`, `interp`.
 - 기타: `name`, `startedAt`, `finishedAt`.

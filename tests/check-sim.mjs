@@ -75,7 +75,7 @@ function seed(patch = {}) {
 }
 // v3 저장: 새 열쇠·새 모양, v2/v1 원문 불변, 설정 넷만 가져오기, play 읽기 검증
 const SETTINGS4 = ['music', 'sound', 'big', 'teacher'];
-const V3_KEYS = ['v', 'music', 'sound', 'big', 'teacher', 'started', 'pos', 'step', 'reach', 'done', 'awake', 'awakeAt',
+const V3_KEYS = ['v', 'music', 'sound', 'voice', 'big', 'teacher', 'started', 'pos', 'step', 'reach', 'done', 'awake', 'awakeAt',
   'items', 'bonds', 'pearls', 'seenFiction', 'ledger', 'wrong', 'journal', 'interp', 'name', 'startedAt', 'finishedAt', 'rpg', 'play'].sort();
 const EMPTY_PLAY = { secretWish: null, choices: {}, firsts: {}, peak: { chuljang: 0, bugwi: 0, pungryu: 0, gongmyeong: 0 } };
 function challengeProbe() {
@@ -115,6 +115,7 @@ await test('v3가 없으면 v2에서 설정 넷만 가져오고 v2·v1 원문은
   ctx.G.save.load(); assert.equal(await ctx.G.save.acquireWriter(), true);
   const s = ctx.G.save.state, fresh = ctx.G.save.fresh();
   for (const key of SETTINGS4) assert.equal(s[key], old[key], key);
+  assert.equal(s.voice, true, 'v2에 없는 목소리는 기본값');
   for (const key of ['started', 'pos', 'step', 'reach', 'done', 'awake', 'awakeAt', 'items', 'bonds', 'pearls', 'seenFiction',
     'ledger', 'wrong', 'journal', 'interp', 'name', 'startedAt', 'finishedAt']) assert.deepEqual(clone(s[key]), clone(fresh[key]), key);
   assert.notEqual(s.rpg.run, 'old-run');
@@ -189,8 +190,8 @@ await test('play 읽기는 허용된 자리·선택지·도전·곳·peak 정수
   assert.equal(reader.G.save.transact(run, (s) => { s.play.peak.chuljang = 1; }), false);
   assert.equal(JSON.parse(memory.get('guunmong-v3')).play.peak.chuljang, 2);
 });
-await test('확인 초기화는 설정 넷과 빈 play만 남김', async () => {
-  const saved = seed({ music: false, big: true, teacher: true, name: '이름',
+await test('확인 초기화는 설정(넷과 목소리)과 빈 play만 남김', async () => {
+  const saved = seed({ music: false, voice: false, big: true, teacher: true, name: '이름',
     play: { secretWish: 'pungryu', choices: { 'ch-tianjin-poem': { option: 'heart' } }, firsts: { 'ch-chunun-ghost': { ok: true, clues: 1 } },
       peak: { chuljang: 0, bugwi: 0, pungryu: 3, gongmyeong: 0 } } });
   const memory = new Map([['guunmong-v3', JSON.stringify(saved)]]), ctx = boot(challengeProbe(), memory, lockService());
@@ -199,7 +200,7 @@ await test('확인 초기화는 설정 넷과 빈 play만 남김', async () => {
   assert.equal(ctx.G.save.state.play.secretWish, 'pungryu');
   assert.equal(ctx.G.save.reset(run, { confirmed: true, cancel() {} }), true);
   const s = ctx.G.save.state, stored = JSON.parse(memory.get('guunmong-v3'));
-  assert.deepEqual(SETTINGS4.map((k) => s[k]), [false, true, true, true]);
+  assert.deepEqual(SETTINGS4.map((k) => s[k]), [false, true, true, true]); assert.equal(s.voice, false);
   assert.deepEqual(clone(s.play), EMPTY_PLAY); assert.deepEqual(stored.play, EMPTY_PLAY);
   assert.equal(s.name, ''); assert.equal(s.started, false); assert.notEqual(s.rpg.run, run);
   assert.equal(stored.v, 3); assert.deepEqual(Object.keys(stored).sort(), V3_KEYS);
@@ -1166,6 +1167,24 @@ await test('읽기: 객체·배열 pos는 받지 않고 null 또는 재개 위�
       assert.equal(G.save.transact(run, (s) => { s.name = '이름'; }), true);
     } finally { G.save.releaseWriter(); }
   }
+});
+await test('반사곡 물 나누기를 남악 꿈 뒤로 옮겨도 옛 차례의 학생 기록을 지킨다', async () => {
+  const source = { window: {} };
+  for (const n of ['people', 'scenes', 'maps', 'experiences', 'challenges']) vm.runInNewContext(read('js/data/' + n + '.js'), source);
+  const data = { ...source.window.GUUN }, ctx = boot(data);
+  const old = ['neungpa-water', 'neungpa-enter', 'neungpa-meet', 'neungpa-defeat', 'neungpa-share', 'neungpa-monk', 'neungpa-return'];
+  const norm = (ids, status, pearls = {}) => ctx.G.experience.normalize({ pos: 'e10-neungpa', teacher: false, awake: false, pearls,
+    rpg: { v: 1, run: 'run-moved', cursor: null, scenes: { 'e10-neungpa': { status, beat: null, hint: null, actions: ids.map((id) => ({ id, by: 'student' })) } } } }, data).scenes['e10-neungpa'];
+  // 마친 기록: 차례만 바뀌고 마침은 그대로. 물 나누기 뒤에 주운 구슬은 자리가 그대로인 마지막 행동(남해 태자) 뒤로 간다.
+  const done = norm([...old.slice(0, 5), 'neungpa-pearl', ...old.slice(5)], 'done', { neungpa: true });
+  assert.equal(done.status, 'done');
+  assert.deepEqual(clone(done.actions.map((a) => a.id)), ['neungpa-water', 'neungpa-enter', 'neungpa-meet', 'neungpa-defeat', 'neungpa-pearl', 'neungpa-monk', 'neungpa-return', 'neungpa-share']);
+  // 물만 나누고 멈춘 기록: 지금 차례의 빈자리(남악 스님) 앞까지 남기고 그 자리부터 다시 한다.
+  const half = norm(old.slice(0, 5), 'active');
+  assert.deepEqual(clone(half.actions.map((a) => a.id)), old.slice(0, 4)); assert.equal(half.beat, 'neungpa-monk');
+  // 지금 차례의 기록은 그대로, 전 차례와도 맞지 않는 기록은 원래대로 버린다.
+  assert.equal(norm([...old.slice(0, 4), 'neungpa-monk'], 'active').beat, 'neungpa-return');
+  assert.deepEqual(clone(norm(['neungpa-water', 'neungpa-meet'], 'active').actions), []);
 });
 await import('./fixtures/check-representative-profiles.mjs');
 console.log('점검 묶음 ' + checks + '개 통과 (브라우저 다중 탭 검증은 별도)');

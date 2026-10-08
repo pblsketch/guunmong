@@ -22,8 +22,9 @@
 | maps.js | maps | 공유 장소·보행 칸·대상 |
 | experiences.js | experiences | 장면별 순서 있는 행동·본문 줄 참조·원작 효과 |
 | challenges.js | challenges | 원작 위기 대목의 도전과 생각 선택 |
+| voice.js | (window.GUUN_VOICE) | 대사 목소리 목록 {글 해시: `assets/voice/<해시>.mp3`}. `tools/make_tts.py`만 쓰고 소리 파일과 같은 커밋에 넣는다(0024) |
 
-`js/core/data.js`의 FILES가 위 파일을 읽는다. 모든 진행 단위는 scenes에, 승인된 동작·아이콘 메타는 sprites에 둔다.
+`js/core/data.js`의 FILES가 위 파일을 읽는다(voice.js는 빼고 `index.html`이 바로 읽는다). 모든 진행 단위는 scenes에, 승인된 동작·아이콘 메타는 sprites에 둔다.
 
 본편은 `optional`이 없는 28단위이며 `c1-bridge`부터 시작한다. `cut-josin`만 `optional:true`로 보존한다. 결과의 선택형 비교 읽기에서만 읽으며 본편 목록·목차·진행 저장에 넣지 않는다. 다른 장면에 optional을 붙이면 데이터 오류다. 옛 `pos:cut-josin` 기록은 현재 본편의 재개 위치로 이어 간다.
 
@@ -61,7 +62,7 @@ bgm은 `bgm.tracks`의 열쇠다. bgm은 `{ title, tracks: { 곡id: { file, len,
 | 자료 | 형식 |
 | --- | --- |
 | map | {id,width,height,tile,walk,art,objects}. id는 유일 문자열, 크기는 양의 정수. walk는 height×width의 0/1 배열, 1이 보행 칸 |
-| object | {id,x,y,kind,solid,label,visibleAt,action,person?,sprite?,verb?,decor?}. id는 맵 안에서 유일, x/y는 맵 안 정수. kind는 npc/item/scenery/exit/pearl. solid는 boolean, action은 행동 id 또는 null. person은 실제 인물 id이며 label과 구분. verb는 행동 단추·지금 할 일에 보일 8자 이하 동사(예: 앉기, 불기)이며 없으면 행동 종류의 기본 동사(말 걸기·살펴보기·사용하기·길 따라가기)를 쓴다. decor:true는 action:null인 장식(예: 돌다리의 팔선녀)으로 대상 목록·초점·누르기에서 빠지고 solid면 통행만 막는다. person·verb를 두지 않는다 |
+| object | {id,x,y,kind,solid,label,visibleAt,action,person?,sprite?,verb?,decor?}. id는 맵 안에서 유일, x/y는 맵 안 정수. kind는 npc/item/scenery/exit/pearl. solid는 boolean, action은 행동 id 또는 null. person은 실제 인물 id이며 label과 구분. verb는 행동 단추·지금 할 일에 보일 8자 이하 동사(예: 앉기, 불기)이며 없으면 행동 종류의 기본 동사(말 걸기·살펴보기·사용하기·길 따라가기)를 쓴다. decor:true는 action:null인 장식(예: 돌다리의 팔선녀)으로 대상 목록·초점·누르기에서 빠지고 solid면 통행만 막는다. person·verb를 두지 않는다. 이야기에서 아직 자리에 있는 인물·풍경이 다음 행동에서 사라지면 안 될 때는 원래 대상의 visibleAt을 늘리지 않고 같은 자리·그림의 장식(`<id>-stay`)을 그 행동들에 둔다(0024). 만나기 전 인연은 장식으로도 미리 세우지 않는다 |
 | experience | {scene,map,actor,spawn,beats,optional}. scene은 기존 id, actor는 seongjin/yang, spawn은 {x,y,facing}, facing은 up/down/left/right. 안전 입구는 보행 가능하고 공개된 solid 칸이 아님 |
 | beat | {id,trigger:{kind,target},lines,effects,map?,spawn?,appearance?}. id는 장면의 beats와 optional 전체에서 유일. kind는 inspect/talk/use/exit/continue/staff. target은 현재 map 대상 id, continue/staff는 null |
 | lines | 해당 scenes.lines의 0기준 정수 인덱스 배열. 본문을 복사하거나 text 필드를 추가하지 않음 |

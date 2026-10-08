@@ -30,6 +30,10 @@ async function openChallenge(p, scene, id) {
     if (await p.locator('.challenge-book[data-challenge-id="' + id + '"]').count()) return;
     if (await p.locator('[data-dialogue] .choice-tray [data-talk]').count()) { await p.locator('[data-dialogue] .choice-tray [data-talk]').first().click(); continue; }
     if (await p.locator('[data-dialogue]').count()) { await p.locator('[data-dialogue] [data-act="next"]').click(); continue; }
+    // 대상 없는 '이야기 이어 가기' 차례(예: 백룡담에서 진영으로 깸)는 행동 단추로 넘긴다.
+    const kind = await p.evaluate(() => G.experience.find(G.data, document.querySelector('.play')?.dataset.scene)?.beats
+      .find(b => b.id === document.querySelector('.play')?.dataset.beat)?.trigger.kind);
+    if (kind === 'continue') { await p.locator('[data-act="interact"]').click(); continue; }
     const t = await p.evaluate(() => document.querySelector('.world-object.required')?.dataset.object);
     assert.ok(t, '도전 전에 필수 대상이 사라짐: ' + id);
     await seekTarget(p, t);
