@@ -19,6 +19,7 @@
 | `make_review.py` | 사용자 확인용 모아 보기 | `design/review/` |
 | `make_bgm.py` | 국립국악원 악구 WAV를 이어 곡으로, 음량 맞추기 | `assets/bgm/*.mp3`, `js/data/bgm.js` |
 | `build_fonts.py` | 게임에 쓰인 글자만 남긴 부분 글꼴 | `assets/fonts/*.woff2`, `OFL.txt` |
+| `make_share_image.py` | 링크 공유 썸네일(승인된 돌다리 장면 + 부분 글꼴 제목, 1200×630) | `assets/ui/share.png` |
 | `make_tts.py` | Fish Audio로 대사 음성을 미리 만듦(역할별 목소리 `tts_voices.json`). 열쇠는 `FISH_API_KEY` 또는 `~/.config/fish-audio/key`, 저장소에 넣지 않는다 | `assets/voice/*.mp3`, `js/data/voice.js`(같은 커밋에) |
 
 ## 맡지 않는 것

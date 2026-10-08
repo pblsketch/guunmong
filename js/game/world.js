@@ -17,7 +17,7 @@
     if (ctx.step('world') === false) return Promise.resolve(false);
     let beatIndex = replay || ctx.reenact || !saved() ? 0 : experience.beats.findIndex(b => b.id === saved()?.beat);
     if (beatIndex < 0) beatIndex = experience.beats.length;
-    let stage, cursor, actor, world, visible = [], scale = 1, frame = 0;
+    let stage, cursor, actor, world, visible = [], scale = 1, frame = 0, hudTop = 0;
     let busy = false, finished = false, disposed = false, route = [], raf = null, motion = null, generation = 0, selected = null, autoExit = null;
     let joystickPointer = null, actionPointer = null, ignorePointerClick = false;
     const keys = new Map(), taps = [], objectArt = new Map(), mapListeners = [];
@@ -70,10 +70,13 @@
       const dpr = devicePixelRatio || 1, pixel = v => Math.round(v * dpr) / dpr;
       const width = stage.map.width * stage.map.tile * scale, height = stage.map.height * stage.map.tile * scale;
       const limitX = Math.floor(Math.max(0, width - camera.clientWidth) * dpr) / dpr;
-      const limitY = Math.floor(Math.max(0, height - camera.clientHeight) * dpr) / dpr;
+      // 세로 휴대폰(hudTop > 0)은 지금 할 일 띠 아래부터 화면 끝까지를 맵이 보이는 곳으로 본다.
+      const viewHeight = camera.clientHeight - hudTop;
+      const limitY = Math.floor(Math.max(0, height - viewHeight) * dpr) / dpr;
       const offsetX = Math.min(limitX, pixel(Math.max(0, (x + .5) * stage.map.tile * scale - camera.clientWidth / 2)));
-      const offsetY = Math.min(limitY, pixel(Math.max(0, (y + 1) * stage.map.tile * scale - camera.clientHeight / 2)));
-      const insetX = pixel(Math.max(0, (camera.clientWidth - width) / 2)), insetY = pixel(Math.max(0, (camera.clientHeight - height) / 2));
+      const offsetY = Math.min(limitY, pixel(Math.max(0, (y + 1) * stage.map.tile * scale - viewHeight / 2)));
+      const insetX = pixel(Math.max(0, (camera.clientWidth - width) / 2));
+      const insetY = !hudTop ? pixel(Math.max(0, (camera.clientHeight - height) / 2)) : pixel(height >= viewHeight ? hudTop : camera.clientHeight - height);
       world.style.transform = 'translate(' + (insetX - offsetX) + 'px,' + (insetY - offsetY) + 'px)';
       Object.assign(camera.dataset, { x: String(offsetX), y: String(offsetY), insetX: String(insetX), insetY: String(insetY), scale: String(scale) });
     }
@@ -88,7 +91,16 @@
     }
     function layout() {
       if (!active() || !stage || !world) return;
-      scale = Math.ceil(2 * (devicePixelRatio || 1)) / (devicePixelRatio || 1);
+      const dpr = devicePixelRatio || 1, base = Math.ceil(2 * dpr) / dpr, mapWidth = stage.map.width * stage.map.tile, mapHeight = stage.map.height * stage.map.tile;
+      scale = base; hudTop = 0;
+      // 세로 휴대폰처럼 맵이 화면보다 넓을 때는 아래에 빈 띠가 남지 않게, 지금 할 일 띠 아래부터 화면 아래 끝까지 맵이 차도록 키운다.
+      // 배율은 기기 픽셀 정수 단계만 쓴다(픽셀 그림이 고르게 보이게). 한 단계 아래로도 24px 안쪽만 모자라면 그 단계를 아래에 붙인다.
+      if (mapWidth * base > camera.clientWidth) {
+        hudTop = Math.max(0, goal.getBoundingClientRect().bottom - camera.getBoundingClientRect().top);
+        const room = camera.clientHeight - hudTop, need = room / mapHeight * dpr;
+        const low = Math.max(base, Math.floor(need) / dpr), high = Math.max(base, Math.ceil(need) / dpr);
+        scale = room - mapHeight * low <= 24 ? low : high;
+      }
       world.style.width = stage.map.width * stage.map.tile * scale + 'px'; world.style.height = stage.map.height * stage.map.tile * scale + 'px';
       const tiles = world.querySelector('.world-tiles');
       if (tiles) tiles.style.backgroundSize = stage.map.tile * scale + 'px ' + stage.map.tile * scale + 'px';
